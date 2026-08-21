@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea
+    url: https://github.com/zitdevs/kreds/discussions
+    about: Ask how something works, propose an idea, or show what your team built.
+  - name: Self-hosting help
+    url: https://github.com/zitdevs/kreds/blob/main/docs/self-hosting.md
+    about: Docker setup, GitHub App credentials, upgrades and troubleshooting.
+  - name: Security vulnerability
+    url: https://github.com/zitdevs/kreds/security/advisories/new
+    about: Report privately. Please never in a public issue.
+  - name: Billing, hosted plans or commercial licensing
+    url: mailto:hello@zitdevs.com
+    about: Anything about the hosted service or a commercial license.

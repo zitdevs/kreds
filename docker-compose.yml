@@ -1,0 +1,56 @@
+# ---------------------------------------------------------------------------
+# Kreds — self-hosted stack
+#
+#   cp .env.example .env    # fill in your GitHub credentials
+#   docker compose up -d
+#   open http://localhost:3000
+#
+# Guide: https://kreds.sh/docs/self-hosting
+# ---------------------------------------------------------------------------
+name: kreds
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kreds}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kreds}
+      POSTGRES_DB: ${POSTGRES_DB:-kreds}
+    volumes:
+      - kreds-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kreds} -d ${POSTGRES_DB:-kreds}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - kreds-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  kreds:
+    image: ghcr.io/zitdevs/kreds:latest
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kreds}:${POSTGRES_PASSWORD:-kreds}@db:5432/${POSTGRES_DB:-kreds}
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+volumes:
+  kreds-db:
+  kreds-redis:

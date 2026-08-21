@@ -1,0 +1,87 @@
+name: Bug report
+description: Something is broken or behaves differently than documented.
+title: "bug: "
+labels: ["bug", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. A reproduction beats a description every time.
+
+        **Security issue?** Do not use this form —
+        [report it privately](https://github.com/zitdevs/kreds/security/advisories/new).
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+      placeholder: |
+        I expected the merged PR to award 25 Kreds.
+        The activity feed shows the merge but the total did not change.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Ideally from a fresh install.
+      placeholder: |
+        1. Connect a repository
+        2. Merge a pull request into main
+        3. Open the leaderboard
+        4. Total is unchanged
+    validations:
+      required: true
+
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: How are you running Kreds?
+      options:
+        - Hosted (kreds.sh)
+        - Self-hosted (Docker)
+        - Self-hosted (other)
+        - Local development
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Release tag, image tag, or commit SHA.
+      placeholder: v0.1.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Only if relevant — browser, OS, Node version, Docker version.
+      placeholder: |
+        Browser: Firefox 129
+        Docker: 27.1.1
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: "Self-hosted: `docker compose logs kreds`. Remove tokens and secrets first."
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and this is not a duplicate
+          required: true
+        - label: I removed every token, secret and private URL from the details above
+          required: true

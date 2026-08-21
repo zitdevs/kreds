@@ -1,0 +1,66 @@
+name: Feature request
+description: Propose something Kreds should do.
+title: "feat: "
+labels: ["enhancement", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tell us the problem before the solution — the best features usually come
+        out of a frustration someone described well.
+
+        Still exploring the idea? [Discussions](https://github.com/zitdevs/kreds/discussions)
+        is a better fit than an issue.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: What is annoying, slow, or impossible today?
+      placeholder: |
+        Our team works in two squads and one leaderboard puts juniors against
+        staff engineers, which discourages exactly the people it should help.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like Kreds to do?
+      placeholder: |
+        Let a team define squads, and let the leaderboard be filtered by squad.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What have you tried or considered?
+      description: Workarounds, other tools, or approaches you rejected and why.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of Kreds?
+      options:
+        - Leaderboard
+        - Kreds rules and scoring
+        - Achievements, streaks or challenges
+        - GitHub integration
+        - Other integrations (Slack, Discord, Linear, Jira)
+        - Team administration
+        - Self-hosting
+        - Marketing site or docs
+        - Something else
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and discussions for this idea
+          required: true

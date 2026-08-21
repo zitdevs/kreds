@@ -1,0 +1,38 @@
+# dependencies
+node_modules/
+
+# builds
+.next/
+out/
+build/
+dist/
+
+# env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# testing
+coverage/
+
+# editors & os
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# misc
+.turbo/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+
+# local tooling
+.claude/

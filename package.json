@@ -1,0 +1,24 @@
+{
+  "name": "kreds",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The leaderboard for your engineering team.",
+  "license": "BUSL-1.1",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "dev": "pnpm --filter @kreds/web dev",
+    "build": "pnpm --filter @kreds/web build",
+    "start": "pnpm --filter @kreds/web start",
+    "lint": "pnpm --filter @kreds/web lint",
+    "typecheck": "pnpm -r typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.6.8"
+  }
+}
