@@ -26,11 +26,12 @@ the scoring is weighted so that helping someone else ship beats shipping alone.
 
 ## Screenshots
 
-<!-- TODO: replace with real captures once the app UI lands -->
-
-| Leaderboard                                 | Activity feed                          | Profile                             |
-| ------------------------------------------- | -------------------------------------- | ----------------------------------- |
-| ![Leaderboard](docs/assets/leaderboard.png) | ![Activity feed](docs/assets/feed.png) | ![Profile](docs/assets/profile.png) |
+> [!IMPORTANT]
+> The application UI is in active development. This repository currently holds
+> the marketing site, the licensing and the self-hosting path. Screenshots of
+> the leaderboard, activity feed and profile land with the first app release —
+> follow [Discussions](https://github.com/zitdevs/kreds/discussions) if you want
+> to know when.
 
 ## What Kreds is
 
