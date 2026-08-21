@@ -23,10 +23,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Version comes from the "packageManager" field in package.json.
+      # Setting it here as well makes the action fail with a version mismatch.
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - name: Set up Node
         uses: actions/setup-node@v4
