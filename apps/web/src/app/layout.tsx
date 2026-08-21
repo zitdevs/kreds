@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { site } from "@/lib/site";
+import { site, links } from "@/lib/site";
+import { plans } from "@/lib/pricing";
+import { faqs } from "@/lib/faq";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,6 +20,7 @@ export const metadata: Metadata = {
     "GitHub leaderboard",
     "code review incentives",
     "engineering team metrics",
+    "developer recognition",
     "self-hosted",
     "source available",
   ],
@@ -41,46 +44,87 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
-    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
   },
+  appleWebApp: { capable: true, title: site.name, statusBarStyle: "black-translucent" },
+  formatDetection: { telephone: false, address: false, email: false },
   category: "technology",
 };
 
 export const viewport: Viewport = {
   themeColor: "#08090b",
   colorScheme: "dark",
+  width: "device-width",
+  initialScale: 1,
 };
 
-const jsonLd = {
+/**
+ * One @graph rather than several loose blocks, so the entities can reference
+ * each other by @id.
+ *
+ * The FAQ and pricing entries are generated from the same modules the page
+ * renders from — structured data that disagrees with the visible page is worse
+ * than none at all.
+ */
+const structuredData = {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: site.name,
-  applicationCategory: "DeveloperApplication",
-  operatingSystem: "Web, Docker",
-  url: site.url,
-  description: site.description,
-  author: { "@type": "Organization", name: site.author, url: site.authorUrl },
-  offers: [
+  "@graph": [
     {
-      "@type": "Offer",
-      name: "Community",
-      price: "0",
-      priceCurrency: "USD",
-      description: "Up to 20 members, 1 team, unlimited repositories.",
+      "@type": "Organization",
+      "@id": `${site.url}/#organization`,
+      name: site.author,
+      url: site.authorUrl,
+      email: "contact@zitdevs.com",
+      sameAs: ["https://github.com/zitdevs"],
     },
     {
-      "@type": "Offer",
-      name: "Team",
-      price: "2.99",
-      priceCurrency: "USD",
-      description: "Per member, per month. Unlimited members and integrations.",
+      "@type": "WebSite",
+      "@id": `${site.url}/#website`,
+      url: site.url,
+      name: site.name,
+      description: site.description,
+      inLanguage: "en-US",
+      publisher: { "@id": `${site.url}/#organization` },
     },
     {
-      "@type": "Offer",
-      name: "Growing",
-      price: "79",
-      priceCurrency: "USD",
-      description: "Flat monthly rate for up to 50 members.",
+      "@type": "SoftwareApplication",
+      "@id": `${site.url}/#software`,
+      name: site.name,
+      applicationCategory: "DeveloperApplication",
+      applicationSubCategory: "Engineering analytics",
+      operatingSystem: "Web, Docker",
+      url: site.url,
+      description: site.description,
+      softwareVersion: "0.1.0",
+      license: links.license,
+      codeRepository: links.github,
+      author: { "@id": `${site.url}/#organization` },
+      publisher: { "@id": `${site.url}/#organization` },
+      offers: plans
+        .filter((plan) => plan.price.startsWith("$"))
+        .map((plan) => ({
+          "@type": "Offer",
+          name: plan.name,
+          price: plan.price.replace("$", ""),
+          priceCurrency: "USD",
+          description: plan.blurb,
+          url: `${site.url}/#pricing`,
+        })),
+    },
+    {
+      "@type": "FAQPage",
+      "@id": `${site.url}/#faq`,
+      mainEntity: faqs.map((item) => ({
+        "@type": "Question",
+        name: item.q,
+        acceptedAnswer: { "@type": "Answer", text: item.a },
+      })),
     },
   ],
 };
@@ -88,6 +132,12 @@ const jsonLd = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+      </head>
       <body className="font-sans antialiased">
         <a
           href="#main"
@@ -96,10 +146,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
         {children}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
       </body>
     </html>
   );

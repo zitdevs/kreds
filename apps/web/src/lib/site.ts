@@ -3,8 +3,10 @@ export const site = {
   domain: "kreds.sh",
   url: "https://kreds.sh",
   tagline: "The leaderboard for your engineering team.",
+  // Kept under ~155 characters so search results show the whole thing,
+  // differentiating clause included.
   description:
-    "Kreds turns merged pull requests, code reviews and closed issues into a live leaderboard for your engineering team. Weighted so that helping someone ship beats shipping alone.",
+    "Merged pull requests, code reviews and closed issues become a live leaderboard for your engineering team \u2014 weighted so helping others ship wins.",
   author: "ZitDevs",
   authorUrl: "https://zitdevs.com",
 } as const;
