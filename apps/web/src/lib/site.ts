@@ -22,9 +22,7 @@ export const links = {
   changelog: "https://github.com/zitdevs/kreds/blob/main/CHANGELOG.md",
   docs: "https://github.com/zitdevs/kreds/tree/main/docs",
   sponsors: "https://github.com/sponsors/zitdevs",
-  openCollective: "https://opencollective.com/kreds",
-  buyMeACoffee: "https://buymeacoffee.com/zitdevs",
-  contact: "mailto:hello@zitdevs.com",
+  contact: "mailto:contact@zitdevs.com",
 } as const;
 
 /** Default Kreds values. Mirrors docs/kreds-rules.md — keep the two in step. */

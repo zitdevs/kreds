@@ -33,13 +33,13 @@ Still stuck? Open a Discussion with your `docker compose logs kreds` output.
 
 ## Hosted plan and billing
 
-Email **[hello@zitdevs.com](mailto:hello@zitdevs.com)**. Include your team name
+Email **[contact@zitdevs.com](mailto:contact@zitdevs.com)**. Include your team name
 and the GitHub org.
 
 ## Commercial licensing
 
 Want to offer Kreds as a hosted service, or need terms the BSL does not grant?
-Email **[hello@zitdevs.com](mailto:hello@zitdevs.com)** — that conversation is
+Email **[contact@zitdevs.com](mailto:contact@zitdevs.com)** — that conversation is
 welcome, not a trap.
 
 ## Free for open source

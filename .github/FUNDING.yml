@@ -1,7 +1,21 @@
 # Kreds is maintained by ZitDevs. Sponsorship keeps the Community tier free.
-# https://kreds.sh/#sponsor
+#
+# Every line below is commented out on purpose: GitHub renders a "Sponsor"
+# button from this file, and a button pointing at a listing that does not
+# exist yet sends people to a dead end.
+#
+# Uncomment each one the moment the matching account is live:
+#
+#   github          -> enable GitHub Sponsors for the org first
+#                      https://github.com/organizations/zitdevs/sponsorship
+#   open_collective -> create the collective, then use its slug
+#   buy_me_a_coffee -> create the page, then use its username
+#   custom          -> any other URL, e.g. https://kreds.sh/sponsor
+#
+# Keep this file and src/lib/site.ts in step — the site reads its funding
+# links from there.
 
-github: [zitdevs]
-open_collective: kreds
-buy_me_a_coffee: zitdevs
-custom: ["https://kreds.sh/sponsor"]
+# github: [zitdevs]
+# open_collective: kreds
+# buy_me_a_coffee: zitdevs
+# custom: ["https://kreds.sh/sponsor"]

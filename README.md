@@ -141,7 +141,7 @@ Nothing gets rug-pulled — it only gets more permissive with time.
 
 Being straight with you: this is **source-available, not open source**. It does
 not meet the OSI definition, and we are not going to call it something it isn't.
-If you need a commercial license, reach out — [hello@zitdevs.com](mailto:hello@zitdevs.com).
+If you need a commercial license, reach out — [contact@zitdevs.com](mailto:contact@zitdevs.com).
 
 ## Contributing
 
@@ -168,12 +168,11 @@ project. See [CONTRIBUTING.md](CONTRIBUTING.md#licensing-of-contributions).
 Kreds is built and maintained by [ZitDevs](https://zitdevs.com). Sponsorship is
 what keeps the Community tier free and generous rather than a trial in disguise.
 
-- [GitHub Sponsors](https://github.com/sponsors/zitdevs)
-- [Open Collective](https://opencollective.com/kreds)
-- [Buy Me a Coffee](https://buymeacoffee.com/zitdevs)
+[**Sponsor on GitHub**](https://github.com/sponsors/zitdevs)
 
-If Kreds helps your team, consider supporting development. If it doesn't, tell us
-why in an issue — that helps too.
+If Kreds helps your team, consider supporting development. Not in a position to?
+Star the repo, file a bug report with a reproduction, or tell us why Kreds did
+not work for your team — that helps too.
 
 ## Docs
 

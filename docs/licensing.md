@@ -76,7 +76,7 @@ permanently, not as a trial. Open an issue with a link to your organization.
 ## Commercial licenses
 
 Need terms the BSL does not grant? That conversation is welcome, not a trap.
-Email **[hello@zitdevs.com](mailto:hello@zitdevs.com)** and tell us what you want
+Email **[contact@zitdevs.com](mailto:contact@zitdevs.com)** and tell us what you want
 to build.
 
 ## Is this really not open source?

@@ -84,7 +84,7 @@ export const plans: Plan[] = [
     price: "Custom",
     blurb: "For 50+ engineers and the paperwork that comes with them.",
     cta: "Talk to us",
-    href: "mailto:hello@zitdevs.com?subject=Kreds%20Enterprise",
+    href: "mailto:contact@zitdevs.com?subject=Kreds%20Enterprise",
     inherits: "Growing",
     features: [
       "50+ members",

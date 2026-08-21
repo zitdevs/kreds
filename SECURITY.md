@@ -7,7 +7,7 @@
 Report privately through either:
 
 - **[GitHub Security Advisories](https://github.com/zitdevs/kreds/security/advisories/new)** — preferred
-- **[security@zitdevs.com](mailto:security@zitdevs.com)**
+- **[contact@zitdevs.com](mailto:contact@zitdevs.com)**
 
 Please include:
 

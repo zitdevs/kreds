@@ -4,10 +4,22 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Heart } from "@/components/ui/icons";
 import { links, site } from "@/lib/site";
 
-const channels = [
-  { name: "GitHub Sponsors", href: links.sponsors, note: "One-off or monthly" },
-  { name: "Open Collective", href: links.openCollective, note: "Transparent spending" },
-  { name: "Buy Me a Coffee", href: links.buyMeACoffee, note: "No account needed" },
+/**
+ * Only channels that actually exist. Adding another means one entry here and
+ * one line in .github/FUNDING.yml — not a link that 404s on a launch day.
+ */
+const otherWays = [
+  {
+    name: "Star the repository",
+    href: links.github,
+    note: "The cheapest thing that genuinely helps",
+  },
+  { name: "File a real bug report", href: links.issues, note: "With a reproduction, ideally" },
+  {
+    name: "Contribute code or docs",
+    href: links.contributing,
+    note: "Good first issues are scoped small",
+  },
 ];
 
 export function Sponsor() {
@@ -42,7 +54,10 @@ export function Sponsor() {
         </div>
 
         <div className="flex flex-col gap-3">
-          {channels.map((c) => (
+          <h3 className="text-ink-faint font-mono text-xs uppercase tracking-[0.12em]">
+            Not in a position to sponsor?
+          </h3>
+          {otherWays.map((c) => (
             <Link
               key={c.name}
               href={c.href}
@@ -56,8 +71,7 @@ export function Sponsor() {
             </Link>
           ))}
           <p className="text-ink-faint mt-2 text-sm leading-relaxed">
-            Not in a position to sponsor? Star the repo, file a good bug report, or tell us why
-            Kreds did not work for your team. That is worth real money too.
+            Or tell us why Kreds did not work for your team. Honestly, that is worth real money too.
           </p>
         </div>
       </div>
