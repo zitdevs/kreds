@@ -128,3 +128,63 @@ export function totalDebt(debts: readonly Debt[]): Kredbits {
     ZERO_KREDBITS,
   );
 }
+
+/**
+ * A stale claim resolved by policy, never by silence.
+ *
+ * 23, as amended by A04's audit round:
+ *
+ * > "Where policy defines an expiry for stale claims, expiry is a **versioned**
+ * > `RECEIVABLE_CANCELLED` adjustment, announced like any policy and never
+ * > silent. This matters most for claims against identities that never
+ * > connected, which could otherwise accumulate forever as a fictitious asset."
+ *
+ * Two failures are being avoided at once, and they pull in opposite directions.
+ * A claim that never expires is an asset on the reviewer's profile that will
+ * never be paid, which is a lie told slowly. A claim that vanishes quietly is a
+ * reviewer's work disappearing with no record, which is worse. So expiry
+ * happens, and it happens as a recorded, versioned event.
+ */
+export interface ClaimExpiry {
+  /** How long a claim may stay outstanding. Policy, never a default in code. */
+  readonly afterMs: number;
+  /** The rules version that defined this expiry (Law XV). */
+  readonly rulesVersion: RulesVersion;
+}
+
+export class ExpiryNotConfiguredError extends Error {
+  constructor() {
+    super(
+      "expiring a claim needs a versioned policy that says when and under which rules. Cancelling without one would be the silent expiry chapter 23 forbids.",
+    );
+    this.name = "ExpiryNotConfiguredError";
+  }
+}
+
+/**
+ * The claims a versioned expiry policy would cancel.
+ *
+ * Returns candidates rather than mutating them, and each one carries the version
+ * that decided it, so the cancellation can be written as an adjustment somebody
+ * can later explain.
+ *
+ * Already-settled and already-cancelled claims are never candidates: expiry
+ * resolves a claim that is still waiting, and re-cancelling a closed one would
+ * write a second history for the same fact.
+ */
+export function claimsToExpire(
+  claims: readonly Receivable[],
+  policy: ClaimExpiry | null,
+  now: Timestamp,
+): { readonly claim: Receivable; readonly rulesVersion: RulesVersion }[] {
+  if (!policy) throw new ExpiryNotConfiguredError();
+  if (!Number.isFinite(policy.afterMs) || policy.afterMs <= 0) {
+    throw new RangeError(
+      `a claim expiry of ${policy.afterMs} would cancel work the moment it was recorded.`,
+    );
+  }
+  return claims
+    .filter(isOutstanding)
+    .filter((claim) => now - claim.createdAt >= policy.afterMs)
+    .map((claim) => ({ claim, rulesVersion: policy.rulesVersion }));
+}

@@ -22,28 +22,75 @@ import { points, ZERO_POINTS, type Points } from "../primitives/points.js";
  * published, so they arrive as configuration and this module only applies them.
  */
 
-/** What Kreds can tell about who else was involved. */
+/**
+ * Who, if anyone, independently saw this work.
+ *
+ * An observer is a **person**, not a property of the repository. 24 fixes the
+ * standard exactly, and it is the validating reviewer's:
+ *
+ * > "An observer, for this purpose, is held to the same standard as a
+ * > validating reviewer: a distinct, eligible, human identity that is not a
+ * > controlled alternate account. Adding your own second account as a
+ * > collaborator does not lift the cap; if it did, the cap would cost one API
+ * > call to bypass."
+ *
+ * The first version of this file treated public visibility and the presence of
+ * collaborators as observation. Both are toggles the author controls, and both
+ * cost one API call, which is the bypass the chapter names. Law XXX says the
+ * same thing about the monetary side: "A toggle is not evidence."
+ */
 export interface ObservationContext {
-  /** A distinct, eligible human reviewed it. */
-  readonly hadIndependentHumanReview: boolean;
-  /** The repository is visible to people other than its owner. */
-  readonly isPublic: boolean;
-  /** Someone other than the author has contributed to this repository. */
-  readonly hasExternalContributors: boolean;
+  /**
+   * An identity other than the contributor was involved.
+   *
+   * Necessary and not sufficient. The three fields below are the reviewer
+   * standard from 25, and all of them must hold.
+   */
+  readonly observerGitHubUserId: number | null;
+  /** Not the contributor themselves. */
+  readonly observerIsDistinct: boolean;
+  /** A human, classified as such rather than assumed (Law XVI). */
+  readonly observerIsEligibleHuman: boolean;
+  /**
+   * Not an account the contributor controls.
+   *
+   * Law XXXIV: "A user may not create economic eligibility by reviewing their
+   * own work through controlled alternate identities." Whether two accounts are
+   * the same person is a Risk Engine judgement, so this arrives as a decision
+   * rather than being computed here.
+   */
+  readonly observerIsNotControlledAlternate: boolean;
 }
 
 /**
- * Whether anybody independent could have seen this.
+ * Whether an independent human observed this.
  *
- * Public visibility counts as observation for points, which is a lighter bar
- * than it is for money: Law XXX says visibility alone "does not automatically
- * grant full monetary eligibility", and Law XXVIII keeps the bar for
- * recognition deliberately below the bar for issuance. A public repository can
- * be looked at by anyone, which is what the leaderboard is defending.
+ * Every clause must hold. An unknown fails closed, which is the same direction
+ * Law XVI takes for an unclassified actor: the safe answer to "was anyone
+ * watching" is no.
  */
 export function wasObserved(context: ObservationContext): boolean {
-  return context.hadIndependentHumanReview || context.isPublic || context.hasExternalContributors;
+  return (
+    context.observerGitHubUserId !== null &&
+    context.observerIsDistinct &&
+    context.observerIsEligibleHuman &&
+    context.observerIsNotControlledAlternate
+  );
 }
+
+/**
+ * Nobody saw it. The default, and what a solo private merge produces.
+ *
+ * Named `NOBODY_OBSERVED` rather than `UNOBSERVED` because the quality module
+ * already exports an `UNOBSERVED` signal, and they mean different things: that
+ * one is a signal Kreds could not measure, this one is the absence of a person.
+ */
+export const NOBODY_OBSERVED: ObservationContext = Object.freeze({
+  observerGitHubUserId: null,
+  observerIsDistinct: false,
+  observerIsEligibleHuman: false,
+  observerIsNotControlledAlternate: false,
+});
 
 /**
  * The caps, as configuration.

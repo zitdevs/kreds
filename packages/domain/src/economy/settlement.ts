@@ -73,17 +73,85 @@ export function hasSettled(entry: LedgerEntry, window: SettlementWindow, now: Ti
 }
 
 /**
+ * Whether the evidence behind an entry can still be re-checked.
+ *
+ * Added by A04's audit round, and it closes the sharpest hole the amendment
+ * opened. 26:
+ *
+ * > "**Pending value requires observability through its settlement window.** The
+ * > window exists so that closures, reverts, invalidated reviews and provider
+ * > corrections can still reach the pending value. If the evidentiary context
+ * > goes dark before settlement, whether by revocation, lost repository access,
+ * > or repository deletion, the pending value **locks**: it does not settle on
+ * > evidence Kreds can no longer re-check."
+ *
+ * The attack this stops is worth stating plainly, because the earlier text
+ * explicitly allowed it: merge eligible work, revoke the authorization, revert
+ * everything while Kreds cannot see, and let the reward settle on evidence that
+ * was quietly invalidated. 26's own summary: "Going dark is legitimate;
+ * settling in the dark is not."
+ */
+export type Observability = "OBSERVABLE" | "DARK";
+
+/** What a sweep can currently see, per evidentiary context. */
+export interface ObservabilityLookup {
+  (entry: LedgerEntry): Observability;
+}
+
+/**
+ * Everything is visible. The ordinary case, and the one webhooks produce.
+ *
+ * Named rather than defaulted, so a caller that has not thought about
+ * observability has to say so in its own source.
+ */
+export const ALL_OBSERVABLE: ObservabilityLookup = () => "OBSERVABLE";
+
+/**
  * The entries a sweep should move to `SETTLED`.
  *
- * Already-settled entries are excluded rather than re-settled. Settling is not
- * idempotent in its effect on `settledAt`: re-stamping an entry would move a
- * historical fact, and 06: Ledger does not permit history to be repaired in
- * place.
+ * Three conditions, and the third is the one A04 added. Already-settled entries
+ * are excluded rather than re-settled: settling is not idempotent in its effect
+ * on `settledAt`, and re-stamping would move a historical fact, which
+ * 06: Ledger does not permit.
+ *
+ * An entry whose context has gone dark is not returned and is not discarded
+ * either. It stays `PENDING`, which is what "locks" means here: 26 has it settle
+ * "when the context becomes observable again, or resolves under versioned
+ * expiry policy", and both of those are later events rather than this sweep's
+ * business.
  */
 export function due(
   entries: readonly LedgerEntry[],
   window: SettlementWindow,
   now: Timestamp,
+  observability: ObservabilityLookup = ALL_OBSERVABLE,
 ): LedgerEntry[] {
-  return entries.filter((entry) => entry.status === "PENDING" && hasSettled(entry, window, now));
+  return entries.filter(
+    (entry) =>
+      entry.status === "PENDING" &&
+      hasSettled(entry, window, now) &&
+      observability(entry) === "OBSERVABLE",
+  );
+}
+
+/**
+ * Pending value that has served its window but cannot be checked.
+ *
+ * Reported separately rather than folded into `due`, because an operator needs
+ * to see it: value locked in the dark is a queue that grows, and the difference
+ * between "nothing was due" and "something was due and is stuck" is the whole
+ * signal.
+ */
+export function lockedInTheDark(
+  entries: readonly LedgerEntry[],
+  window: SettlementWindow,
+  now: Timestamp,
+  observability: ObservabilityLookup,
+): LedgerEntry[] {
+  return entries.filter(
+    (entry) =>
+      entry.status === "PENDING" &&
+      hasSettled(entry, window, now) &&
+      observability(entry) === "DARK",
+  );
 }

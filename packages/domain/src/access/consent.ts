@@ -18,47 +18,54 @@
  * defence disappears with it."
  */
 
+import type { PositionScope } from "./scope.js";
+
 /** Who could consent, in this context. `NONE` is a real answer and the important one. */
 export type ConsentingAuthority = "CONTRIBUTOR" | "ORGANIZATION" | "NONE";
 
-/** Where a review happened, in the terms consent is decided in. */
+/** Where a charge would arise, in the terms consent is decided in. */
 export interface ChargeContext {
-  /** The repository's owner is the contributor being charged. */
-  readonly isContributorsOwnRepository: boolean;
+  /**
+   * The contributor authorized Kreds for their own account.
+   *
+   * 26: "A connected contributor has consented everywhere they act: authorizing
+   * Kreds is joining the game, and author-pays review is the game."
+   */
+  readonly contributorHasConnected: boolean;
   /** A Kreds Team is bound to the owning organization, by that organization's authority. */
   readonly hasBoundOrganization: boolean;
-  /** The contributor authorized Kreds for their own account. */
-  readonly contributorHasConnected: boolean;
+  /** Which position this charge would land in (Law IV as amended). */
+  readonly scope: PositionScope;
 }
 
 /**
  * Who consented to liability arising here.
  *
- * 26's table, in order:
+ * 26's table, in its order, and the order is the precedence:
  *
- * | The contributor's own repository | The contributor |
- * | A bound organization's repository | The organization |
- * | A public repository, unbound organization, contributor not connected | **None** |
+ * | The charged contributor is **connected** | The contributor, through their own authorization |
+ * | The context is a **bound organization's** repository | The organization, for its context |
+ * | Neither | **None** |
  *
- * The contributor's own repository comes first. Somebody who connected their
- * account and works in their own repository has consented to the economy that
- * runs there, whatever any organization did or did not do.
+ * The organization's consent is specifically what makes charging a
+ * non-connected identity lawful: "A bound organization has consented for its
+ * own context, which covers charging identities that never connected, including
+ * unclaimed ones."
+ *
+ * Note what is *not* here. An earlier version of this file treated the
+ * contributor's own repository as a consenting context on its own. A04's audit
+ * round removed that, and 09 gives the reason: "an unclaimed owner never
+ * connected, so they never consented to anything, including their own
+ * repository becoming a place they can be charged."
  */
 export function consentingAuthorityFor(context: ChargeContext): ConsentingAuthority {
-  if (context.isContributorsOwnRepository && context.contributorHasConnected) {
-    return "CONTRIBUTOR";
-  }
-  if (context.hasBoundOrganization) return "ORGANIZATION";
-  // A contributor who connected has consented to being charged for work they
-  // chose to do inside the economy, wherever it happened. This is the case 26
-  // does not tabulate directly: its third row is specifically the contributor
-  // who has *not* connected.
   if (context.contributorHasConnected) return "CONTRIBUTOR";
+  if (context.hasBoundOrganization) return "ORGANIZATION";
   return "NONE";
 }
 
 /** Where an obligation goes. Never onto an identity that never consented. */
-export type LiabilityRoute = "CHARGE_CONTEXT" | "FUNDED_SOURCE" | "RECEIVABLE";
+export type LiabilityRoute = "CHARGE_CONTEXT" | "REVIEW_FUND" | "CREDIT_FACILITY" | "RECEIVABLE";
 
 export interface LiabilityDecision {
   readonly authority: ConsentingAuthority;
@@ -75,31 +82,55 @@ export interface LiabilityDecision {
   readonly reviewerStillEarns: true;
 }
 
+/** What an organization has available to cover a shortfall. */
+export interface FundingAvailable {
+  readonly reviewFund: boolean;
+  readonly creditFacility: boolean;
+}
+
+/** A personal position has neither, by construction. */
+export const NO_SHARED_FUNDING: FundingAvailable = Object.freeze({
+  reviewFund: false,
+  creditFacility: false,
+});
+
 /**
  * Route a review obligation.
  *
- * With a consenting authority the ordinary waterfall applies (23), and this
- * function says only that the context may be charged. With none, the obligation
- * goes to a funded source if one is available and otherwise stays a receivable,
- * which is Law XXIV's claim rather than money.
+ * The waterfall is scoped, which 23 states as a rule rather than a nuance:
  *
- * @param fundedSourceAvailable whether a Review Fund or other funded source can
- * cover it. An argument rather than a lookup: which sources exist is an
- * organization's business and this package does not query anything.
+ * > "Levels 2 and 3 exist only inside a **bound organization**: the Review Fund
+ * > and the Credit Facility are organization features. In a personal position
+ * > the waterfall collapses to `author -> receivable`. An implementation that
+ * > wires credit draws for personal positions has extended the reserve to a
+ * > scope no authority consented to."
+ *
+ * So a personal scope reaches neither level, whatever the caller passes: the
+ * argument is ignored rather than trusted, because the caller is the place that
+ * would eventually get it wrong.
  */
 export function routeLiability(
   context: ChargeContext,
-  fundedSourceAvailable: boolean,
+  funding: FundingAvailable = NO_SHARED_FUNDING,
 ): LiabilityDecision {
   const authority = consentingAuthorityFor(context);
+
   if (authority !== "NONE") {
-    return Object.freeze({ authority, route: "CHARGE_CONTEXT" as const, reviewerStillEarns: true });
+    return decision(authority, "CHARGE_CONTEXT");
   }
-  return Object.freeze({
-    authority,
-    route: fundedSourceAvailable ? ("FUNDED_SOURCE" as const) : ("RECEIVABLE" as const),
-    reviewerStillEarns: true,
-  });
+
+  // Levels 2 and 3 are organization features. In a personal position the
+  // waterfall is `author -> receivable`, and the author did not consent, so
+  // what is left is the claim.
+  if (context.scope !== "ORGANIZATION") return decision(authority, "RECEIVABLE");
+
+  if (funding.reviewFund) return decision(authority, "REVIEW_FUND");
+  if (funding.creditFacility) return decision(authority, "CREDIT_FACILITY");
+  return decision(authority, "RECEIVABLE");
+}
+
+function decision(authority: ConsentingAuthority, route: LiabilityRoute): LiabilityDecision {
+  return Object.freeze({ authority, route, reviewerStillEarns: true });
 }
 
 export class NoConsentingContextError extends Error {

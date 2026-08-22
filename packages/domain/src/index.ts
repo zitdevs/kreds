@@ -206,10 +206,14 @@ export {
 } from "./economy/position.js";
 
 export {
+  ALL_OBSERVABLE,
   due,
   hasSettled,
+  lockedInTheDark,
   settlementWindow,
   settlesAt,
+  type Observability,
+  type ObservabilityLookup,
   type SettlementWindow,
 } from "./economy/settlement.js";
 
@@ -239,11 +243,14 @@ export {
 } from "./ledger/ledger.js";
 
 export {
+  claimsToExpire,
+  ExpiryNotConfiguredError,
   inSettlementOrder,
   isOutstanding,
   outstandingOn,
   totalDebt,
   totalOutstanding,
+  type ClaimExpiry,
   type Debt,
   type DebtScope,
   type Receivable,
@@ -295,7 +302,10 @@ export {
 
 export {
   BindingNotVerifiedError,
+  assertForwardOnly,
   decideBinding,
+  isWithinBinding,
+  RetroactiveScopeError,
   requireVerifiedAuthority,
   type BindingDecision,
   type BindingEvidence,
@@ -307,15 +317,18 @@ export {
   assertMayBeCharged,
   consentingAuthorityFor,
   NoConsentingContextError,
+  NO_SHARED_FUNDING,
   routeLiability,
   type ChargeContext,
   type ConsentingAuthority,
+  type FundingAvailable,
   type LiabilityDecision,
   type LiabilityRoute,
 } from "./access/consent.js";
 
 export {
   capUnobserved,
+  NOBODY_OBSERVED,
   NO_UNOBSERVED_ALLOWANCE,
   unobservedCaps,
   UnobservedCapsNotConfiguredError,

@@ -4,6 +4,7 @@ import { points } from "../primitives/points.js";
 import {
   capUnobserved,
   NO_UNOBSERVED_ALLOWANCE,
+  NOBODY_OBSERVED,
   unobservedCaps,
   UnobservedCapsNotConfiguredError,
   wasObserved,
@@ -11,6 +12,7 @@ import {
 import {
   assertMayBeCharged,
   consentingAuthorityFor,
+  NO_SHARED_FUNDING,
   NoConsentingContextError,
   routeLiability,
   type ChargeContext,
@@ -295,23 +297,47 @@ describe("Law XXXVI, only organization authority binds an organization", () => {
 
 describe("Law XXXVII, liability requires a consenting context", () => {
   const context = (over: Partial<ChargeContext> = {}): ChargeContext => ({
-    isContributorsOwnRepository: false,
     hasBoundOrganization: false,
     contributorHasConnected: false,
+    scope: "PERSONAL",
     ...over,
   });
 
-  /** 26's table, row by row. */
-  it("finds the contributor consented in their own repository", () => {
+  /**
+   * 26's table, row by row, in its order. "A connected contributor has consented
+   * everywhere they act: authorizing Kreds is joining the game, and author-pays
+   * review is the game."
+   */
+  it("finds a connected contributor consented, wherever they were acting", () => {
+    expect(consentingAuthorityFor(context({ contributorHasConnected: true }))).toBe("CONTRIBUTOR");
     expect(
       consentingAuthorityFor(
-        context({ isContributorsOwnRepository: true, contributorHasConnected: true }),
+        context({
+          contributorHasConnected: true,
+          hasBoundOrganization: true,
+          scope: "ORGANIZATION",
+        }),
       ),
     ).toBe("CONTRIBUTOR");
   });
 
-  it("finds the organization consented in a bound organization's repository", () => {
-    expect(consentingAuthorityFor(context({ hasBoundOrganization: true }))).toBe("ORGANIZATION");
+  /**
+   * The exception A04's audit round removed. 09: "an unclaimed owner never
+   * connected, so they never consented to anything, including their own
+   * repository becoming a place they can be charged."
+   */
+  it("does not treat an unconnected owner's own repository as consent", () => {
+    expect(consentingAuthorityFor(context())).toBe("NONE");
+  });
+
+  /**
+   * 26: a bound organization's consent "covers charging identities that never
+   * connected, including unclaimed ones."
+   */
+  it("finds the organization consented for identities that never connected", () => {
+    expect(
+      consentingAuthorityFor(context({ hasBoundOrganization: true, scope: "ORGANIZATION" })),
+    ).toBe("ORGANIZATION");
   });
 
   /**
@@ -332,11 +358,11 @@ describe("Law XXXVII, liability requires a consenting context", () => {
   it("pays the reviewer in every case, including the one nobody consented to", () => {
     for (const c of [
       context(),
-      context({ hasBoundOrganization: true }),
-      context({ isContributorsOwnRepository: true, contributorHasConnected: true }),
+      context({ hasBoundOrganization: true, scope: "ORGANIZATION" }),
+      context({ contributorHasConnected: true }),
     ]) {
-      for (const funded of [true, false]) {
-        expect(routeLiability(c, funded).reviewerStillEarns).toBe(true);
+      for (const funding of [NO_SHARED_FUNDING, { reviewFund: true, creditFacility: true }]) {
+        expect(routeLiability(c, funding).reviewerStillEarns).toBe(true);
       }
     }
   });
@@ -345,20 +371,41 @@ describe("Law XXXVII, liability requires a consenting context", () => {
    * > "the obligation goes to a funded source or stays a receivable. It does
    * > **not** become debt against someone who never heard of Kreds."
    */
-  it("sends an unconsented obligation to a funded source, or leaves it a claim", () => {
-    expect(routeLiability(context(), true)).toMatchObject({
+  it("sends an unconsented obligation in an organization to its funded sources", () => {
+    const inOrg = context({ scope: "ORGANIZATION" });
+    expect(routeLiability(inOrg, { reviewFund: true, creditFacility: true })).toMatchObject({
       authority: "NONE",
-      route: "FUNDED_SOURCE",
+      route: "REVIEW_FUND",
     });
-    expect(routeLiability(context(), false)).toMatchObject({
+    expect(routeLiability(inOrg, { reviewFund: false, creditFacility: true })).toMatchObject({
+      route: "CREDIT_FACILITY",
+    });
+    expect(routeLiability(inOrg, NO_SHARED_FUNDING)).toMatchObject({ route: "RECEIVABLE" });
+  });
+
+  /**
+   * 23, as amended: "In a personal position the waterfall collapses to
+   * `author -> receivable`. An implementation that wires credit draws for
+   * personal positions has extended the reserve to a scope no authority
+   * consented to."
+   *
+   * The funding argument is passed and ignored, which is the point: the caller
+   * is the place that would eventually get this wrong.
+   */
+  it("reaches no Review Fund and no Credit Facility from a personal position", () => {
+    const generous = { reviewFund: true, creditFacility: true };
+    expect(routeLiability(context(), generous)).toMatchObject({
       authority: "NONE",
       route: "RECEIVABLE",
     });
   });
 
   it("never routes an unconsented obligation onto the context", () => {
-    for (const funded of [true, false]) {
-      expect(routeLiability(context(), funded).route).not.toBe("CHARGE_CONTEXT");
+    for (const funding of [NO_SHARED_FUNDING, { reviewFund: true, creditFacility: true }]) {
+      expect(routeLiability(context(), funding).route).not.toBe("CHARGE_CONTEXT");
+      expect(routeLiability(context({ scope: "ORGANIZATION" }), funding).route).not.toBe(
+        "CHARGE_CONTEXT",
+      );
     }
   });
 
@@ -368,7 +415,9 @@ describe("Law XXXVII, liability requires a consenting context", () => {
    */
   it("refuses to write debt against an identity that never consented", () => {
     expect(() => assertMayBeCharged(context(), 4242)).toThrow(NoConsentingContextError);
-    expect(() => assertMayBeCharged(context({ hasBoundOrganization: true }), 4242)).not.toThrow();
+    expect(() =>
+      assertMayBeCharged(context({ hasBoundOrganization: true, scope: "ORGANIZATION" }), 4242),
+    ).not.toThrow();
   });
 });
 
@@ -382,28 +431,59 @@ describe("Contribution Points where nobody was watching", () => {
   const caps = unobservedCaps({ perUserPerDay: 7, perUserPerMonth: 23 });
 
   /**
-   * 24: "Points earned in a context with no independent human observer are
-   * capped." Everything else passes through untouched: this is a bound on work
-   * nobody can check, not a discount on private work.
+   * 24: "An observer, for this purpose, is held to the same standard as a
+   * validating reviewer: a distinct, eligible, human identity that is not a
+   * controlled alternate account."
+   *
+   * A person, not a property of the repository.
    */
-  it("does not touch points from a context somebody could see", () => {
-    for (const seen of [
-      { hadIndependentHumanReview: true, isPublic: false, hasExternalContributors: false },
-      { hadIndependentHumanReview: false, isPublic: true, hasExternalContributors: false },
-      { hadIndependentHumanReview: false, isPublic: false, hasExternalContributors: true },
-    ]) {
-      expect(wasObserved(seen)).toBe(true);
-      const award = capUnobserved(points(50), seen, tally(), caps);
-      expect(award.awarded).toBe(points(50));
-      expect(award.reason).toBe("NOT_CAPPED");
-    }
+  const observed = {
+    observerGitHubUserId: 9001,
+    observerIsDistinct: true,
+    observerIsEligibleHuman: true,
+    observerIsNotControlledAlternate: true,
+  };
+
+  it("does not touch points once an independent human has seen the work", () => {
+    expect(wasObserved(observed)).toBe(true);
+    const award = capUnobserved(points(50), observed, tally(), caps);
+    expect(award.awarded).toBe(points(50));
+    expect(award.reason).toBe("NOT_CAPPED");
   });
 
-  const unseen = {
-    hadIndependentHumanReview: false,
-    isPublic: false,
-    hasExternalContributors: false,
-  };
+  /**
+   * Every clause must hold, and each failure is a real path somebody would take.
+   *
+   * > "Adding your own second account as a collaborator does not lift the cap;
+   * > if it did, the cap would cost one API call to bypass."
+   */
+  it("refuses each way an observer falls short, one at a time", () => {
+    for (const missing of [
+      "observerIsDistinct",
+      "observerIsEligibleHuman",
+      "observerIsNotControlledAlternate",
+    ] as const) {
+      expect(wasObserved({ ...observed, [missing]: false }), missing).toBe(false);
+    }
+    expect(wasObserved({ ...observed, observerGitHubUserId: null })).toBe(false);
+  });
+
+  /**
+   * An earlier version of this treated public visibility and the presence of
+   * collaborators as observation. Both are toggles the author controls, and
+   * Law XXX says the same thing about the monetary side: a toggle is not
+   * evidence. There is no field for either any more, and this asserts it.
+   */
+  it("offers no way to lift the cap that is not a person", () => {
+    expect(Object.keys(observed).sort()).toEqual([
+      "observerGitHubUserId",
+      "observerIsDistinct",
+      "observerIsEligibleHuman",
+      "observerIsNotControlledAlternate",
+    ]);
+  });
+
+  const unseen = NOBODY_OBSERVED;
 
   /**
    * > "They are not refused: solo work in a private repository is real work."
@@ -450,10 +530,9 @@ describe("Contribution Points where nobody was watching", () => {
     );
   });
 
-  /** An unconfigured instance still runs a complete public economy. */
+  /** An unconfigured instance still runs a complete reviewed economy. */
   it("leaves observed work untouched even with no allowance configured", () => {
-    const seen = { hadIndependentHumanReview: true, isPublic: true, hasExternalContributors: true };
-    expect(capUnobserved(points(50), seen, tally(), NO_UNOBSERVED_ALLOWANCE).awarded).toBe(
+    expect(capUnobserved(points(50), observed, tally(), NO_UNOBSERVED_ALLOWANCE).awarded).toBe(
       points(50),
     );
   });

@@ -126,3 +126,56 @@ export function requireVerifiedAuthority(
   }
   return decision.grant;
 }
+
+/**
+ * A binding starts an organization's economy; it does not reach backwards.
+ *
+ * 26, added by A04's audit round:
+ *
+ * > "**Binding is forward-only.** Activity that landed in personal positions
+ * > before a Kreds Team existed stays where it settled; the organization's
+ * > economy begins at the binding, in the spirit of Law XIII. No retroactive
+ * > migration, no re-scoping of settled history."
+ *
+ * Law XIII is the one being echoed: "Joining Kreds Network gives an existing
+ * local economy a reserve relationship; it does not erase its previous balances
+ * or ledger." The same reasoning applies one level down. Somebody's earnings
+ * are theirs, in their own position, and an organization adopting Kreds later
+ * does not acquire them.
+ */
+export class RetroactiveScopeError extends Error {
+  constructor(
+    readonly boundAt: number,
+    readonly occurredAt: number,
+  ) {
+    super(
+      `this activity happened before the organization was bound, so it belongs to the personal position it already landed in. Binding is forward-only (26, Law XIII).`,
+    );
+    this.name = "RetroactiveScopeError";
+  }
+}
+
+/**
+ * Whether an event falls inside an organization's economy.
+ *
+ * Only events at or after the binding. Note that this compares against
+ * `grantedAt` rather than `verifiedAt`: the economy began when the organization
+ * consented, and a later re-verification does not move that moment.
+ */
+export function isWithinBinding(grant: OrganizationGrant, occurredAt: number): boolean {
+  return occurredAt >= grant.grantedAt;
+}
+
+/**
+ * Guard the moment history would be re-scoped.
+ *
+ * Called where an event is assigned to an organization position, so that a
+ * backfill cannot quietly sweep somebody's earlier personal earnings into an
+ * organization's books. Delegated query makes backfill ordinary, which is
+ * exactly why this needs to be a guard rather than a convention.
+ */
+export function assertForwardOnly(grant: OrganizationGrant, occurredAt: number): void {
+  if (!isWithinBinding(grant, occurredAt)) {
+    throw new RetroactiveScopeError(grant.grantedAt, occurredAt);
+  }
+}
