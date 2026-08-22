@@ -4,10 +4,10 @@ import { ArrowRight, GitHub, Heart, Server } from "@/components/ui/icons";
 import { links, site } from "@/lib/site";
 
 const ledger = [
-  { value: "+25", text: "PR #128 merged", meta: "api", accent: true },
-  { value: "+15", text: "Review on PR #131", meta: "web" },
-  { value: "+10", text: "PR #127 approved", meta: "web" },
-  { value: "+50", text: "5-day streak", meta: "" },
+  { value: "+18.00", text: "api#128 merged", meta: "minted", accent: false },
+  { value: "-12.00", text: "paid @mariel for her review", meta: "", accent: false },
+  { value: "+11.76", text: "reviewed web#131", meta: "less 2% fee", accent: true },
+  { value: "+34 pts", text: "contribution recorded", meta: "", accent: true },
 ];
 
 export function Hero() {
@@ -34,9 +34,9 @@ export function Hero() {
           </h1>
 
           <p className="text-ink-dim mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed sm:text-lg">
-            Kreds turns merged pull requests, reviews and closed issues into a live leaderboard.
-            Weighted so that <span className="text-ink">helping someone ship</span> beats shipping
-            alone.
+            Merging a pull request <span className="text-ink">creates</span> KRED. Getting it
+            reviewed <span className="text-ink">costs</span> you some — paid to whoever reviewed it.
+            An economy where helping someone ship is the way to get ahead.
           </p>
 
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
@@ -92,7 +92,7 @@ export function Hero() {
             </ul>
           </div>
           <p className="text-ink-faint mt-3 text-center text-xs">
-            Every award is a row you can click through to the pull request.
+            Double-entry, always. Every movement is a row you can click through to the pull request.
           </p>
         </div>
       </div>

@@ -34,8 +34,8 @@ const features = [
   },
   {
     icon: Flame,
-    title: "Streaks",
-    body: "Consecutive days with a scoring action. Bonus awarded once per streak — weekends don't break it.",
+    title: "Streaks and achievements",
+    body: "Consecutive days with scoring activity, and milestones worth recognising. Weekends don't break a streak.",
   },
   {
     icon: Target,

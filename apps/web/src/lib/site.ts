@@ -54,13 +54,40 @@ export const links = {
   contact: "mailto:contact@zitdevs.com",
 } as const;
 
-/** Default Kreds values. Mirrors docs/kreds-rules.md — keep the two in step. */
-export const rules = [
-  { action: "Pull request merged to main", value: 25, note: "to the author" },
-  { action: "Code review submitted", value: 15, note: "to the reviewer" },
-  { action: "Your pull request gets approved", value: 10, note: "to the author" },
-  { action: "Issue closed", value: 10, note: "to whoever closed it" },
-  { action: "Five-day contribution streak", value: 50, note: "once per streak" },
-  { action: "Finish the week at #1", value: 100, note: "Friday 18:00" },
-  { action: "Commit pushed", value: 1, note: "off by default", muted: true },
+/**
+ * How value moves. Sourced from the public economic policy (rules v0.3) in
+ * zitdevs/kreds-laws — never invented here, and never restated from memory.
+ *
+ * The split is the point, and it is Law III: shipping *creates* value, reviewing
+ * *circulates* it. A review is paid by the author out of existing KRED, so two
+ * accounts reviewing each other cannot print supply.
+ */
+export const minted = [
+  {
+    action: "Pull request merged to main",
+    value: "5 – 35 K",
+    note: "issued from the Central Bank reserve, scaled by quality score",
+  },
+] as const;
+
+export const transferred = [
+  {
+    action: "Code review",
+    value: "5 – 40 K",
+    note: "paid by the pull request author, less a 2% protocol fee",
+  },
+] as const;
+
+/** A separate system. Never converts to KRED, in either direction — Law XXVI. */
+export const points = [
+  { action: "Merged pull request", value: "10 – 50 pts" },
+  { action: "Code review", value: "10 – 60 pts" },
+  { action: "Issue resolved", value: "5 – 20 pts" },
+] as const;
+
+/** Worth nothing, on purpose. */
+export const worthless = [
+  "Reviewing your own pull request",
+  "Reviews from bots and AI agents",
+  "Reviews submitted after the merge",
 ] as const;
