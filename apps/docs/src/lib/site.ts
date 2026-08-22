@@ -28,10 +28,17 @@ export const links = {
   contentEdit: "https://github.com/zitdevs/kreds/edit/main/apps/docs/content",
 } as const;
 
-/** Analytics is shared with the marketing site so the two surfaces report together. */
+/**
+ * Self-hosted Umami, on its own website id. Sharing the marketing site's id
+ * merged both surfaces into a single property, so documentation traffic was
+ * indistinguishable from the landing page's.
+ *
+ * `domains` scopes the beacon to the production hostname: without it every
+ * page load on a preview URL and on localhost lands in the same dashboard.
+ */
 export const analytics = {
   scriptUrl: "https://analytics.zitdevs.com/script.js",
-  websiteId: "25cde335-408e-425b-be19-8b90ba66281c",
+  websiteId: "86b0d8a6-9f6e-49db-a9e0-77f67bb5ecca",
   domains: "docs.kreds.sh",
 } as const;
 
