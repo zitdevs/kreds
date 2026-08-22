@@ -9,6 +9,16 @@ import type { Env } from "../config/env.js";
 import { GitHubOAuthService } from "./github-oauth.service.js";
 import { OAUTH_STATE_COOKIE, SESSION_COOKIE, SessionService } from "./session.service.js";
 
+interface SessionUser {
+  readonly id: string;
+  /** The person's name. */
+  readonly displayName: string;
+  /** Their GitHub handle. Mutable, and never an identifier (09: Identity). */
+  readonly login: string;
+  readonly avatarUrl: string | null;
+  readonly gitHubUserId: number;
+}
+
 /**
  * Phase 1, in one endpoint pair: OAuth answers "who are you", and the answer is
  * attached to a GitHub identity that may already have a history.
@@ -82,23 +92,25 @@ export class AuthController {
 
   /** Who the caller is, or `null`. The web app's session check. */
   @Get("session")
-  async session(@Req() request: Request): Promise<{
-    user: { id: string; displayName: string; login: string; gitHubUserId: number } | null;
-  }> {
+  async session(@Req() request: Request): Promise<{ user: SessionUser | null }> {
     const cookies = request.cookies as Record<string, string | undefined> | undefined;
     const payload = this.sessions.readSession(cookies?.[SESSION_COOKIE]);
     if (!payload) return { user: null };
 
-    // Read through to the identity rather than trusting the cookie's copy: a
-    // renamed login should show up without waiting for the session to expire.
-    const identity = await this.identities.findByGitHubUserId(gitHubUserId(payload.gitHubUserId));
-    if (!identity || identity.userId !== payload.userId) return { user: null };
+    // Read through to the database rather than trusting the cookie's copy. A
+    // renamed handle or a revoked account should take effect immediately, not
+    // whenever the session happens to expire.
+    const account = await this.identities.findAccount(gitHubUserId(payload.gitHubUserId));
+    if (!account || account.user.id !== payload.userId) return { user: null };
 
     return {
       user: {
-        id: payload.userId,
-        displayName: identity.login,
-        login: identity.login,
+        id: account.user.id,
+        // The person's name, not their GitHub handle. Both are returned
+        // because they are different things and the interface shows both.
+        displayName: account.user.displayName,
+        login: account.identity.login,
+        avatarUrl: account.avatarUrl,
         gitHubUserId: payload.gitHubUserId,
       },
     };

@@ -4,12 +4,21 @@ import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
 import cookieParser from "cookie-parser";
 
+import { runMigrations } from "@kreds/database";
+
 import { AppModule } from "./app.module.js";
+import { DATABASE } from "./database/database.module.js";
 import type { Env } from "./config/env.js";
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const config = app.get(ConfigService<Env, true>);
+
+  // The self-hosting guide promises migrations run on boot, so they do. An
+  // advisory lock inside makes it safe when several replicas start at once.
+  // Failing here is correct: an instance with a stale schema should refuse to
+  // serve rather than fail one request at a time.
+  await runMigrations(app.get(DATABASE));
 
   app.use(cookieParser());
   // No global ValidationPipe: it wants class-validator, and this codebase

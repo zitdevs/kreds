@@ -1,11 +1,10 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
-import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { sql } from "drizzle-orm";
-import { dirname, resolve } from "node:path";
 
 import { gitHubUserId } from "@kreds/domain";
 
 import { createDatabase, type Database } from "../client.js";
+import { runMigrations } from "../migrate.js";
 import { IdentityRepository } from "./identity-repository.js";
 
 /**
@@ -27,13 +26,7 @@ let repository: IdentityRepository;
 describeWithDatabase("IdentityRepository", () => {
   beforeEach(async () => {
     db ??= createDatabase({ url: url as string, max: 1 });
-    const migrations = resolve(
-      dirname(new URL(import.meta.url).pathname),
-      "..",
-      "..",
-      "migrations",
-    );
-    await migrate(db, { migrationsFolder: migrations });
+    await runMigrations(db);
     // Identities reference users, so the order matters.
     await db.execute(sql`truncate table github_identities, users cascade`);
     repository = new IdentityRepository(db);
@@ -133,10 +126,63 @@ describeWithDatabase("IdentityRepository", () => {
       expect((count as unknown as { n: number }[])[0]?.n).toBe(1);
     });
 
+    /**
+     * Regression. The early return for an already-claimed identity used to skip
+     * the update entirely, so a rename never reached anyone who had signed in,
+     * which is exactly the population that sees their own handle.
+     */
+    it("refreshes the handle and avatar when a returning person has been renamed", async () => {
+      await repository.claim(profile({ displayName: "Maria" }));
+      const again = await repository.claim(
+        profile({ login: "maria-dev", avatarUrl: "https://example.test/new.png" }),
+      );
+      expect(again.identity.login).toBe("maria-dev");
+
+      const account = await repository.findAccount(gitHubUserId(4242));
+      expect(account?.identity.login).toBe("maria-dev");
+      expect(account?.avatarUrl).toBe("https://example.test/new.png");
+    });
+
+    /**
+     * The account's own name belongs to the Kreds account, not to GitHub.
+     * Overwriting it on every sign-in would silently undo an edit the moment a
+     * profile page exists.
+     */
+    it("does not overwrite the account name from GitHub on a later sign-in", async () => {
+      const first = await repository.claim(profile({ displayName: "Maria" }));
+      const second = await repository.claim(profile({ displayName: "Someone Else" }));
+      expect(second.user.displayName).toBe("Maria");
+      expect(second.user.id).toBe(first.user.id);
+    });
+
     it("keeps two different GitHub identities apart", async () => {
       const a = await repository.claim(profile());
       const b = await repository.claim(profile({ gitHubUserId: gitHubUserId(99), login: "jose" }));
       expect(b.user.id).not.toBe(a.user.id);
+    });
+  });
+
+  /**
+   * A session check needs the person's name, which lives on the account, and
+   * their handle and avatar, which are mirrored from GitHub onto the identity.
+   */
+  describe("reading an identity together with its account", () => {
+    it("returns both halves once claimed", async () => {
+      await repository.claim(profile({ displayName: "Maria" }));
+      const account = await repository.findAccount(gitHubUserId(4242));
+      expect(account?.user.displayName).toBe("Maria");
+      expect(account?.identity.login).toBe("maria");
+      expect(account?.avatarUrl).toContain("avatars.githubusercontent.com");
+    });
+
+    /** Unclaimed means nobody is signed in, which is the same answer as unknown. */
+    it("returns null while the identity is only observed", async () => {
+      await repository.observe(profile());
+      expect(await repository.findAccount(gitHubUserId(4242))).toBeNull();
+    });
+
+    it("returns null for an identity Kreds has never seen", async () => {
+      expect(await repository.findAccount(gitHubUserId(1234))).toBeNull();
     });
   });
 

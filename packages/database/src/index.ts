@@ -9,7 +9,9 @@
 export { createDatabase, ping, type Database, type DatabaseOptions } from "./client.js";
 export {
   IdentityRepository,
+  type Account,
   type ClaimResult,
   type GitHubProfile,
 } from "./repositories/identity-repository.js";
+export { runMigrations } from "./migrate.js";
 export * as schema from "./schema/index.js";

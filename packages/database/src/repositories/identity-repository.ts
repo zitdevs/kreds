@@ -60,8 +60,47 @@ export interface ClaimResult {
   readonly hadPriorHistory: boolean;
 }
 
+/** An identity together with the account that claimed it. */
+export interface Account {
+  readonly user: User;
+  readonly identity: GitHubIdentity;
+  /** Mirrored from GitHub, so it can be absent. */
+  readonly avatarUrl: string | null;
+}
+
 export class IdentityRepository {
   constructor(private readonly db: Database) {}
+
+  /**
+   * The identity and its account in one read.
+   *
+   * A session check needs both: the person's name lives on the account, the
+   * handle and avatar are mirrored from GitHub onto the identity. Returning
+   * them separately would make every caller do this join by hand.
+   *
+   * `null` when the identity is unknown or still unclaimed, which is the same
+   * answer a caller needs in both cases: there is nobody signed in.
+   */
+  async findAccount(id: GitHubUserId): Promise<Account | null> {
+    const [row] = await this.db
+      .select({ identity: gitHubIdentities, account: users })
+      .from(gitHubIdentities)
+      .innerJoin(users, eq(gitHubIdentities.userId, users.id))
+      .where(eq(gitHubIdentities.gitHubUserId, id))
+      .limit(1);
+
+    if (!row) return null;
+    return {
+      user: {
+        id: toUserId(row.account.id),
+        gitHubUserId: gitHubUserId(row.identity.gitHubUserId),
+        displayName: row.account.displayName,
+        createdAt: fromDate(row.account.createdAt),
+      },
+      identity: toDomain(row.identity),
+      avatarUrl: row.identity.avatarUrl,
+    };
+  }
 
   async findByGitHubUserId(id: GitHubUserId): Promise<GitHubIdentity | null> {
     const [row] = await this.db
@@ -141,6 +180,21 @@ export class IdentityRepository {
           .where(eq(users.id, existing.userId))
           .limit(1);
         if (account) {
+          // Mirror GitHub's current facts. Without this a rename never reaches
+          // anyone who has already signed in, which is exactly the population
+          // that sees it, and 09: Identity's whole point is that the handle is
+          // display rather than identity: refreshing it moves nothing.
+          //
+          // The account's own `displayName` and `email` are left alone. Those
+          // belong to the Kreds account rather than to GitHub, and overwriting
+          // them on every sign-in would silently undo an edit the moment a
+          // profile page exists.
+          const [refreshed] = await tx
+            .update(gitHubIdentities)
+            .set({ login: profile.login, avatarUrl: profile.avatarUrl ?? null })
+            .where(eq(gitHubIdentities.gitHubUserId, profile.gitHubUserId))
+            .returning();
+
           return {
             user: {
               id: toUserId(account.id),
@@ -148,7 +202,7 @@ export class IdentityRepository {
               displayName: account.displayName,
               createdAt: fromDate(account.createdAt),
             },
-            identity: toDomain(existing),
+            identity: toDomain(refreshed ?? existing),
             hadPriorHistory: false,
           };
         }
