@@ -22,6 +22,11 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "incremental": true,
+    // Inside outDir on purpose. `nest build` sets `deleteOutDir`, so when the
+    // build state lived outside dist it survived the delete and told tsc
+    // everything was current, and the build emitted nothing while exiting 0.
+    // Sharing a lifetime with the output is what makes that impossible.
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true
   },

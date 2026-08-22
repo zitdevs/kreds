@@ -64,6 +64,7 @@ export {
   currencyId,
   debtId,
   economyId,
+  gitHubInstallationId,
   gitHubLogin,
   gitHubUserId,
   idempotencyKey,
@@ -84,6 +85,7 @@ export {
   type CurrencyId,
   type DebtId,
   type EconomyId,
+  type GitHubInstallationId,
   type GitHubLogin,
   type GitHubUserId,
   type IdempotencyKey,
@@ -113,6 +115,14 @@ export {
   type IdentityStatus,
   type User,
 } from "./identity/identity.js";
+
+export {
+  isProducingActivity,
+  type Installation,
+  type InstallationAccountType,
+  type InstallationScope,
+  type InstallationStatus,
+} from "./github/installation.js";
 
 export {
   isStructurallyIndependentReviewer,

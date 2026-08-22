@@ -36,7 +36,7 @@ export const Sizes = () => (
 
 export const InALedgerRow = () => (
   <div className="border-line bg-surface rounded-card border">
-    <div className="border-line text-ink-faint flex items-center justify-between border-b px-4 py-2.5 font-mono text-xs uppercase tracking-wide">
+    <div className="border-line text-ink-faint flex items-center justify-between border-b px-4 py-2.5 font-mono text-xs tracking-wide uppercase">
       <span>kreds ledger --tail</span>
       <span>net</span>
     </div>

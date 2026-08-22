@@ -49,6 +49,31 @@ export const envSchema = z.object({
    */
   AUTH_GITHUB_ID: z.string().trim().min(1),
   AUTH_GITHUB_SECRET: z.string().trim().min(1),
+
+  /**
+   * The GitHub App. Answers "what is happening in your repositories", which is
+   * a different grant from the OAuth App above and a different set of secrets.
+   *
+   * All three are optional, deliberately, and this is the one place in the
+   * schema where something is. An instance with no App configured is a
+   * legitimate state: it is every deployment before an admin has created one,
+   * including a self-hoster following the guide in order. Making these
+   * required would mean the API refuses to boot the moment this code ships,
+   * taking identity down with it over a feature nobody has switched on yet.
+   *
+   * The webhook endpoint refuses clearly when they are missing, so the failure
+   * lands on the one request that needs them instead of on the whole process.
+   */
+  GITHUB_APP_ID: z.string().trim().min(1).optional(),
+  /**
+   * The App's private key, in PEM.
+   *
+   * Accepted in three shapes because dashboards mangle newlines differently:
+   * real newlines, literal `\n` escapes, or the whole PEM base64 encoded.
+   * See `readPrivateKey`.
+   */
+  GITHUB_APP_PRIVATE_KEY: z.string().min(1).optional(),
+  GITHUB_WEBHOOK_SECRET: z.string().trim().min(1).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

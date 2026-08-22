@@ -76,7 +76,10 @@ source code.
    | Pull requests | Read-only               |
    | Issues        | Read-only               |
 
-4. **Subscribe to events**: `Pull request`, `Pull request review`, `Issues`.
+4. **Subscribe to events**: `Pull request`, `Pull request review`, `Issues`,
+   `Repository`. Installation events arrive whether or not you subscribe to
+   them, and Kreds needs them: they are how it learns which repositories you
+   selected.
 5. Create the App, then:
    - note the **App ID**
    - generate a **client secret**
@@ -204,7 +207,7 @@ Two things to get right:
   ingestion at the same time. `KREDS_APP_URL` is the origin CORS allows, so
   getting it wrong leaves people signed in with a product that cannot read the
   session it just issued them.
-- Do not buffer or rewrite the request body on `/api/github/webhook`. Webhook
+- Do not buffer or rewrite the request body on `/github/webhook`. Webhook
   signatures are computed over the raw bytes; a proxy that reformats JSON will
   break verification.
 

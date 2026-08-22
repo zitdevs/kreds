@@ -26,7 +26,7 @@ export const Lockup = () => (
     <span className="border-line bg-surface rounded-card flex items-center gap-2.5 border px-4 py-3">
       <KredsMark size={24} />
       <span className="text-ink text-base font-semibold tracking-tight">Kreds</span>
-      <span className="border-line text-ink-faint rounded-md border px-1.5 py-0.5 font-mono text-[0.65rem] uppercase tracking-wide">
+      <span className="border-line text-ink-faint rounded-md border px-1.5 py-0.5 font-mono text-[0.65rem] tracking-wide uppercase">
         docs
       </span>
     </span>

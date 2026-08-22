@@ -12,7 +12,7 @@ export default defineConfig({
   // through CJS require, which does not apply TypeScript's `.js` to `.ts`
   // extension mapping, so a barrel that re-exports `./identity.js` fails to
   // resolve here even though tsc and vitest are happy with it.
-  schema: "./src/schema/identity.ts",
+  schema: ["./src/schema/identity.ts", "./src/schema/github.ts"],
   out: "./migrations",
   dbCredentials: { url: process.env["DATABASE_URL"] ?? "" },
   strict: true,

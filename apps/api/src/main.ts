@@ -10,7 +10,11 @@ import { AppModule } from "./app.module.js";
 import type { Env } from "./config/env.js";
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  // `rawBody` keeps the exact bytes of every request alongside the parsed
+  // body. The GitHub webhook signature covers those bytes, and re-serialising
+  // the parsed JSON changes key order and whitespace, so a signature computed
+  // over anything else can never match.
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, rawBody: true });
   const config = app.get(ConfigService<Env, true>);
 
   // The self-hosting guide promises migrations run on boot, so they do. An
