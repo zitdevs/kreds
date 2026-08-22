@@ -9,6 +9,7 @@ const items = [
   { label: "Pricing", href: "#pricing" },
   { label: "Self-host", href: "#self-hosting" },
   { label: "License", href: "#license" },
+  { label: "Docs", href: "/docs" },
 ];
 
 export function Nav() {

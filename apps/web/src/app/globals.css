@@ -131,3 +131,178 @@ body {
   background-clip: text;
   color: transparent;
 }
+
+/* ---------------------------------------------------------------------------
+   Documentation prose
+
+   Written against the tokens above rather than pulled in from a typography
+   plugin. The documents are mostly tables and ASCII diagrams, which a generic
+   prose theme handles badly, and a plugin would bring a second set of colour
+   decisions to keep in sync with the ones already defined here.
+
+   Code blocks are deliberately unhighlighted. Seventeen of the twenty-eight
+   fenced blocks in these documents are plain text diagrams where highlighting
+   does nothing, and a build-time highlighter would be real weight for the six
+   that would benefit.
+--------------------------------------------------------------------------- */
+
+.prose {
+  color: var(--color-ink-dim);
+  line-height: 1.75;
+  overflow-wrap: break-word;
+}
+
+.prose > * + * {
+  margin-top: 1.15rem;
+}
+
+.prose h2,
+.prose h3,
+.prose h4 {
+  color: var(--color-ink);
+  font-weight: 600;
+  letter-spacing: -0.011em;
+  scroll-margin-top: 5.5rem;
+}
+
+.prose h2 {
+  margin-top: 2.75rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--color-line);
+  font-size: 1.375rem;
+}
+
+.prose h3 {
+  margin-top: 2rem;
+  font-size: 1.075rem;
+}
+
+.prose h4 {
+  margin-top: 1.6rem;
+  font-size: 0.95rem;
+}
+
+/* rehype-autolink-headings wraps the text, so the anchor must not restyle it */
+.prose .heading-anchor {
+  color: inherit;
+  text-decoration: none;
+}
+
+.prose .heading-anchor:hover {
+  color: var(--color-accent);
+}
+
+.prose strong {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.prose a {
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--color-line-strong);
+  transition: color 0.15s ease;
+}
+
+.prose a:hover {
+  color: var(--color-accent);
+  text-decoration-color: currentColor;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.3rem;
+}
+
+.prose ul {
+  list-style: disc;
+}
+
+.prose ol {
+  list-style: decimal;
+}
+
+.prose li + li {
+  margin-top: 0.45rem;
+}
+
+.prose li::marker {
+  color: var(--color-ink-faint);
+}
+
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.855em;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 0.3rem;
+  padding: 0.1rem 0.32rem;
+}
+
+.prose pre {
+  background: var(--color-bg-elev);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  padding: 1rem 1.1rem;
+  /* Wide diagrams scroll inside the block; the page itself never scrolls sideways. */
+  overflow-x: auto;
+}
+
+.prose pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 0.83rem;
+  line-height: 1.65;
+  color: var(--color-ink-dim);
+}
+
+.prose blockquote {
+  border-left: 2px solid var(--color-accent-deep);
+  background: var(--color-accent-wash);
+  border-radius: 0 0.4rem 0.4rem 0;
+  padding: 0.85rem 1.1rem;
+  color: var(--color-ink-dim);
+}
+
+.prose blockquote > * + * {
+  margin-top: 0.7rem;
+}
+
+/* A table is the densest thing in these documents, so it gets its own scroller. */
+.prose table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid var(--color-line);
+  padding: 0.55rem 0.8rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.prose th {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--color-line);
+  margin: 2.5rem 0;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}

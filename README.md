@@ -8,7 +8,7 @@ Kreds turns the work your team already does on GitHub into a live leaderboard:
 merged pull requests, code reviews, closed issues. Not a vanity commit counter.
 The scoring is weighted so that helping someone else ship beats shipping alone.
 
-[kreds.sh](https://kreds.sh) &nbsp;·&nbsp; [Docs](https://kreds.sh/docs) &nbsp;·&nbsp; [Self-hosting](docs/self-hosting.md) &nbsp;·&nbsp; [Pricing](https://kreds.sh/#pricing) &nbsp;·&nbsp; [Sponsor](https://github.com/sponsors/zitdevs)
+[kreds.sh](https://kreds.sh) &nbsp;·&nbsp; [Docs](https://kreds.sh/docs) &nbsp;·&nbsp; [Self-hosting](https://kreds.sh/docs/self-hosting) &nbsp;·&nbsp; [Pricing](https://kreds.sh/#pricing) &nbsp;·&nbsp; [Sponsor](https://github.com/sponsors/zitdevs)
 
 [![CI](https://github.com/zitdevs/kreds/actions/workflows/ci.yml/badge.svg)](https://github.com/zitdevs/kreds/actions/workflows/ci.yml)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-6ee7a0)](LICENSE)
