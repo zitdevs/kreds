@@ -18,6 +18,7 @@ export default defineConfig({
     "./src/schema/events.ts",
     "./src/schema/contribution.ts",
     "./src/schema/ledger.ts",
+    "./src/schema/claims.ts",
   ],
   out: "./migrations",
   dbCredentials: { url: process.env["DATABASE_URL"] ?? "" },

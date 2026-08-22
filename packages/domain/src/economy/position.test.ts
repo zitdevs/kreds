@@ -120,6 +120,18 @@ describe("a balance is derived from entries and nothing else", () => {
       derivePosition(sources({ entries: [line("CREDIT", 5), line("DEBIT", 30)] })),
     ).toThrow(/negative/i);
   });
+
+  /**
+   * Matching on the word "negative" alone would not prove this check ran.
+   * `kredbits` refuses a negative value too, and says the same word, so the
+   * test passed with this guard deleted: two guards, one message, one of them
+   * untested. The assertion names the sentence only this one produces.
+   */
+  it("says the entries are what implied it, so the report names the ledger", () => {
+    expect(() =>
+      derivePosition(sources({ entries: [line("CREDIT", 5), line("DEBIT", 30)] })),
+    ).toThrow(/entries imply a balance of -2500/);
+  });
 });
 
 /**
@@ -287,5 +299,92 @@ describe("claims settle oldest eligible first", () => {
     const settled = claim(30, { id: receivableId("rcv_done"), status: "SETTLED" });
     const cancelled = claim(30, { id: receivableId("rcv_void"), status: "CANCELLED" });
     expect(inSettlementOrder([settled, open, cancelled]).map((c) => c.id)).toEqual(["rcv_open"]);
+  });
+});
+
+/**
+ * A deterministic generator, so a failure reproduces from its seed rather than
+ * disappearing on the next run.
+ */
+function* seeded(seed: number, count: number): Generator<number> {
+  let state = seed;
+  for (let i = 0; i < count; i++) {
+    state = (state * 1103515245 + 12345) % 2147483648;
+    yield state;
+  }
+}
+
+describe("19: Invariants, Withdrawable ⊆ Available ⊆ Balance", () => {
+  /**
+   * The containment holds by construction today. This asserts it as the named
+   * invariant it actually is, over inputs nobody chose to be convenient,
+   * because "by construction" is a property of the code as written and this
+   * chapter is a property of the economy.
+   */
+  it("holds for every combination of entries, debt and locked funds", () => {
+    for (const roll of seeded(20260822, 400)) {
+      // An entry for zero kredbits records no movement and the ledger refuses
+      // it, so every amount here is at least one.
+      const credit = (roll % 500) + 1;
+      const pendingCredit = ((roll >> 4) % 500) + 1;
+      const debit = ((roll >> 8) % (credit + pendingCredit)) + 1;
+      const locked = (roll >> 12) % 700;
+      const owed = (roll >> 16) % 700;
+
+      const position = derivePosition(
+        sources({
+          entries: [
+            line("CREDIT", credit),
+            line("CREDIT", pendingCredit, { status: "PENDING", settledAt: null }),
+            line("DEBIT", debit),
+          ],
+          debts: owed > 0 ? [debt(owed)] : [],
+          locked: fromKred(locked),
+        }),
+      );
+
+      const where = `credit ${credit} pending ${pendingCredit} debit ${debit} locked ${locked} debt ${owed}`;
+      expect(position.withdrawable <= position.available, where).toBe(true);
+      expect(position.available <= position.balance, where).toBe(true);
+      expect(position.balance >= ZERO_KREDBITS, where).toBe(true);
+      expect(position.withdrawable >= ZERO_KREDBITS, where).toBe(true);
+    }
+  });
+
+  /**
+   * 19: Invariants, "A negative net position has `Withdrawable = 0`", and 11
+   * on how absolute that is: "There is no partial exception, no 'but the
+   * pending portion', no manual override."
+   */
+  it("withdraws nothing whenever the net position is under water, however rich the balance", () => {
+    for (const roll of seeded(19, 200)) {
+      const balance = (roll % 1000) + 1;
+      const owed = balance + 1 + ((roll >> 8) % 1000);
+
+      const position = derivePosition(
+        sources({ entries: [line("CREDIT", balance)], debts: [debt(owed)] }),
+      );
+
+      expect(netPosition(position) < 0n, `balance ${balance} debt ${owed}`).toBe(true);
+      expect(position.withdrawable, `balance ${balance} debt ${owed}`).toBe(ZERO_KREDBITS);
+    }
+  });
+
+  /**
+   * Law XXIV: receivables "cannot be transferred, spent, or withdrawn until
+   * funded". The check that matters is that holding a claim never raises what
+   * the holder can take out, because a claim that moved withdrawable would be
+   * money by another name.
+   */
+  it("never lets a receivable raise the balance or what can be withdrawn", () => {
+    const withoutClaim = derivePosition(sources({ entries: [line("CREDIT", 100)] }));
+    const withClaim = derivePosition(
+      sources({ entries: [line("CREDIT", 100)], receivables: [claim(5_000)] }),
+    );
+
+    expect(withClaim.balance).toBe(withoutClaim.balance);
+    expect(withClaim.available).toBe(withoutClaim.available);
+    expect(withClaim.withdrawable).toBe(withoutClaim.withdrawable);
+    expect(withClaim.pendingReceivables).toBe(fromKred(5_000));
   });
 });
