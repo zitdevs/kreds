@@ -7,9 +7,7 @@
   "tsconfig": "../../.design-sync/tsconfig.design-sync.json",
   "buildCmd": "node .ds-sync/node_modules/@tailwindcss/cli/dist/index.mjs -i .design-sync/tailwind-entry.css -o packages/ui/.ds-css/kreds.css",
   "cssEntry": ".ds-css/kreds.css",
-  "extraFonts": [
-    "../../.design-sync/fonts.css"
-  ],
+  "extraFonts": ["../../.design-sync/fonts.css"],
   "tokensPkg": "@kreds/ui",
   "tokensGlob": "src/styles/*.css",
   "readmeHeader": ".design-sync/conventions.md",
