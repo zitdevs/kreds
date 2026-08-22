@@ -17,6 +17,28 @@ One API note that catches people: **`Button` is always a link.** It takes
 `href`, never `onClick`. The same is true of the links inside `SiteHeader`,
 `SiteFooter` and `Brand`.
 
+## The two brand glyphs — do not mix them up
+
+`KredsMark` is the **logo**: the Merge K. Header, footer, favicon, avatars,
+docs. **Never put it in front of a number.**
+
+`KredSymbol` is the **currency symbol**: the $K. It goes next to balances,
+transactions, rewards and prices, exactly the way `$` goes next to dollars, and
+is **never** used as a logo, favicon or lockup.
+
+Both take a `size` in px (not font-size) and thicken their stroke as they
+shrink. `KredsMark` takes `tone="accent" | "ink"`; `KredSymbol` takes
+`tone="amber" | "ink"` — `amber` for primary balances, `ink` for secondary
+figures in running text. Size the symbol to the cap height of its text: 13 for
+13px mono, 18 for 20px, 24 for 26px.
+
+```jsx
+<span className="text-amber inline-flex items-center gap-1 font-mono text-sm">
+  <KredSymbol size={13} />
+  1,240.00
+</span>
+```
+
 ## The styling idiom: Tailwind v4 utilities over semantic tokens
 
 Style with utility classes built on **semantic colour names, never raw palette

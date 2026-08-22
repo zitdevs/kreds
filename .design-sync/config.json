@@ -7,7 +7,9 @@
   "tsconfig": "../../.design-sync/tsconfig.design-sync.json",
   "buildCmd": "node .ds-sync/node_modules/@tailwindcss/cli/dist/index.mjs -i .design-sync/tailwind-entry.css -o packages/ui/.ds-css/kreds.css",
   "cssEntry": ".ds-css/kreds.css",
-  "extraFonts": ["../../.design-sync/fonts.css"],
+  "extraFonts": [
+    "../../.design-sync/fonts.css"
+  ],
   "tokensPkg": "@kreds/ui",
   "tokensGlob": "src/styles/*.css",
   "readmeHeader": ".design-sync/conventions.md",
@@ -47,6 +49,8 @@
     "Heart": "src/icons.tsx",
     "Hero": "../../apps/web/src/components/hero.tsx",
     "HowItWorks": "../../apps/web/src/components/how-it-works.tsx",
+    "KredSymbol": "src/brand.tsx",
+    "KredsMark": "src/brand.tsx",
     "LeaderboardShowcase": "../../apps/web/src/components/leaderboard-showcase.tsx",
     "License": "../../apps/web/src/components/license.tsx",
     "Nav": "../../apps/web/src/components/nav.tsx",
@@ -174,6 +178,12 @@
       "cardMode": "single",
       "viewport": "1280x900"
     },
+    "KredSymbol": {
+      "viewport": "1200x300"
+    },
+    "KredsMark": {
+      "viewport": "1200x300"
+    },
     "LeaderboardShowcase": {
       "cardMode": "single",
       "viewport": "1280x900"
@@ -253,6 +263,8 @@
     "Heart": "../../.design-sync/docs/Heart.md",
     "Hero": "../../.design-sync/docs/Hero.md",
     "HowItWorks": "../../.design-sync/docs/HowItWorks.md",
+    "KredSymbol": "../../.design-sync/docs/KredSymbol.md",
+    "KredsMark": "../../.design-sync/docs/KredsMark.md",
     "LeaderboardShowcase": "../../.design-sync/docs/LeaderboardShowcase.md",
     "License": "../../.design-sync/docs/License.md",
     "Nav": "../../.design-sync/docs/Nav.md",

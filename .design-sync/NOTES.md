@@ -134,6 +134,24 @@ resolves `@import "tailwindcss"` relative to the entry file, which lives in
 - Toolchain at sync time: node 25.8.0, pnpm 9.12.0, tailwindcss 4.3.3 (matched to
   the repo's own version, keep them in step), esbuild/ts-morph from `.ds-sync/`.
 
+## Brand glyphs (added 2026-08-22, second sync)
+
+`KredsMark` and `KredSymbol` live in `packages/ui/src/brand.tsx` and both export
+a real `<Name>Props` interface, so the extractor picks their contracts up with no
+`dtsPropsFor` entry — do not add one unless that stops being true. They are
+grouped under `Brand` via the `category:` frontmatter in `.design-sync/docs/`,
+which works because their src-derived group is generic.
+
+The usage rule (mark = identity only, symbol = always beside an amount) is stated
+in the `brand.tsx` docblock and is now transcribed into `conventions.md`, because
+the design agent reads only the README. **If that rule changes in the source,
+change it in `conventions.md` too** — nothing cross-checks them.
+
+`apps/web/src/components/kred-amount.tsx` (`KredAmount`) wraps `KredSymbol` with a
+figure. It is deliberately NOT synced: it is an app-level convenience, and the
+design agent can compose the same thing from `KredSymbol` directly. Add it to
+`extraEntries` + `componentSrcMap` if that judgement changes.
+
 ## Cosmetic finding (not fixed: it belongs to the repo, not the sync)
 
 `packages/ui/src/styles/tokens.css` opens with the "Kreds design tokens" header
