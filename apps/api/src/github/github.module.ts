@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 
 import { ContributionModule } from "../contribution/contribution.module.js";
+import { EligibilityModule } from "../eligibility/eligibility.module.js";
 import { DatabaseModule } from "../database/database.module.js";
 import { GitHubAppService } from "./github-app.service.js";
 import { GitHubWebhookController } from "./github-webhook.controller.js";
@@ -16,7 +17,7 @@ import { InstallationService } from "./installation.service.js";
  * mean one set of secrets guarding two unrelated grants.
  */
 @Module({
-  imports: [DatabaseModule, ContributionModule],
+  imports: [DatabaseModule, ContributionModule, EligibilityModule],
   controllers: [GitHubWebhookController],
   providers: [GitHubAppService, InstallationService, IngestionService],
   exports: [GitHubAppService],

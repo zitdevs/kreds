@@ -39,13 +39,17 @@ function harness(over: Partial<Record<string, unknown>> = {}) {
   const installations = { findRepository: vi.fn(async () => ({ id: "repo-uuid" })) };
   const installationEvents = { handle: vi.fn(async () => "IGNORED" as const) };
   const contributions = { recognise: vi.fn(async () => ({ recognised: true })) };
+  const eligibility = {
+    forMerge: vi.fn(async () => ({ status: "INELIGIBLE", outcome: "NONE", reasons: [] })),
+  };
   const service = new IngestionService(
     events as never,
     installations as never,
     installationEvents as never,
     contributions as never,
+    eligibility as never,
   );
-  return { service, events, installations, installationEvents, contributions };
+  return { service, events, installations, installationEvents, contributions, eligibility };
 }
 
 const delivery = { deliveryId: "d-1", eventType: "pull_request", payload: PR_MERGED };
