@@ -1,4 +1,6 @@
 import type { CurrencyId, EconomyId, OrganizationId } from "../primitives/ids.js";
+import type { BackingRatio } from "../primitives/money.js";
+import type { Timestamp } from "../primitives/time.js";
 
 /**
  * Which economy a balance belongs to.
@@ -29,14 +31,18 @@ export interface Currency {
   readonly code: string;
   readonly name: string;
   /**
-   * How much KRED reserve stands behind one unit. `null` for official KRED and
-   * for independent currencies.
+   * How much KRED reserve stands behind this currency, as an exact integer
+   * ratio. `null` for official KRED and for independent currencies.
    *
    * Law XIV, Reserve Backing Is Not Fiat Value: publish `1 ZIT = 0.025 KRED`,
    * never `1 KRED = $0.12`. This field is a ratio against KRED and there is
-   * deliberately nowhere to put a cash price.
+   * deliberately nowhere in the type to put a cash price.
+   *
+   * A rational pair rather than a `number` because 14's own published figures,
+   * `0.025` and `0.05`, are both inexact in binary, and 06: Ledger forbids
+   * floating point anywhere in the monetary pipeline.
    */
-  readonly backingRatioToKred: number | null;
+  readonly backingRatioToKred: BackingRatio | null;
 }
 
 /**
@@ -52,7 +58,7 @@ export interface Economy {
   /** `null` for the network economy itself. */
   readonly organizationId: OrganizationId | null;
   readonly currencyId: CurrencyId;
-  readonly createdAt: Date;
+  readonly createdAt: Timestamp;
 }
 
 /**

@@ -1,4 +1,5 @@
 import { totalDebt, totalOutstanding, type Debt, type Receivable } from "../claims/claims.js";
+import type { AccountId, EconomyId } from "../primitives/ids.js";
 import type { LedgerEntry } from "../ledger/ledger.js";
 import type { Brand } from "../primitives/brand.js";
 import { ZERO_KREDBITS, kredbits, type Kredbits } from "../primitives/money.js";
@@ -37,6 +38,10 @@ export interface EconomicPosition {
 }
 
 export interface PositionSources {
+  /** The account this position belongs to. Entries for any other account are a caller bug. */
+  readonly accountId: AccountId;
+  /** The accounting context. Entries from another economy are a caller bug (Laws IV, V, X). */
+  readonly economyId: EconomyId;
   /** Every entry addressed to this account, in any status. */
   readonly entries: readonly LedgerEntry[];
   /** Obligations this account carries. */
@@ -83,7 +88,7 @@ export function netPosition(position: EconomicPosition): NetPosition {
  * store, it is a defect upstream: something minted (Law XXI).
  */
 export function derivePosition(sources: PositionSources): EconomicPosition {
-  const { entries, debts, receivables, locked } = sources;
+  const { accountId, economyId, entries, debts, receivables, locked } = sources;
 
   let credits = 0n;
   let debits = 0n;
@@ -91,6 +96,19 @@ export function derivePosition(sources: PositionSources): EconomicPosition {
   let pendingDebits = 0n;
 
   for (const line of entries) {
+    // A position is scoped to one account inside one economy. Folding entries
+    // from another account, or another currency, produces a number that looks
+    // like a balance and is not one (Laws IV, V, X).
+    if (line.accountId !== accountId) {
+      throw new RangeError(
+        `entry ${line.id} belongs to account ${line.accountId}, this position is ${accountId}.`,
+      );
+    }
+    if (line.economyId !== economyId) {
+      throw new RangeError(
+        `entry ${line.id} belongs to economy ${line.economyId}, this position is ${economyId} (Law X).`,
+      );
+    }
     if (line.direction === "MEMO") continue;
     const isCredit = line.direction === "CREDIT";
     if (isCredit) credits += line.amount;
@@ -116,13 +134,23 @@ export function derivePosition(sources: PositionSources): EconomicPosition {
     pendingCredits > pendingDebits ? pendingCredits - pendingDebits : 0n,
   );
 
-  const usable = balance - pendingSettlement - locked;
+  // 11: Debt and Settlement, Balance vs available vs withdrawable, is explicit
+  // that these are "five distinct quantities. Conflating any two of them breaks
+  // the model", and its worked example fixes the arithmetic:
+  //
+  //   Balance 320, Pending 40, Locked 100  ->  Available 280, Withdrawable 180
+  //
+  // So Pending is the gap between Balance and Available, and Locked is the gap
+  // between Available and Withdrawable. 02: Organizations gives the same shape
+  // independently (Balance 180, Pending 40, Available 140, Withdrawable 120).
+  const usable = balance - pendingSettlement;
   const available = kredbits(usable > 0n ? usable : 0n);
 
+  const unlocked = available - locked;
   // 19: Invariants, "A negative net position has Withdrawable = 0", which is
   // Law VII enforced at the only place value leaves the org context.
   const underwater = balance - outstandingDebt < 0n;
-  const withdrawable = underwater ? ZERO_KREDBITS : available;
+  const withdrawable = underwater || unlocked <= 0n ? ZERO_KREDBITS : kredbits(unlocked);
 
   return Object.freeze({
     balance,

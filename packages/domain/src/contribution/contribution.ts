@@ -6,6 +6,7 @@ import type {
   RulesVersion,
 } from "../primitives/ids.js";
 import type { Points } from "../primitives/points.js";
+import type { Timestamp } from "../primitives/time.js";
 
 /**
  * The kinds of work Kreds recognises.
@@ -46,9 +47,9 @@ export interface Contribution {
   readonly qualityScore: number;
   /** Law XV: recognition is versioned too, so a past award stays explainable. */
   readonly rulesVersion: RulesVersion;
-  readonly occurredAt: Date;
+  readonly occurredAt: Timestamp;
   /** Set when the underlying work was later invalidated (revert, fraud, reclassification). */
-  readonly invalidatedAt: Date | null;
+  readonly invalidatedAt: Timestamp | null;
 }
 
 /**
@@ -63,17 +64,4 @@ export interface ContributionScore {
   /** `null` for the global score. */
   readonly organizationId: OrganizationId | null;
   readonly points: Points;
-}
-
-/**
- * Whether recognition is owed for this work regardless of whether the economy
- * can pay for it.
- *
- * 24, Recognition does not wait for funding: points are awarded even when the
- * KRED reward is `AWAITING FUNDING`. "This is the practical payoff of the
- * split: a reviewer whose author is broke is no longer told, implicitly, that
- * their review was worth nothing."
- */
-export function recognitionSurvivesUnfundedReward(): true {
-  return true;
 }

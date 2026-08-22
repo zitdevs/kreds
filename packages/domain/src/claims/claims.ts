@@ -1,5 +1,11 @@
 import type { AccountId, DebtId, ReceivableId, RulesVersion } from "../primitives/ids.js";
-import { ZERO_KREDBITS, subtractKredbits, type Kredbits } from "../primitives/money.js";
+import {
+  ZERO_KREDBITS,
+  addKredbits,
+  subtractKredbits,
+  type Kredbits,
+} from "../primitives/money.js";
+import type { Timestamp } from "../primitives/time.js";
 
 /**
  * Who carries a review obligation.
@@ -35,7 +41,7 @@ export interface Debt {
   /** What is still owed. Repayment reduces this, never the principal. */
   readonly outstanding: Kredbits;
   readonly rulesVersion: RulesVersion;
-  readonly createdAt: Date;
+  readonly createdAt: Timestamp;
 }
 
 /**
@@ -68,7 +74,7 @@ export interface Receivable {
   readonly settledValue: Kredbits;
   readonly status: ReceivableStatus;
   readonly rulesVersion: RulesVersion;
-  readonly createdAt: Date;
+  readonly createdAt: Timestamp;
 }
 
 /** What is still owed on a claim. */
@@ -99,8 +105,11 @@ export function isOutstanding(claim: Receivable): boolean {
  * stable.
  */
 export function inSettlementOrder(claims: readonly Receivable[]): Receivable[] {
-  return [...claims].sort((a, b) => {
-    const byAge = a.createdAt.getTime() - b.createdAt.getTime();
+  // "oldest **eligible** receivable first". A settled or cancelled claim is not
+  // eligible for anything, and leaving it in the queue would let it absorb an
+  // ordering slot it can never use.
+  return claims.filter(isOutstanding).sort((a, b) => {
+    const byAge = a.createdAt - b.createdAt;
     return byAge !== 0 ? byAge : a.id.localeCompare(b.id);
   });
 }
@@ -109,7 +118,7 @@ export function inSettlementOrder(claims: readonly Receivable[]): Receivable[] {
 export function totalOutstanding(claims: readonly Receivable[]): Kredbits {
   return claims
     .filter(isOutstanding)
-    .reduce<Kredbits>((total, claim) => (total + outstandingOn(claim)) as Kredbits, ZERO_KREDBITS);
+    .reduce<Kredbits>((total, claim) => addKredbits(total, outstandingOn(claim)), ZERO_KREDBITS);
 }
 
 /** Total still owed across a set of debts. Never a term in the supply equation. */

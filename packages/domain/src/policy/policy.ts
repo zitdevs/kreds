@@ -1,4 +1,5 @@
 import type { EconomyId, OrganizationId, RulesVersion, SeasonId } from "../primitives/ids.js";
+import type { Timestamp } from "../primitives/time.js";
 
 /**
  * A published, versioned set of economic rules.
@@ -21,13 +22,13 @@ export interface PolicyVersion {
    * the activity occurred**, not when the event was processed. "Processing
    * delay is an infrastructure detail and must never be economically visible."
    */
-  readonly effectiveFrom: Date;
+  readonly effectiveFrom: Timestamp;
   /** `null` while current. Superseded versions are retained, never deleted. */
-  readonly supersededAt: Date | null;
+  readonly supersededAt: Timestamp | null;
   /** Why this version exists. No silent monetary policy changes. */
   readonly reason: string;
   /** When members were told, which 13 requires to happen before it takes effect. */
-  readonly announcedAt: Date | null;
+  readonly announcedAt: Timestamp | null;
 }
 
 /**
@@ -54,11 +55,11 @@ export interface Policy {
  */
 export function versionInForceAt(
   versions: readonly PolicyVersion[],
-  occurredAt: Date,
+  occurredAt: Timestamp,
 ): PolicyVersion | null {
   const applicable = versions
-    .filter((candidate) => candidate.effectiveFrom.getTime() <= occurredAt.getTime())
-    .sort((a, b) => b.effectiveFrom.getTime() - a.effectiveFrom.getTime());
+    .filter((candidate) => candidate.effectiveFrom <= occurredAt)
+    .sort((a, b) => b.effectiveFrom - a.effectiveFrom);
   return applicable[0] ?? null;
 }
 
@@ -75,12 +76,11 @@ export interface Season {
   readonly economyId: EconomyId;
   readonly organizationId: OrganizationId | null;
   readonly name: string;
-  readonly startsAt: Date;
-  readonly endsAt: Date;
+  readonly startsAt: Timestamp;
+  readonly endsAt: Timestamp;
   readonly rulesVersion: RulesVersion;
 }
 
-export function isSeasonActive(season: Season, at: Date): boolean {
-  const instant = at.getTime();
-  return instant >= season.startsAt.getTime() && instant < season.endsAt.getTime();
+export function isSeasonActive(season: Season, at: Timestamp): boolean {
+  return at >= season.startsAt && at < season.endsAt;
 }

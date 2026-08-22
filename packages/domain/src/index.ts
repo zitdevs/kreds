@@ -25,15 +25,27 @@
 export type { Brand } from "./primitives/brand.js";
 
 export {
+  fromDate,
+  fromIso,
+  isBefore,
+  timestamp,
+  toIso,
+  type Timestamp,
+} from "./primitives/time.js";
+
+export {
   KREDBITS_PER_KRED,
   ZERO_KREDBITS,
   addKredbits,
+  backingRatio,
+  convertsExactly,
   formatKred,
   fromKred,
   kredbits,
   splitKredbits,
   subtractKredbits,
   takeFee,
+  type BackingRatio,
   type Kredbits,
 } from "./primitives/money.js";
 
@@ -104,6 +116,7 @@ export {
 
 export {
   isStructurallyIndependentReviewer,
+  trustTierIsRepresentable,
   type EconomicEligibility,
   type Organization,
   type PullRequest,
@@ -114,7 +127,6 @@ export {
 } from "./github/github.js";
 
 export {
-  recognitionSurvivesUnfundedReward,
   type Contribution,
   type ContributionKind,
   type ContributionScore,

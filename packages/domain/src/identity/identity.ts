@@ -1,4 +1,5 @@
 import type { GitHubLogin, GitHubUserId, UserId } from "../primitives/ids.js";
+import type { Timestamp } from "../primitives/time.js";
 
 /**
  * How a GitHub identity is classified.
@@ -41,9 +42,9 @@ export interface GitHubIdentity {
   readonly status: IdentityStatus;
   /** The Kreds account this identity was claimed by, if any. */
   readonly userId?: UserId;
-  readonly claimedAt: Date | null;
+  readonly claimedAt: Timestamp | null;
   /** When Kreds first observed this identity through verified activity. */
-  readonly observedAt: Date;
+  readonly observedAt: Timestamp;
 }
 
 /**
@@ -56,7 +57,7 @@ export interface User {
   readonly id: UserId;
   readonly gitHubUserId: GitHubUserId;
   readonly displayName: string;
-  readonly createdAt: Date;
+  readonly createdAt: Timestamp;
 }
 
 /**

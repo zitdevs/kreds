@@ -8,6 +8,7 @@ import type {
   TreasuryId,
   UserId,
 } from "../primitives/ids.js";
+import type { Timestamp } from "../primitives/time.js";
 
 /**
  * Every kind of ledger-addressable holder.
@@ -61,7 +62,7 @@ export interface Account {
   readonly organizationId: OrganizationId | null;
   /** Set for wallets and organization positions. */
   readonly userId?: UserId;
-  readonly createdAt: Date;
+  readonly createdAt: Timestamp;
 }
 
 /**
@@ -79,7 +80,7 @@ export interface Treasury {
   readonly id: TreasuryId;
   readonly accountId: AccountId;
   readonly organizationId: OrganizationId;
-  readonly createdAt: Date;
+  readonly createdAt: Timestamp;
 }
 
 /**
@@ -104,7 +105,7 @@ export interface ReviewFund {
   readonly repositoryId?: RepositoryId;
   /** Whether the fund and its contributors are publicly visible. */
   readonly isPublic: boolean;
-  readonly createdAt: Date;
+  readonly createdAt: Timestamp;
 }
 
 /**

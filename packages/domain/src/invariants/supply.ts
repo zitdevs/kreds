@@ -1,5 +1,5 @@
 import type { AccountType } from "../economy/account.js";
-import { fromKred, type Kredbits } from "../primitives/money.js";
+import { fromKred, kredbits, type Kredbits } from "../primitives/money.js";
 
 /**
  * 01: The Kreds Network, Global supply.
@@ -35,6 +35,22 @@ export const SUPPLY_TERMS = [
 ] as const satisfies readonly AccountType[];
 
 /**
+ * Proof that `SUPPLY_TERMS` covers every `AccountType`.
+ *
+ * `satisfies readonly AccountType[]` only checks that each member *is* an
+ * `AccountType`; it does not check that all of them are present. Without the
+ * line below, adding a tenth account type would silently drop it from the
+ * conservation equation and every test would stay green while
+ * 19: Invariants' "No unexplained delta is acceptable" quietly stopped holding.
+ */
+type _EverySupplyTermIsCovered =
+  Exclude<AccountType, (typeof SUPPLY_TERMS)[number]> extends never
+    ? true
+    : ["missing from SUPPLY_TERMS", Exclude<AccountType, (typeof SUPPLY_TERMS)[number]>];
+const _supplyTermsAreExhaustive: _EverySupplyTermIsCovered = true;
+void _supplyTermsAreExhaustive;
+
+/**
  * The failure modes 19: Invariants lists for a non-zero delta.
  *
  * The chapter is explicit that "a drift of one kredbit means one of the
@@ -65,7 +81,14 @@ export interface SupplyReconciliation {
 export interface SupplyInputs {
   /** Total held by every account of each type. */
   readonly balances: Readonly<Record<(typeof SUPPLY_TERMS)[number], Kredbits>>;
-  /** Defaults to the network maximum. An override exists for tests and for sovereign economies. */
+  /**
+   * Defaults to the network maximum.
+   *
+   * The override exists for tests and for independent economies, which run
+   * their own currency entirely (Law XI). It is **not** for sovereign
+   * economies: 14: Cloud Economic Modes gives those a local currency and a KRED
+   * reserve, not a different official maximum supply.
+   */
   readonly maximumSupply?: Kredbits;
 }
 
@@ -81,12 +104,14 @@ export interface SupplyInputs {
  */
 export function reconcileSupply(inputs: SupplyInputs): SupplyReconciliation {
   const maximumSupply = inputs.maximumSupply ?? MAXIMUM_SUPPLY;
-  const counted = SUPPLY_TERMS.reduce<bigint>((total, term) => total + inputs.balances[term], 0n);
+  const counted = kredbits(
+    SUPPLY_TERMS.reduce<bigint>((total, term) => total + inputs.balances[term], 0n),
+  );
   const delta = counted - maximumSupply;
   return Object.freeze({
     reconciles: delta === 0n,
     delta,
-    counted: counted as Kredbits,
+    counted,
     maximumSupply,
     possibleCauses: delta === 0n ? [] : DRIFT_CAUSES,
   });

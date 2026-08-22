@@ -51,10 +51,15 @@ export function kredbits(value: bigint): Kredbits {
  * 100, because `39.2 * 100` is `3920.0000000000005` and that is precisely the
  * representation error 06: Ledger forbids.
  *
+ * **Prefer the string form for anything load-bearing.** A `number` argument has
+ * already lost precision before this function is reached: the literal
+ * `1234567890123456.78` is not representable, so no amount of careful parsing
+ * inside can recover it. The string form is exact at any magnitude.
+ *
  * @throws if the figure carries more precision than one kredbit.
  */
-export function fromKred(kred: number): Kredbits {
-  const text = String(kred);
+export function fromKred(kred: number | string): Kredbits {
+  const text = typeof kred === "string" ? kred : String(kred);
   if (!KRED_DECIMAL.test(text)) {
     throw new RangeError(
       `${text} is not a non-negative amount of whole kredbits. At most two decimal places are representable.`,
@@ -106,7 +111,10 @@ export function subtractKredbits(a: Kredbits, b: Kredbits): Kredbits {
  * 35 KRED across three contributors, comes out as 11.67 / 11.67 / 11.66.
  */
 export function splitKredbits(total: Kredbits, shares: number): Kredbits[] {
-  if (!Number.isInteger(shares) || shares < 1) {
+  // isSafeInteger, not isInteger: `Number.isInteger(1e21)` is true, and a share
+  // count that large dies inside `Array.from` with an unhelpful error rather
+  // than at the guard.
+  if (!Number.isSafeInteger(shares) || shares < 1) {
     throw new RangeError(`a split needs at least one share, received ${shares}.`);
   }
   const divisor = BigInt(shares);
@@ -141,3 +149,56 @@ export function takeFee(gross: Kredbits, basisPoints: number): { net: Kredbits; 
 
 /** The zero amount, for folds and empty positions. */
 export const ZERO_KREDBITS = kredbits(0n);
+
+/**
+ * An exact rate between a local currency and official KRED, as a rational pair
+ * of integers.
+ *
+ * 14: Cloud Economic Modes publishes rates in the form `1 ZIT = 0.025 KRED`.
+ * Both of that chapter's worked figures, `0.025` and `0.05`, are inexact in
+ * binary, so a `number` field here would be the one floating-point value in the
+ * monetary model, which 06: Ledger forbids outright. The pair follows the
+ * precedent `takeFee` already sets by taking basis points: keep the arithmetic
+ * in integers.
+ *
+ * Read it as: `localSubunits` of the local currency are worth `kredbits`
+ * kredbits.
+ *
+ * Law XIV, Reserve Backing Is Not Fiat Value: this is a ratio against KRED and
+ * there is deliberately nowhere in the type to put a cash price.
+ */
+export interface BackingRatio {
+  readonly kredbits: bigint;
+  readonly localSubunits: bigint;
+}
+
+export function backingRatio(kredbitsPart: bigint, localSubunitsPart: bigint): BackingRatio {
+  if (typeof kredbitsPart !== "bigint" || typeof localSubunitsPart !== "bigint") {
+    throw new TypeError(
+      `a backing ratio is a pair of bigints. Floating point never enters the pipeline.`,
+    );
+  }
+  if (kredbitsPart <= 0n || localSubunitsPart <= 0n) {
+    throw new RangeError(
+      `a backing ratio needs two positive terms, received ${kredbitsPart}/${localSubunitsPart}.`,
+    );
+  }
+  return Object.freeze({ kredbits: kredbitsPart, localSubunits: localSubunitsPart });
+}
+
+/**
+ * Whether `localAmount` of a local currency is worth exactly `kredAmount`
+ * kredbits at this rate.
+ *
+ * Cross-multiplication, so no division and no remainder to lose. An exchange
+ * that does not land on an exact integer on both sides is not representable and
+ * must be rejected rather than rounded, because rounding an exchange is
+ * creating or destroying supply.
+ */
+export function convertsExactly(
+  rate: BackingRatio,
+  localAmount: bigint,
+  kredAmount: bigint,
+): boolean {
+  return localAmount * rate.kredbits === kredAmount * rate.localSubunits;
+}

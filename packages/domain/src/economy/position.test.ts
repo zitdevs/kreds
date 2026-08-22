@@ -12,11 +12,14 @@ import {
   rulesVersion,
 } from "../primitives/ids.js";
 import { ZERO_KREDBITS, formatKred, fromKred } from "../primitives/money.js";
+import { fromIso } from "../primitives/time.js";
 import { entry, type LedgerEntry } from "../ledger/ledger.js";
 import { derivePosition, netPosition } from "./position.js";
 
 const ACCOUNT = accountId("acct_isaac");
+const ECONOMY = economyId("kreds-network");
 const V4 = rulesVersion("v0.4");
+const AT = fromIso("2026-08-22T00:00:00Z");
 
 let sequence = 0;
 const line = (
@@ -27,7 +30,7 @@ const line = (
   sequence += 1;
   return entry({
     id: ledgerEntryId(`entry_${sequence}`),
-    economyId: economyId("kreds-network"),
+    economyId: ECONOMY,
     organizationId: organizationId("org_zitdevs"),
     accountId: ACCOUNT,
     direction,
@@ -39,12 +42,22 @@ const line = (
     rulesVersion: V4,
     idempotencyKey: idempotencyKey(`key_${sequence}`),
     status: "SETTLED",
-    settledAt: new Date("2026-08-22T00:00:00Z"),
-    createdAt: new Date("2026-08-22T00:00:00Z"),
+    settledAt: AT,
+    createdAt: AT,
     metadata: {},
     ...over,
   });
 };
+
+const sources = (over: Partial<Parameters<typeof derivePosition>[0]> = {}) => ({
+  accountId: ACCOUNT,
+  economyId: ECONOMY,
+  entries: [],
+  debts: [],
+  receivables: [],
+  locked: ZERO_KREDBITS,
+  ...over,
+});
 
 const debt = (kred: number): Debt => ({
   id: debtId("debt_1"),
@@ -54,7 +67,7 @@ const debt = (kred: number): Debt => ({
   principal: fromKred(kred),
   outstanding: fromKred(kred),
   rulesVersion: V4,
-  createdAt: new Date("2026-08-10T00:00:00Z"),
+  createdAt: fromIso("2026-08-10T00:00:00Z"),
 });
 
 const claim = (kred: number, over: Partial<Receivable> = {}): Receivable => ({
@@ -65,7 +78,7 @@ const claim = (kred: number, over: Partial<Receivable> = {}): Receivable => ({
   settledValue: ZERO_KREDBITS,
   status: "AWAITING_FUNDING",
   rulesVersion: V4,
-  createdAt: new Date("2026-08-11T00:00:00Z"),
+  createdAt: fromIso("2026-08-11T00:00:00Z"),
   ...over,
 });
 
@@ -77,33 +90,24 @@ const claim = (kred: number, over: Partial<Receivable> = {}): Receivable => ({
  */
 describe("a balance is derived from entries and nothing else", () => {
   it("sums credits against debits", () => {
-    const position = derivePosition({
-      entries: [line("CREDIT", 35), line("DEBIT", 10)],
-      debts: [],
-      receivables: [],
-      locked: ZERO_KREDBITS,
-    });
+    const position = derivePosition(sources({ entries: [line("CREDIT", 35), line("DEBIT", 10)] }));
     expect(formatKred(position.balance)).toBe("25.00");
   });
 
   it("starts every account at zero, with no signup grant", () => {
     // 01: Network and Supply, No signup grant. "New users begin with 0 KRED."
-    const position = derivePosition({
-      entries: [],
-      debts: [],
-      receivables: [],
-      locked: ZERO_KREDBITS,
-    });
-    expect(position.balance).toBe(ZERO_KREDBITS);
+    expect(derivePosition(sources()).balance).toBe(ZERO_KREDBITS);
   });
 
   it("ignores memo entries, which move no KRED", () => {
-    const position = derivePosition({
-      entries: [line("CREDIT", 35), line("MEMO", 30, { type: "RECEIVABLE_CREATED" })],
-      debts: [],
-      receivables: [],
-      locked: ZERO_KREDBITS,
-    });
+    const position = derivePosition(
+      sources({
+        entries: [
+          line("CREDIT", 35),
+          line("MEMO", 30, { type: "RECEIVABLE_CREATED", sourceType: "NETWORK_OPERATION" }),
+        ],
+      }),
+    );
     expect(formatKred(position.balance)).toBe("35.00");
   });
 
@@ -113,13 +117,24 @@ describe("a balance is derived from entries and nothing else", () => {
    */
   it("refuses to derive a negative balance", () => {
     expect(() =>
-      derivePosition({
-        entries: [line("CREDIT", 5), line("DEBIT", 30)],
-        debts: [],
-        receivables: [],
-        locked: ZERO_KREDBITS,
-      }),
+      derivePosition(sources({ entries: [line("CREDIT", 5), line("DEBIT", 30)] })),
     ).toThrow(/negative/i);
+  });
+});
+
+/**
+ * Laws IV, V and X. A position is one account inside one accounting context.
+ * Folding anything else produces a number that looks like a balance and is not.
+ */
+describe("a position is scoped to one account in one economy", () => {
+  it("refuses an entry belonging to another account", () => {
+    const other = line("CREDIT", 10, { accountId: accountId("acct_someone_else") });
+    expect(() => derivePosition(sources({ entries: [other] }))).toThrow(/belongs to account/i);
+  });
+
+  it("refuses an entry denominated in another economy", () => {
+    const local = line("CREDIT", 10, { economyId: economyId("zitdevs-LOCAL") });
+    expect(() => derivePosition(sources({ entries: [local] }))).toThrow(/Law X/);
   });
 });
 
@@ -131,12 +146,7 @@ describe("a balance is derived from entries and nothing else", () => {
 describe("net position is a display figure and may be negative", () => {
   it("reproduces the worked example from chapter 23", () => {
     // Balance 25 K, Debt 120 K, Net Position -95 K
-    const position = derivePosition({
-      entries: [line("CREDIT", 25)],
-      debts: [debt(120)],
-      receivables: [],
-      locked: ZERO_KREDBITS,
-    });
+    const position = derivePosition(sources({ entries: [line("CREDIT", 25)], debts: [debt(120)] }));
     expect(formatKred(position.balance)).toBe("25.00");
     expect(formatKred(position.outstandingDebt)).toBe("120.00");
     expect(netPosition(position)).toBe(-9500n);
@@ -150,85 +160,108 @@ describe("net position is a display figure and may be negative", () => {
    *  and are not folded into this figure."
    */
   it("does not fold pending receivables into the figure", () => {
-    const withoutClaim = derivePosition({
-      entries: [line("CREDIT", 25)],
-      debts: [debt(120)],
-      receivables: [],
-      locked: ZERO_KREDBITS,
-    });
-    const withClaim = derivePosition({
-      entries: [line("CREDIT", 25)],
-      debts: [debt(120)],
-      receivables: [claim(40)],
-      locked: ZERO_KREDBITS,
-    });
+    const withoutClaim = derivePosition(
+      sources({ entries: [line("CREDIT", 25)], debts: [debt(120)] }),
+    );
+    const withClaim = derivePosition(
+      sources({ entries: [line("CREDIT", 25)], debts: [debt(120)], receivables: [claim(40)] }),
+    );
     expect(netPosition(withClaim)).toBe(netPosition(withoutClaim));
     expect(formatKred(withClaim.pendingReceivables)).toBe("40.00");
   });
 
   it("counts only claims still awaiting funding", () => {
-    const position = derivePosition({
-      entries: [],
-      debts: [],
-      receivables: [
-        claim(40),
-        claim(30, { id: receivableId("rcv_2"), status: "SETTLED" }),
-        claim(20, { id: receivableId("rcv_3"), status: "CANCELLED" }),
-      ],
-      locked: ZERO_KREDBITS,
-    });
+    const position = derivePosition(
+      sources({
+        receivables: [
+          claim(40),
+          claim(30, { id: receivableId("rcv_2"), status: "SETTLED" }),
+          claim(20, { id: receivableId("rcv_3"), status: "CANCELLED" }),
+        ],
+      }),
+    );
     expect(formatKred(position.pendingReceivables)).toBe("40.00");
   });
 });
 
 /**
- * 19: Invariants, Derived invariants, and the Glossary:
+ * 11: Debt and Settlement, Balance vs available vs withdrawable.
  *
- * "`Withdrawable ⊆ Available ⊆ Balance`. Pending and Locked are the difference."
+ * "These are five distinct quantities. Conflating any two of them breaks the
+ *  model."
+ *
+ * Pending is the gap between Balance and Available. Locked is the gap between
+ * Available and Withdrawable. Getting that the wrong way round collapses two of
+ * the five, which is exactly what the chapter warns about.
  */
-describe("withdrawable is a strict subset of available, which is a subset of balance", () => {
-  it("subtracts pending and locked funds from what is usable now", () => {
-    const position = derivePosition({
-      entries: [
-        line("CREDIT", 100, { status: "SETTLED" }),
-        line("CREDIT", 40, { status: "PENDING", settledAt: null }),
-      ],
-      debts: [],
-      receivables: [],
-      locked: fromKred(10),
-    });
-    expect(formatKred(position.balance)).toBe("140.00");
+describe("balance, available and withdrawable are three distinct quantities", () => {
+  it("reproduces the worked example from chapter 11", () => {
+    // Balance 320, Available 280, Withdrawable 180, Pending 40, Locked 100
+    const position = derivePosition(
+      sources({
+        entries: [
+          line("CREDIT", 280, { status: "SETTLED" }),
+          line("CREDIT", 40, { status: "PENDING", settledAt: null }),
+        ],
+        locked: fromKred(100),
+      }),
+    );
+    expect(formatKred(position.balance)).toBe("320.00");
     expect(formatKred(position.pendingSettlement)).toBe("40.00");
-    expect(formatKred(position.available)).toBe("90.00");
-    expect(position.available <= position.balance).toBe(true);
-    expect(position.withdrawable <= position.available).toBe(true);
+    expect(formatKred(position.available)).toBe("280.00");
+    expect(formatKred(position.withdrawable)).toBe("180.00");
   });
 
   /**
-   * "A negative net position has `Withdrawable = 0`."
-   *
-   * Law VII, Extraction Is Not Guaranteed: this is what stops mint locally,
-   * export instantly, default locally, walk away.
+   * 02: Organizations gives the same shape independently, which is what makes
+   * the arithmetic unambiguous rather than a reading of one example.
    */
-  it("withholds every kredbit while the net position is negative", () => {
-    const position = derivePosition({
-      entries: [line("CREDIT", 25)],
-      debts: [debt(120)],
-      receivables: [],
-      locked: ZERO_KREDBITS,
-    });
-    expect(netPosition(position) < 0n).toBe(true);
+  it("reproduces the organization position from chapter 02", () => {
+    // Balance 180, Pending 40, Available 140, Withdrawable 120
+    const position = derivePosition(
+      sources({
+        entries: [
+          line("CREDIT", 140, { status: "SETTLED" }),
+          line("CREDIT", 40, { status: "PENDING", settledAt: null }),
+        ],
+        locked: fromKred(20),
+      }),
+    );
+    expect(formatKred(position.balance)).toBe("180.00");
+    expect(formatKred(position.available)).toBe("140.00");
+    expect(formatKred(position.withdrawable)).toBe("120.00");
+  });
+
+  it("keeps withdrawable strictly below available whenever funds are locked", () => {
+    const position = derivePosition(
+      sources({ entries: [line("CREDIT", 100)], locked: fromKred(30) }),
+    );
+    expect(position.withdrawable < position.available).toBe(true);
+    expect(position.available <= position.balance).toBe(true);
+  });
+
+  it("never lets locked funds push withdrawable below zero", () => {
+    const position = derivePosition(
+      sources({ entries: [line("CREDIT", 10)], locked: fromKred(50) }),
+    );
     expect(position.withdrawable).toBe(ZERO_KREDBITS);
   });
 
-  it("releases funds once the position is back above water", () => {
-    const position = derivePosition({
-      entries: [line("CREDIT", 200)],
-      debts: [debt(120)],
-      receivables: [],
-      locked: ZERO_KREDBITS,
-    });
-    expect(formatKred(position.withdrawable)).toBe("200.00");
+  /**
+   * "A negative net position has `Withdrawable = 0`." (19: Invariants)
+   *
+   * Law VII, Extraction Is Not Guaranteed: this is what stops mint locally,
+   * export instantly, default locally, walk away.
+   *
+   * Note what is NOT asserted here. The published law fixes the *negative* net
+   * case only. What a non-negative net position with live debt may withdraw is
+   * unpublished operational policy, so this package implements the one rule the
+   * constitution states and leaves the rest to the settlement engine.
+   */
+  it("withholds every kredbit while the net position is negative", () => {
+    const position = derivePosition(sources({ entries: [line("CREDIT", 25)], debts: [debt(120)] }));
+    expect(netPosition(position) < 0n).toBe(true);
+    expect(position.withdrawable).toBe(ZERO_KREDBITS);
   });
 });
 
@@ -236,16 +269,23 @@ describe("withdrawable is a strict subset of available, which is a subset of bal
  * 23: Review Funding, Debt and Credit, Payment ordering.
  * "Initial policy: oldest eligible receivable first."
  */
-describe("claims settle oldest first", () => {
+describe("claims settle oldest eligible first", () => {
   it("orders by age, then by id so the order is total", () => {
     const older = claim(30, {
       id: receivableId("rcv_a"),
-      createdAt: new Date("2026-08-01T00:00:00Z"),
+      createdAt: fromIso("2026-08-01T00:00:00Z"),
     });
     const newer = claim(30, {
       id: receivableId("rcv_b"),
-      createdAt: new Date("2026-08-09T00:00:00Z"),
+      createdAt: fromIso("2026-08-09T00:00:00Z"),
     });
     expect(inSettlementOrder([newer, older]).map((c) => c.id)).toEqual(["rcv_a", "rcv_b"]);
+  });
+
+  it("drops claims that are not eligible for settlement at all", () => {
+    const open = claim(30, { id: receivableId("rcv_open") });
+    const settled = claim(30, { id: receivableId("rcv_done"), status: "SETTLED" });
+    const cancelled = claim(30, { id: receivableId("rcv_void"), status: "CANCELLED" });
+    expect(inSettlementOrder([settled, open, cancelled]).map((c) => c.id)).toEqual(["rcv_open"]);
   });
 });

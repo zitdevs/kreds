@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { gitHubLogin, gitHubUserId } from "../primitives/ids.js";
+import { fromIso } from "../primitives/time.js";
 import {
   ACTOR_TYPES,
   IDENTITY_STATUSES,
@@ -17,7 +18,7 @@ const identity = (over: Partial<GitHubIdentity> = {}): GitHubIdentity => ({
   actorType: "HUMAN",
   status: "UNCLAIMED",
   claimedAt: null,
-  observedAt: new Date("2026-08-01T00:00:00Z"),
+  observedAt: fromIso("2026-08-01T00:00:00Z"),
   ...over,
 });
 
@@ -88,7 +89,7 @@ describe("an unclaimed identity is passive in both directions", () => {
   });
 
   it("can act once claimed", () => {
-    const claimed = identity({ status: "CLAIMED", claimedAt: new Date("2026-08-20T00:00:00Z") });
+    const claimed = identity({ status: "CLAIMED", claimedAt: fromIso("2026-08-20T00:00:00Z") });
     expect(canPerformVoluntaryEconomicAction(claimed)).toBe(true);
   });
 
@@ -101,7 +102,7 @@ describe("an unclaimed identity is passive in both directions", () => {
   });
 
   it("can be sent one once claimed", () => {
-    const claimed = identity({ status: "CLAIMED", claimedAt: new Date("2026-08-20T00:00:00Z") });
+    const claimed = identity({ status: "CLAIMED", claimedAt: fromIso("2026-08-20T00:00:00Z") });
     expect(canReceiveVoluntaryTransfer(claimed)).toBe(true);
   });
 
