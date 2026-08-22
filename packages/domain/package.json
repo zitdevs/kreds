@@ -12,7 +12,8 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "tsc --noEmit && vitest run",
+    "test:related": "tsc --noEmit && vitest run --changed",
     "test:watch": "vitest"
   },
   "devDependencies": {

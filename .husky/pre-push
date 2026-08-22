@@ -1,0 +1,3 @@
+# Only the packages this push touches, and inside them only the tests the
+# changed files can reach. See scripts/test-affected.sh for the details.
+sh scripts/test-affected.sh
