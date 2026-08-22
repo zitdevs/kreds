@@ -41,6 +41,15 @@ export type GitHubUserId = Brand<number, "GitHubUserId">;
 export type GitHubLogin = Brand<string, "GitHubLogin">;
 
 /**
+ * The numeric id GitHub assigns to one installation of the Kreds App.
+ *
+ * Branded for the same reason as `GitHubUserId`: an installation id and a user
+ * id are both bare numbers, and passing one where the other belongs would ask
+ * GitHub for a token scoped to the wrong account.
+ */
+export type GitHubInstallationId = Brand<number, "GitHubInstallationId">;
+
+/**
  * The stable key that makes a GitHub-derived economic event idempotent.
  *
  * 06: Ledger, Idempotency: GitHub delivers webhooks *at least once*, so a
@@ -103,4 +112,11 @@ export function gitHubUserId(value: number): GitHubUserId {
     throw new RangeError(`GitHubUserId must be a positive integer, received ${value}.`);
   }
   return value as GitHubUserId;
+}
+
+export function gitHubInstallationId(value: number): GitHubInstallationId {
+  if (!Number.isSafeInteger(value) || value <= 0) {
+    throw new RangeError(`GitHubInstallationId must be a positive integer, received ${value}.`);
+  }
+  return value as GitHubInstallationId;
 }

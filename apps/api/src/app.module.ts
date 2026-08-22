@@ -4,6 +4,7 @@ import { ConfigModule } from "@nestjs/config";
 import { AuthModule } from "./auth/auth.module.js";
 import { validateEnv } from "./config/env.js";
 import { DatabaseModule } from "./database/database.module.js";
+import { GitHubModule } from "./github/github.module.js";
 import { HealthController } from "./health/health.controller.js";
 
 @Module({
@@ -11,6 +12,7 @@ import { HealthController } from "./health/health.controller.js";
     ConfigModule.forRoot({ isGlobal: true, cache: true, validate: validateEnv }),
     DatabaseModule,
     AuthModule,
+    GitHubModule,
   ],
   controllers: [HealthController],
 })
