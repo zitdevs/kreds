@@ -32,5 +32,6 @@ export {
   type InvalidationTrigger,
   type LeaderboardRow,
 } from "./repositories/contribution-ledger.js";
+export { InsufficientBalanceError, Ledger, type PostedTransaction } from "./repositories/ledger.js";
 export { runMigrations } from "./migrate.js";
 export * as schema from "./schema/index.js";
