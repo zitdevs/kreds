@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src=".github/banner.png" alt="Kreds" width="830">
+
 # Kreds
 
 **The leaderboard for your engineering team.**
