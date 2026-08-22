@@ -1,6 +1,25 @@
 import { z } from "zod";
 
 /**
+ * An optional secret, where "not set" and "set to nothing" mean the same thing.
+ *
+ * `z.string().min(1).optional()` is not enough, and the difference matters. A
+ * secrets manager holds a key before it holds a value: someone creates
+ * `GITHUB_APP_PRIVATE_KEY`, saves, and pastes the key in a moment later. That
+ * intermediate state syncs an empty string, `optional()` only forgives
+ * `undefined`, and the whole API refuses to boot on a variable nobody has
+ * finished filling in.
+ *
+ * Since these values are synced to production and a save triggers a deploy,
+ * that failure would take identity down with it. An empty value means the same
+ * thing as an absent one: this instance has no GitHub App yet.
+ */
+const optionalSecret = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.string().trim().min(1).optional(),
+);
+
+/**
  * The environment this service needs, validated once at boot.
  *
  * Every name here already appears in the repository's `.env.example`, which is
@@ -64,7 +83,7 @@ export const envSchema = z.object({
    * The webhook endpoint refuses clearly when they are missing, so the failure
    * lands on the one request that needs them instead of on the whole process.
    */
-  GITHUB_APP_ID: z.string().trim().min(1).optional(),
+  GITHUB_APP_ID: optionalSecret,
   /**
    * The App's private key, in PEM.
    *
@@ -72,8 +91,8 @@ export const envSchema = z.object({
    * real newlines, literal `\n` escapes, or the whole PEM base64 encoded.
    * See `readPrivateKey`.
    */
-  GITHUB_APP_PRIVATE_KEY: z.string().min(1).optional(),
-  GITHUB_WEBHOOK_SECRET: z.string().trim().min(1).optional(),
+  GITHUB_APP_PRIVATE_KEY: optionalSecret,
+  GITHUB_WEBHOOK_SECRET: optionalSecret,
 });
 
 export type Env = z.infer<typeof envSchema>;
