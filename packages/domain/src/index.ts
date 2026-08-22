@@ -116,6 +116,8 @@ export {
   type User,
 } from "./identity/identity.js";
 
+export { classifyActor, type GitHubActor } from "./identity/classify.js";
+
 export {
   isProducingActivity,
   type Installation,
@@ -154,6 +156,17 @@ export {
   type ContributionKind,
   type ContributionScore,
 } from "./contribution/contribution.js";
+
+export {
+  UNOBSERVED,
+  isHealthySize,
+  pointsFor,
+  score,
+  type QualityResult,
+  type Signal,
+  type SizeBands,
+  type Unobserved,
+} from "./contribution/quality.js";
 
 export {
   holdsOfficialKred,

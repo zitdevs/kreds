@@ -18,3 +18,10 @@ export {
   gitHubEventRelations,
   gitHubEvents,
 } from "./events.js";
+export {
+  contributionEntries,
+  contributionEntryRelations,
+  contributionEntryType,
+  contributionKind,
+  invalidationTrigger,
+} from "./contribution.js";

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   buildIdempotencyKey,
+  classifyActor,
   fromIso,
   gitHubInstallationId,
   gitHubUserId,
@@ -29,6 +30,10 @@ const actor = z.object({
 
 const pullRequest = z.object({
   number: z.number().int().positive(),
+  body: z.string().nullable().optional(),
+  title: z.string().optional(),
+  additions: z.number().int().nonnegative().optional(),
+  deletions: z.number().int().nonnegative().optional(),
   merged: z.boolean().optional(),
   merged_at: z.string().nullable().optional(),
   closed_at: z.string().nullable().optional(),
@@ -56,6 +61,7 @@ const reviewEvent = z.object({
   action: z.string().min(1),
   review: z.object({
     id: z.number().int().positive(),
+    body: z.string().nullable().optional(),
     state: z.string().min(1),
     submitted_at: z.string().nullable().optional(),
     user: actor,
@@ -100,6 +106,25 @@ function reviewState(raw: string): "APPROVED" | "CHANGES_REQUESTED" | "COMMENTED
 const CO_AUTHORS_NOT_YET_RESOLVED: readonly GitHubUserId[] = [];
 
 /**
+ * Whether the text points at an issue.
+ *
+ * Structural, so it needs no threshold Kreds cannot cite: either a reference is
+ * there or it is not. Matches both a bare `#123` and GitHub's closing keywords,
+ * because a pull request that says "fixes #12" has linked an issue whichever
+ * form it used.
+ */
+const ISSUE_REFERENCE = /(^|\s)(close[sd]?|fix(e[sd])?|resolve[sd]?)?\s*#\d+/i;
+
+function linksIssue(...text: readonly (string | null | undefined)[]): boolean {
+  return text.some((value) => (value ? ISSUE_REFERENCE.test(value) : false));
+}
+
+/** Empty is definitively not meaningful. Non-empty is as far as Kreds can honestly go. */
+function hasText(value: string | null | undefined): boolean {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+/**
  * @returns the fact this delivery describes, or `null` when it describes
  * nothing Kreds reads. `null` is an ordinary answer: GitHub sends every event
  * the App subscribes to, and most of them are not economic.
@@ -133,6 +158,10 @@ function normalizePullRequest(payload: unknown): DomainEvent | null {
     gitHubInstallationId: gitHubInstallationId(app.id),
     pullRequestNumber: pr.number,
     authorGitHubUserId: gitHubUserId(pr.user.id),
+    // Classified from what GitHub itself states about the account. Every
+    // heuristic beyond that is operational and belongs to the Network.
+    authorActorType: classifyActor(pr.user),
+    authorLogin: pr.user.login,
   };
 
   if (!pr.merged) {
@@ -154,6 +183,14 @@ function normalizePullRequest(payload: unknown): DomainEvent | null {
     mergedToPrimaryBranch:
       repo.default_branch !== undefined && pr.base?.ref === repo.default_branch,
     mergedByGitHubUserId: pr.merged_by ? gitHubUserId(pr.merged_by.id) : null,
+    signals: {
+      changedLines:
+        pr.additions === undefined && pr.deletions === undefined
+          ? null
+          : (pr.additions ?? 0) + (pr.deletions ?? 0),
+      hasDescription: hasText(pr.body),
+      linksIssue: linksIssue(pr.body, pr.title),
+    },
   };
 }
 
@@ -177,6 +214,8 @@ function normalizeReview(payload: unknown): DomainEvent | null {
     gitHubInstallationId: gitHubInstallationId(app.id),
     pullRequestNumber: pr.number,
     reviewerGitHubUserId: gitHubUserId(review.user.id),
+    reviewerActorType: classifyActor(review.user),
+    reviewerLogin: review.user.login,
     authorGitHubUserId: gitHubUserId(pr.user.id),
     state: reviewState(review.state),
     // A03: "A post-merge review does not retroactively create eligibility."
@@ -184,5 +223,6 @@ function normalizeReview(payload: unknown): DomainEvent | null {
       pr.merged_at !== null && pr.merged_at !== undefined
         ? new Date(submittedAt) > new Date(pr.merged_at)
         : false,
+    signals: { hasBody: hasText(review.body) },
   };
 }

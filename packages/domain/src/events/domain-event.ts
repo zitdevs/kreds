@@ -1,3 +1,4 @@
+import type { ActorType } from "../identity/identity.js";
 import type {
   GitHubInstallationId,
   GitHubUserId,
@@ -47,26 +48,57 @@ export interface PullRequestMerged extends BaseDomainEvent {
   readonly type: "PULL_REQUEST_MERGED";
   readonly pullRequestNumber: number;
   readonly authorGitHubUserId: GitHubUserId;
+  /**
+   * What GitHub said the author is.
+   *
+   * Carried on the event rather than looked up later, because it is part of
+   * what Kreds understood at the time. Law XVI decides from it, and 03 requires
+   * `UNKNOWN` to fail closed toward restriction.
+   */
+  readonly authorActorType: ActorType;
+  readonly authorLogin: string;
   /** Verified human co-authors only. Bots and Apps are excluded upstream (03). */
   readonly coAuthorGitHubUserIds: readonly GitHubUserId[];
   readonly mergedToPrimaryBranch: boolean;
   readonly mergedByGitHubUserId: GitHubUserId | null;
+  /**
+   * The quality signals Kreds could read from the payload.
+   *
+   * Only structural facts live here: a body is empty or it is not, a reference
+   * to an issue is present or it is not, a diff is a size the published bands
+   * name. Anything needing a threshold Kreds cannot cite is deliberately absent
+   * rather than guessed, and absent scores as not met.
+   */
+  readonly signals: {
+    /** `null` when GitHub did not report the diff size. */
+    readonly changedLines: number | null;
+    readonly hasDescription: boolean;
+    readonly linksIssue: boolean;
+  };
 }
 
 export interface PullRequestClosed extends BaseDomainEvent {
   readonly type: "PULL_REQUEST_CLOSED";
   readonly pullRequestNumber: number;
   readonly authorGitHubUserId: GitHubUserId;
+  readonly authorActorType: ActorType;
+  readonly authorLogin: string;
 }
 
 export interface ReviewSubmitted extends BaseDomainEvent {
   readonly type: "REVIEW_SUBMITTED";
   readonly pullRequestNumber: number;
   readonly reviewerGitHubUserId: GitHubUserId;
+  readonly reviewerActorType: ActorType;
+  readonly reviewerLogin: string;
   readonly authorGitHubUserId: GitHubUserId;
   readonly state: "APPROVED" | "CHANGES_REQUESTED" | "COMMENTED" | "DISMISSED";
   /** Whether the review landed after the pull request was merged (A03). */
   readonly afterMerge: boolean;
+  readonly signals: {
+    /** Whether the reviewer wrote anything, as opposed to a bare state change. */
+    readonly hasBody: boolean;
+  };
 }
 
 export interface RepositoryConnected extends BaseDomainEvent {
