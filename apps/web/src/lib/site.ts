@@ -25,6 +25,19 @@ export const analytics = {
   domains: "kreds.sh",
 } as const;
 
+/**
+ * Microsoft Clarity — heatmaps and session replay.
+ *
+ * Unlike Umami this is NOT cookieless: the loader declares `_clck` plus the
+ * Microsoft Advertising identifiers `_uetmsclkid` and `_uetvid`, all with a
+ * 365-day expiry, and `content: true` means the DOM is captured for replay.
+ * Treat it as consent-requiring in the EU, and configure masking before the
+ * app itself (real handles, real team data) is ever recorded.
+ */
+export const clarity = {
+  projectId: "y64elrildm",
+} as const;
+
 export const links = {
   github: "https://github.com/zitdevs/kreds",
   discussions: "https://github.com/zitdevs/kreds/discussions",

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { site, links, analytics } from "@/lib/site";
+import { site, links, analytics, clarity } from "@/lib/site";
 import { plans } from "@/lib/pricing";
 import { faqs } from "@/lib/faq";
 import "./globals.css";
@@ -146,6 +146,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           src={analytics.src}
           data-website-id={analytics.websiteId}
           data-domains={analytics.domains}
+        />
+        {/*
+          Clarity's own loader, kept as they ship it. It is not optional
+          boilerplate: the tag at clarity.ms/tag/<id> calls window.clarity()
+          on its first line, so without this queue stub defined first it
+          throws. Loading the tag on its own does not work.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","${clarity.projectId}");`,
+          }}
         />
         <script
           type="application/ld+json"
