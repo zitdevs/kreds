@@ -29,6 +29,8 @@ const snapshots = join(here, "snapshots");
 const CHECKSUMS: Readonly<Record<string, string>> = {
   "kreds-rules-public-v0.4.json":
     "5396d073e7c3b2be95ba816a8d149caf8b046cd592bcd0633359521cc3ac211c",
+  "kreds-rules-public-v0.5.json":
+    "061c3d87c2f1fa2902947d98f609b55e62623b2b6f0a8b21a63ce039602b5a05",
 };
 
 describe("the snapshots are copies, not edits", () => {
@@ -55,8 +57,8 @@ describe("the snapshots are copies, not edits", () => {
 
 describe("what the policy publishes", () => {
   it("loads and reports its version", () => {
-    expect(CURRENT_RULES_VERSION).toBe("v0.4");
-    expect(currentPolicy().rulesVersion).toBe("v0.4");
+    expect(CURRENT_RULES_VERSION).toBe("v0.5");
+    expect(currentPolicy().rulesVersion).toBe("v0.5");
   });
 
   /**

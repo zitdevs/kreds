@@ -7,6 +7,7 @@ import { ContributionModule } from "./contribution/contribution.module.js";
 import { DatabaseModule } from "./database/database.module.js";
 import { EligibilityModule } from "./eligibility/eligibility.module.js";
 import { RelevanceModule } from "./relevance/relevance.module.js";
+import { AccessModule } from "./access/access.module.js";
 import { SupplyModule } from "./supply/supply.module.js";
 import { GitHubModule } from "./github/github.module.js";
 import { HealthController } from "./health/health.controller.js";
@@ -20,6 +21,7 @@ import { HealthController } from "./health/health.controller.js";
     ContributionModule,
     EligibilityModule,
     RelevanceModule,
+    AccessModule,
     SupplyModule,
   ],
   controllers: [HealthController],

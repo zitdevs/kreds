@@ -206,10 +206,14 @@ export {
 } from "./economy/position.js";
 
 export {
+  ALL_OBSERVABLE,
   due,
   hasSettled,
+  lockedInTheDark,
   settlementWindow,
   settlesAt,
+  type Observability,
+  type ObservabilityLookup,
   type SettlementWindow,
 } from "./economy/settlement.js";
 
@@ -239,11 +243,14 @@ export {
 } from "./ledger/ledger.js";
 
 export {
+  claimsToExpire,
+  ExpiryNotConfiguredError,
   inSettlementOrder,
   isOutstanding,
   outstandingOn,
   totalDebt,
   totalOutstanding,
+  type ClaimExpiry,
   type Debt,
   type DebtScope,
   type Receivable,
@@ -265,3 +272,70 @@ export {
   type SupplyInputs,
   type SupplyReconciliation,
 } from "./invariants/supply.js";
+
+export {
+  CLIENT_ROLES,
+  ClientOriginatedEvidenceError,
+  factKey,
+  INGESTION_MODES,
+  provenance,
+  type ClientRole,
+  type IngestionMode,
+  type Provenance,
+} from "./access/provenance.js";
+
+export {
+  FeatureRequiresOrganizationError,
+  isAvailable,
+  landingFor,
+  ORGANIZATION_ONLY_FEATURES,
+  PERSONAL_FEATURES,
+  POSITION_SCOPES,
+  requireFeature,
+  type EventContext,
+  type Feature,
+  type Landing,
+  type OrganizationOnlyFeature,
+  type PersonalFeature,
+  type PositionScope,
+} from "./access/scope.js";
+
+export {
+  BindingNotVerifiedError,
+  assertForwardOnly,
+  decideBinding,
+  isWithinBinding,
+  RetroactiveScopeError,
+  requireVerifiedAuthority,
+  type BindingDecision,
+  type BindingEvidence,
+  type BindingRefusal,
+  type OrganizationGrant,
+} from "./access/binding.js";
+
+export {
+  assertMayBeCharged,
+  consentingAuthorityFor,
+  NoConsentingContextError,
+  NO_SHARED_FUNDING,
+  routeLiability,
+  type ChargeContext,
+  type ConsentingAuthority,
+  type FundingAvailable,
+  type LiabilityDecision,
+  type LiabilityRoute,
+} from "./access/consent.js";
+
+export {
+  capUnobserved,
+  NOBODY_OBSERVED,
+  NO_UNOBSERVED_ALLOWANCE,
+  unobservedCaps,
+  UnobservedCapsNotConfiguredError,
+  wasObserved,
+  type CappedAward,
+  type CapReason,
+  type ObservationContext,
+  type UnobservedCaps,
+  type UnobservedTally,
+} from "./access/observation.js";

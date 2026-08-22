@@ -26,6 +26,10 @@ export const SUPPLY_TERMS = [
   "CENTRAL_BANK_RESERVE",
   "GLOBAL_WALLET",
   "ORGANIZATION_POSITION",
+  // A04. A personal position holds official KRED exactly as an organization
+  // position does, so it is a term in the equation, not an exception to it.
+  // The guard below named it before any test ran.
+  "PERSONAL_POSITION",
   "TREASURY",
   "REVIEW_FUND",
   "PENDING",

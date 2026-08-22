@@ -1,5 +1,6 @@
 import { and, eq, inArray, isNull, lte, sql } from "drizzle-orm";
 import {
+  ALL_OBSERVABLE,
   derivePosition,
   due,
   entry as validateEntry,
@@ -8,6 +9,7 @@ import {
   type EconomicPosition,
   type Kredbits,
   type LedgerEntry,
+  type ObservabilityLookup,
   type SettlementWindow,
   type Timestamp,
 } from "@kreds/domain";
@@ -117,6 +119,13 @@ export class Positions {
    * value waits, and a default here would be this file inventing a number that
    * belongs to policy.
    *
+   * A04 added a third condition, and it is not expressible in SQL at all:
+   * pending value only settles while its evidentiary context is still
+   * observable. 26: "Going dark is legitimate; settling in the dark is not."
+   * The lookup arrives as an argument because whether a context is observable
+   * is a question about authorizations and provider access, not about the
+   * ledger, and this repository does not know the answer.
+   *
    * The window is expressed twice, once as an indexed SQL cutoff and once as
    * the domain's `due`, and they are the same inequality. That is deliberate
    * redundancy rather than a division of labour, and worth being plain about:
@@ -128,7 +137,11 @@ export class Positions {
    *
    * @returns how many entries settled.
    */
-  async settleDue(window: SettlementWindow, now: Timestamp): Promise<number> {
+  async settleDue(
+    window: SettlementWindow,
+    now: Timestamp,
+    observability: ObservabilityLookup = ALL_OBSERVABLE,
+  ): Promise<number> {
     const cutoff = new Date(now - window.milliseconds);
 
     const candidates = await this.db
@@ -138,7 +151,7 @@ export class Positions {
       .orderBy(ledgerEntries.createdAt)
       .limit(SWEEP_LIMIT);
 
-    const ready = due(candidates.map(toEntry), window, now);
+    const ready = due(candidates.map(toEntry), window, now, observability);
     if (ready.length === 0) return 0;
 
     const settledAt = new Date(now);

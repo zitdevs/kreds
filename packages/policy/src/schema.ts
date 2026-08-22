@@ -191,6 +191,16 @@ export const policySchema = z.object({
     }),
     dailyCaps: z.union([notPublished, z.unknown()]),
     unclaimedIdentitiesEligible: z.boolean(),
+    /**
+     * A04. Points in a context with no independent human observer are capped.
+     *
+     * `NOT_PUBLISHED`, and typed as the literal so that no code can read it as
+     * "absent, so award without a bound". 24: GitHub attesting that a merge
+     * happened "is not the same as anyone judging it was worth something."
+     */
+    unobservedContextCaps: notPublished.optional(),
+    /** True: "Not refused: solo work in a private repository is real work." */
+    unobservedContextAwarded: z.literal(true).optional(),
   }),
 
   /**
@@ -276,6 +286,102 @@ export const policySchema = z.object({
 
   /** 23, Who owes the debt. */
   debtTypes: z.array(z.string().min(1)).nonempty(),
+
+  /**
+   * How activity reaches Kreds, and who may originate a claim.
+   *
+   * Amendment A04. Absent from `v0.4` and earlier, which is why every section
+   * below is optional: Law XV keeps history explainable under the rules that
+   * produced it, so an older snapshot has to keep loading rather than being
+   * retrofitted with values it never had.
+   */
+  access: z
+    .object({
+      /** A04: organizations adopt for shared money, not to let their people play. */
+      organizationAdoptionRequired: z.literal(false),
+      ingestionModes: z
+        .array(z.enum(["PROVIDER_WEBHOOK", "SERVER_SIDE_DELEGATED_QUERY"]))
+        .nonempty(),
+      /**
+       * Law XXXV, pinned rather than read.
+       *
+       * 26: "Anything a client is trusted to send, an attacker sends directly
+       * with curl: no repository, no account history, no work." A policy file
+       * that permitted it would be one Kreds must refuse to load, because the
+       * alternative is a flag somebody flips for a demo.
+       */
+      clientOriginatedEvidencePermitted: z.literal(false),
+      /** What a client may do instead. Display, and nothing else. */
+      clientRoles: z.array(z.literal("DISPLAY_ONLY")).nonempty(),
+      ladder: z
+        .array(
+          z.object({
+            context: z.string().min(1),
+            orgActionRequired: z.enum(["NONE", "ORG_WIDE_APPROVAL"]),
+          }),
+        )
+        .nonempty(),
+    })
+    .optional(),
+
+  /**
+   * Where an event lands.
+   *
+   * Law IV as amended by A04: "the connected GitHub Organization's economy where
+   * a Kreds Team exists, otherwise the contributor's personal position. It never
+   * lands directly in a global wallet."
+   */
+  economicScope: z
+    .object({
+      positions: z.array(z.enum(["PERSONAL", "ORGANIZATION"])).nonempty(),
+      defaultWhenNoTeam: z.literal("PERSONAL"),
+      /** Law IV. Pinned: a direct pipe to the wallet deletes every Part XI protection. */
+      directToGlobalWalletPermitted: z.literal(false),
+      /** 26: "This is not a lighter tier. It is the same accounting with a different boundary." */
+      personalPositionUsesSameStates: z.literal(true),
+      personalPositionUsesSameSettlement: z.literal(true),
+      /** Everything involving money that is not the individual's. */
+      orgOnlyFeatures: z.array(z.string().min(1)).nonempty(),
+    })
+    .optional(),
+
+  /**
+   * Law XXXVI, Only Organization Authority Binds an Organization.
+   *
+   * The three insufficiencies are pinned to `false` because each one is a real
+   * path somebody would otherwise reach for: 26 lists "being a member, being
+   * first to connect, having write access to a repository, or contributing to
+   * one of its public repositories" and calls all of them never sufficient.
+   */
+  organizationBinding: z
+    .object({
+      requiresOrganizationAuthority: z.literal(true),
+      membershipSufficient: z.literal(false),
+      firstConnectionSufficient: z.literal(false),
+      repositoryAccessSufficient: z.literal(false),
+      /** "A binding valid at creation is not evidence of authority today." */
+      reverifyBeforeTreasuryActions: z.literal(true),
+    })
+    .optional(),
+
+  /**
+   * Law XXXVII, Liability Requires a Consenting Context.
+   *
+   * > "Earning without consent is a gift. Owing without consent is an
+   * > imposition."
+   */
+  consent: z
+    .object({
+      earningRequiresConsent: z.literal(false),
+      chargingRequiresConsentingContext: z.literal(true),
+      consentingAuthorities: z.object({
+        OWN_REPOSITORY: z.literal("CONTRIBUTOR"),
+        BOUND_ORGANIZATION: z.literal("ORGANIZATION"),
+      }),
+      /** Where the obligation goes when nobody consented. Never the author. */
+      fallbackWhenNoConsentingContext: z.array(z.enum(["FUNDED_SOURCE", "RECEIVABLE"])).nonempty(),
+    })
+    .optional(),
 });
 
 export type Policy = z.infer<typeof policySchema>;

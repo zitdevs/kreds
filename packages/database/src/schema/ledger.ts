@@ -28,6 +28,7 @@ export const accountType = pgEnum("account_type", [
   "CENTRAL_BANK_RESERVE",
   "GLOBAL_WALLET",
   "ORGANIZATION_POSITION",
+  "PERSONAL_POSITION",
   "TREASURY",
   "REVIEW_FUND",
   "PENDING",

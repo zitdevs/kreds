@@ -1,3 +1,4 @@
+import { CURRENT_RULES_VERSION } from "@kreds/policy";
 import { describe, expect, it, vi } from "vitest";
 
 import { ContributionService } from "./contribution.service.js";
@@ -79,7 +80,10 @@ describe("recognition is not payment", () => {
     expect(award.kind).toBe("PULL_REQUEST_MERGED");
     expect(award.points).toBeGreaterThan(0);
     // Law XV: the version that decided travels with the decision.
-    expect(award.rulesVersion).toBe("v0.4");
+    // From the policy rather than a literal. A hard-coded version made this go
+    // red on the A04 bump for the wrong reason: it was asserting the number,
+    // not that the service records whatever version actually decided.
+    expect(award.rulesVersion).toBe(CURRENT_RULES_VERSION);
   });
 
   /**

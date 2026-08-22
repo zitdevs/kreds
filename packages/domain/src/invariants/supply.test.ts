@@ -9,6 +9,7 @@ const balances = (over: Partial<Record<AccountType, ReturnType<typeof fromKred>>
   CENTRAL_BANK_RESERVE: fromKred(4_120_000),
   GLOBAL_WALLET: fromKred(780_000),
   ORGANIZATION_POSITION: ZERO_KREDBITS,
+  PERSONAL_POSITION: ZERO_KREDBITS,
   TREASURY: fromKred(70_000),
   REVIEW_FUND: ZERO_KREDBITS,
   PENDING: ZERO_KREDBITS,
@@ -37,6 +38,7 @@ describe("official KRED conservation", () => {
       "CENTRAL_BANK_RESERVE",
       "GLOBAL_WALLET",
       "ORGANIZATION_POSITION",
+      "PERSONAL_POSITION",
       "TREASURY",
       "REVIEW_FUND",
       "PENDING",
@@ -119,5 +121,50 @@ describe("contribution points cannot enter the equation", () => {
     // @ts-expect-error Law XXVI: points are not denominated in KRED and have no supply
     withPoints.PROTOCOL = points(8942);
     expect(withPoints).toBeDefined();
+  });
+});
+
+describe("a personal position is money, not an exception to the equation", () => {
+  /**
+   * Law IV as amended by A04. 26: a personal position "is not a lighter tier. It
+   * is the same accounting with a different boundary."
+   *
+   * The strongest evidence for that is arithmetic rather than prose: KRED moved
+   * from an organization position to a personal one changes nothing about
+   * whether the books balance, because both are terms.
+   */
+  it("reconciles the same whether value sits in an org position or a personal one", () => {
+    const inOrg = reconcileSupply({
+      balances: balances({
+        GLOBAL_WALLET: fromKred(700_000),
+        ORGANIZATION_POSITION: fromKred(80_000),
+      }),
+    });
+    const inPersonal = reconcileSupply({
+      balances: balances({
+        GLOBAL_WALLET: fromKred(700_000),
+        PERSONAL_POSITION: fromKred(80_000),
+      }),
+    });
+
+    expect(inOrg.reconciles).toBe(true);
+    expect(inPersonal.reconciles).toBe(true);
+    expect(inPersonal.delta).toBe(inOrg.delta);
+  });
+
+  /**
+   * The failure the exhaustiveness guard in `supply.ts` exists to prevent: a
+   * new account type dropped from the equation, with every test still green and
+   * "No unexplained delta is acceptable" quietly no longer holding.
+   *
+   * Adding `PERSONAL_POSITION` to `AccountType` turned that guard into a
+   * compile error naming the missing term, before any test ran.
+   */
+  it("counts a personal position that would otherwise be an unexplained delta", () => {
+    const orphaned = reconcileSupply({
+      balances: balances({ PERSONAL_POSITION: fromKred(1) }),
+    });
+    expect(orphaned.reconciles).toBe(false);
+    expect(orphaned.delta).toBe(fromKred(1));
   });
 });

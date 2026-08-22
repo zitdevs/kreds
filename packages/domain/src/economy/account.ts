@@ -33,6 +33,16 @@ export type AccountType =
   | "GLOBAL_WALLET"
   /** A user's org-scoped accounting context, same currency (Law IV, Law V). */
   | "ORGANIZATION_POSITION"
+  /**
+   * A user's own accounting context, where no Kreds Team owns the work.
+   *
+   * Added by A04. 26: "This is not a lighter tier. It is the same accounting
+   * with a different boundary, because Law VII does not care whether an
+   * organization happens to be involved." It is a term in the supply equation
+   * on the same footing as an organization position, which is why it is a
+   * member of this union rather than a flag on one.
+   */
+  | "PERSONAL_POSITION"
   /** An org-held account funding challenges, grants and reviewer support. */
   | "TREASURY"
   /** An org or repo account that finances review labour (Law XXII). */

@@ -15,6 +15,7 @@ export {
   domainEventType,
   domainEvents,
   eventStatus,
+  ingestionMode,
   gitHubEventRelations,
   gitHubEvents,
 } from "./events.js";
@@ -51,3 +52,9 @@ export {
   receivableStatus,
   receivables,
 } from "./claims.js";
+export {
+  delegatedAuthorizationRelations,
+  delegatedAuthorizations,
+  organizationGrantRelations,
+  organizationGrants,
+} from "./access.js";

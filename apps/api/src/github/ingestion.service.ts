@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 
 import { EventStore, InstallationRepository } from "@kreds/database";
-import { gitHubInstallationId, type DomainEvent } from "@kreds/domain";
+import { gitHubInstallationId, type DomainEvent, type IngestionMode } from "@kreds/domain";
 
 import { ContributionService } from "../contribution/contribution.service.js";
 import { EligibilityService } from "../eligibility/eligibility.service.js";
@@ -44,6 +44,14 @@ export class IngestionService {
     deliveryId: string;
     eventType: string;
     payload: unknown;
+    /**
+     * Which of the two lawful channels this came through (Law XXXV).
+     *
+     * Optional, defaulting to the webhook, because every caller before A04 was
+     * a webhook and Law XV does not permit history to be restated. There is no
+     * third value to pass: the type has two members.
+     */
+    ingestionMode?: IngestionMode;
   }): Promise<IngestionResult> {
     const body = input.payload as { action?: unknown; installation?: { id?: unknown } };
     const action = typeof body?.action === "string" ? body.action : null;
@@ -56,6 +64,7 @@ export class IngestionService {
       action,
       gitHubInstallationId: rawInstallationId ? gitHubInstallationId(rawInstallationId) : null,
       payload: input.payload,
+      ingestionMode: input.ingestionMode ?? "PROVIDER_WEBHOOK",
     });
 
     // A redelivery of something already finished is nothing to do. A redelivery
