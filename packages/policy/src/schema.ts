@@ -97,6 +97,71 @@ export const policySchema = z.object({
     unknownFailsClosed: z.boolean(),
   }),
 
+  /**
+   * The eligibility matrix, published as data.
+   *
+   * This is the part of eligibility Kreds can evaluate anywhere: the context a
+   * repository is in, whether a valid review exists, and which trust band it
+   * sits in. The **multipliers** attached to a reduced outcome are monetary
+   * policy and are withheld, which is why `economicEligibility.multipliers` is
+   * `NOT_PUBLISHED` and this table carries outcomes rather than numbers.
+   */
+  mergeEligibility: z.object({
+    privateRepoRequiresEligibleReview: z.boolean(),
+    publicVisibilityAloneSufficient: z.boolean(),
+    matrix: z
+      .array(
+        z.object({
+          context: z.enum([
+            "PERSONAL_PRIVATE",
+            "PERSONAL_PUBLIC",
+            "ORGANIZATION_PRIVATE",
+            "ORGANIZATION_PUBLIC",
+          ]),
+          review: z.boolean(),
+          /** `null` where the row applies at any trust level. */
+          trust: z.enum(["LOW", "MEDIUM", "HIGH", "ELIGIBLE"]).nullable(),
+          eligibility: z.enum(["NONE", "REDUCED", "PARTIAL", "FULL", "REDUCED_OR_NONE"]),
+        }),
+      )
+      .min(1),
+    /** A03: a post-merge review does not retroactively create eligibility. */
+    postMergeReviewEstablishesEligibility: z.literal(false),
+    draftReviewEstablishesEligibility: z.literal(false),
+  }),
+
+  economicEligibility: z.object({
+    appliesBeforePricing: z.boolean(),
+    outcomes: z.array(z.string().min(1)),
+    /** Monetary policy, and withheld. Core never supplies one. */
+    multipliers: z.union([notPublished, z.unknown()]),
+    appliesToPlatformFundedReviewRewards: z.boolean(),
+    appliesToAuthorFundedReviewTransfers: z.boolean(),
+    appliesToCreditFacilityDraws: z.boolean(),
+    appliesToProtectionPayments: z.boolean(),
+  }),
+
+  repositoryTrust: z.object({
+    tiers: z.array(z.string().min(1)),
+    tiersApplyTo: z.string().min(1),
+    tierThresholds: z.union([notPublished, z.unknown()]),
+    scoringFormula: z.union([notPublished, z.unknown()]),
+    /** Law XXXI: no single popularity metric defines economic legitimacy. */
+    singleMetricMayBeDecisive: z.literal(false),
+    signals: z.array(z.string().min(1)),
+  }),
+
+  reviewerEconomicValidation: z.object({
+    mustBeDistinctIdentity: z.literal(true),
+    mustBeHuman: z.literal(true),
+    mustMeetMinimumTrust: z.boolean(),
+    trustThreshold: z.union([notPublished, z.unknown()]),
+    mustNotBeFlaggedForCollusion: z.boolean(),
+    mustBeMeaningfulReview: z.boolean(),
+    /** Law XXXIV: alternate accounts cannot legitimize self-directed work. */
+    alternateAccountValidationPermitted: z.literal(false),
+  }),
+
   contributionPoints: z.object({
     isCurrency: z.literal(false),
     transferable: z.literal(false),

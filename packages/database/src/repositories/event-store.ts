@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import type { DomainEvent, EventStatus, GitHubInstallationId } from "@kreds/domain";
 
 import type { Database } from "../client.js";
@@ -208,6 +208,32 @@ export class EventStore {
       status: row.status,
       isRedelivery: false,
     }));
+  }
+
+  /**
+   * Every review recorded against one pull request.
+   *
+   * Read from the domain events rather than from a reviews table, because the
+   * facts are already there and a second copy would be a second truth. 25 needs
+   * this to answer whether a merge had independent human validation, which is
+   * the question that decides whether it may create money at all.
+   */
+  async findReviewsFor(
+    gitHubRepositoryId: number,
+    pullRequestNumber: number,
+  ): Promise<readonly DomainEvent[]> {
+    const rows = await this.db
+      .select()
+      .from(domainEvents)
+      .where(
+        and(
+          eq(domainEvents.type, "REVIEW_SUBMITTED"),
+          sql`${domainEvents.data} ->> 'repositoryId' = ${String(gitHubRepositoryId)}`,
+          sql`(${domainEvents.data} -> 'pullRequestNumber')::int = ${pullRequestNumber}`,
+        ),
+      )
+      .orderBy(asc(domainEvents.occurredAt));
+    return rows.map((row) => row.data as DomainEvent);
   }
 
   async findDomainEvent(idempotencyKey: string): Promise<DomainEvent | null> {

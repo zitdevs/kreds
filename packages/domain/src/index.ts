@@ -196,6 +196,18 @@ export {
 } from "./economy/position.js";
 
 export {
+  evaluateEligibility,
+  trustBandFor,
+  type EligibilityInput,
+  type EligibilityReason,
+  type EligibilityResult,
+  type MatrixOutcome,
+  type MatrixRow,
+  type RepositoryContext,
+  type TrustBand,
+} from "./economy/eligibility.js";
+
+export {
   MOVES_NO_KRED,
   TRANSACTION_TYPES,
   entry,

@@ -4,6 +4,7 @@ import { EventStore, InstallationRepository } from "@kreds/database";
 import { gitHubInstallationId, type DomainEvent } from "@kreds/domain";
 
 import { ContributionService } from "../contribution/contribution.service.js";
+import { EligibilityService } from "../eligibility/eligibility.service.js";
 import { InstallationService } from "./installation.service.js";
 import { normalize } from "./normalizer.js";
 
@@ -36,6 +37,7 @@ export class IngestionService {
     private readonly installations: InstallationRepository,
     private readonly installationEvents: InstallationService,
     private readonly contributions: ContributionService,
+    private readonly eligibility: EligibilityService,
   ) {}
 
   async ingest(input: {
@@ -103,6 +105,14 @@ export class IngestionService {
       // Running every time makes a redelivery a repair rather than a no-op, and
       // leaves the idempotency where it belongs, on the ledger.
       await this.contributions.recognise(event);
+
+      // Layer 2, and deliberately after Layer 1 rather than gating it. 25's
+      // core rule is that the two are separate standards: work earns
+      // recognition on its own merits, and whether it may also affect an
+      // economy is a different, stricter question asked afterwards.
+      if (event.type === "PULL_REQUEST_MERGED") {
+        await this.eligibility.forMerge(event);
+      }
 
       if (!result.isNew) {
         // The same fact through a different delivery id, which is what pressing
