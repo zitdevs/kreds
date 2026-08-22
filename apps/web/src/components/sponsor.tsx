@@ -32,10 +32,10 @@ export function Sponsor() {
         <div className="border-accent-deep bg-accent-wash rounded-card relative overflow-hidden border p-8">
           <div
             aria-hidden
-            className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,#5ee9a4_0%,transparent_65%)] opacity-20 blur-2xl"
+            className="pointer-events-none absolute -top-20 -right-16 h-56 w-56 rounded-full bg-[radial-gradient(circle,#5ee9a4_0%,transparent_65%)] opacity-20 blur-2xl"
           />
           <Heart className="text-accent h-7 w-7" />
-          <p className="mt-5 text-pretty text-lg leading-relaxed">
+          <p className="mt-5 text-lg leading-relaxed text-pretty">
             Help us keep Kreds fast, useful and community-friendly.
           </p>
           <p className="text-ink-dim mt-3 text-sm leading-relaxed">
@@ -52,7 +52,7 @@ export function Sponsor() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <h3 className="text-ink-faint font-mono text-xs uppercase tracking-[0.12em]">
+          <h3 className="text-ink-faint font-mono text-xs tracking-[0.12em] uppercase">
             Not in a position to sponsor?
           </h3>
           {otherWays.map((c) => (

@@ -22,7 +22,7 @@ export function Pricing() {
             }`}
           >
             {plan.featured ? (
-              <span className="bg-accent absolute -top-2.5 left-6 rounded-full px-2.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-[#04140c]">
+              <span className="bg-accent absolute -top-2.5 left-6 rounded-full px-2.5 py-0.5 text-[0.65rem] font-semibold tracking-wide text-[#04140c] uppercase">
                 Most teams
               </span>
             ) : null}

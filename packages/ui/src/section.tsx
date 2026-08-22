@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 export function Eyebrow({ children }: { children: ReactNode }) {
   return (
-    <span className="text-accent font-mono text-xs uppercase tracking-[0.14em]">{children}</span>
+    <span className="text-accent font-mono text-xs tracking-[0.14em] uppercase">{children}</span>
   );
 }
 
@@ -31,11 +31,11 @@ export function Section({
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <div className={`max-w-2xl ${centered ? "mx-auto text-center" : ""}`}>
           {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
-          <h2 className="mt-3 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
             {title}
           </h2>
           {lead ? (
-            <p className="text-ink-dim mt-4 text-pretty text-base leading-relaxed">{lead}</p>
+            <p className="text-ink-dim mt-4 text-base leading-relaxed text-pretty">{lead}</p>
           ) : null}
         </div>
         <div className="mt-12 sm:mt-14">{children}</div>

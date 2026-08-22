@@ -42,7 +42,7 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
     <DocsShell page={page} headings={headings}>
       <article>
         <header className="mb-10">
-          <p className="text-ink-faint text-[0.7rem] font-semibold uppercase tracking-[0.14em]">
+          <p className="text-ink-faint text-[0.7rem] font-semibold tracking-[0.14em] uppercase">
             {section?.title}
           </p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{page.title}</h1>

@@ -42,7 +42,7 @@ export function License() {
     >
       <div className="grid gap-5 lg:grid-cols-[1fr_1.1fr] lg:items-start">
         <div className="border-line bg-surface/60 rounded-card border p-6">
-          <h3 className="text-accent font-mono text-xs uppercase tracking-[0.14em]">You can</h3>
+          <h3 className="text-accent font-mono text-xs tracking-[0.14em] uppercase">You can</h3>
           <ul className="mt-4 flex flex-col gap-3">
             {allowed.map((item) => (
               <li key={item} className="flex gap-2.5 text-sm">

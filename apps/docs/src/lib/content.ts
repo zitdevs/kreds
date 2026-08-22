@@ -1,6 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
-import { dirname, join, posix, resolve } from "node:path";
+import { join, posix } from "node:path";
 
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
@@ -128,21 +127,18 @@ export function pagesIn(section: SectionId): readonly DocPage[] {
 }
 
 /**
- * Walk up from this file until the app root appears.
+ * Where the markdown lives, relative to the app root.
  *
- * Resolving by marker rather than by a fixed number of `..` segments means
- * moving this file inside the app does not silently break the build.
+ * Deliberately a static path rather than a search upward from this file. A
+ * computed root cannot be analysed by the bundler, so it concludes that any
+ * file in the project might be read and traces the entire tree into the server
+ * output, source and all. A literal segment lets it trace `content/` and
+ * nothing else.
+ *
+ * `process.cwd()` is the app root because every script that reads this runs
+ * from `apps/docs`, both during the build and under `next start`.
  */
-function contentRoot(): string {
-  let current = resolve(dirname(new URL(import.meta.url).pathname));
-  for (let depth = 0; depth < 10; depth += 1) {
-    if (existsSync(join(current, "content"))) return join(current, "content");
-    const parent = dirname(current);
-    if (parent === current) break;
-    current = parent;
-  }
-  throw new Error("could not locate the content directory.");
-}
+const CONTENT_ROOT = "content";
 
 export interface Heading {
   readonly id: string;
@@ -235,7 +231,7 @@ function stripLeadingTitle() {
 }
 
 export async function renderDoc(page: DocPage): Promise<RenderedDoc> {
-  const raw = await readFile(join(contentRoot(), page.source), "utf8");
+  const raw = await readFile(join(process.cwd(), CONTENT_ROOT, page.source), "utf8");
   const headings: Heading[] = [];
 
   const file = await unified()

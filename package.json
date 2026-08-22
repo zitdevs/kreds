@@ -19,11 +19,12 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky",
-    "dev:docs": "pnpm --filter @kreds/docs dev"
+    "dev:docs": "pnpm --filter @kreds/docs dev",
+    "dev:all": "pnpm --parallel --filter './apps/*' dev"
   },
   "devDependencies": {
     "husky": "^9.1.7",
     "prettier": "^3.3.3",
-    "prettier-plugin-tailwindcss": "^0.6.8"
+    "prettier-plugin-tailwindcss": "^0.8.1"
   }
 }
