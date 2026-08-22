@@ -24,6 +24,7 @@ export {
   type KredsNetworkClient,
   type NetworkIdentity,
   type OfficialPosition,
+  type SupplyReadModel,
 } from "./protocol.js";
 
 export { OfflineNetworkClient } from "./offline-client.js";

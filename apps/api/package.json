@@ -16,6 +16,7 @@
   "dependencies": {
     "@kreds/database": "workspace:*",
     "@kreds/domain": "workspace:*",
+    "@kreds/network-client": "workspace:*",
     "@kreds/policy": "workspace:*",
     "@nestjs/common": "^10.4.15",
     "@nestjs/config": "^3.3.0",

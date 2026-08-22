@@ -5,6 +5,7 @@ import {
   type KredsNetworkClient,
   type NetworkIdentity,
   type OfficialPosition,
+  type SupplyReadModel,
 } from "./protocol.js";
 
 export interface HttpNetworkClientOptions {
@@ -107,5 +108,9 @@ export class HttpNetworkClient implements KredsNetworkClient {
 
   async getNetworkIdentity(gitHubUserId: number): Promise<NetworkIdentity | null> {
     return this.call<NetworkIdentity>(`/v1/identities/${gitHubUserId}`, { method: "GET" });
+  }
+
+  async getSupply(): Promise<SupplyReadModel | null> {
+    return this.call<SupplyReadModel>("/v1/supply", { method: "GET" });
   }
 }

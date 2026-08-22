@@ -18,7 +18,7 @@
  * and this repository is public.
  */
 
-export const PROTOCOL_VERSION = "1";
+export const PROTOCOL_VERSION = "2";
 
 export type CandidateKind = "PULL_REQUEST_MERGED" | "REVIEW_SUBMITTED";
 
@@ -132,6 +132,26 @@ export interface NetworkIdentity {
 }
 
 /**
+ * What Core may show about the supply.
+ *
+ * Three numbers, all read-only, all decimal strings. Phase 8 is explicit that
+ * "Core cannot mutate Central Bank state", and this shape is part of how that
+ * holds: there is no request type to go with it, because a read model has no
+ * parameters and a thing with no parameters is hard to turn into an
+ * instruction.
+ *
+ * Strings rather than numbers because this crosses the wire as JSON and JSON
+ * numbers are doubles. Five million KRED is inside the safe range today, and
+ * relying on that would be relying on the supply never gaining a subunit of
+ * precision.
+ */
+export interface SupplyReadModel {
+  readonly maximumSupply: string;
+  readonly circulatingSupply: string;
+  readonly reserve: string;
+}
+
+/**
  * The whole of what Core may ask of the Network.
  *
  * Core holds an implementation of this interface and nothing behind it. There
@@ -143,4 +163,12 @@ export interface KredsNetworkClient {
   submitEconomicCandidate(candidate: EconomicCandidate): Promise<EconomicDecision>;
   getOfficialPosition(gitHubUserId: number): Promise<OfficialPosition | null>;
   getNetworkIdentity(gitHubUserId: number): Promise<NetworkIdentity | null>;
+  /**
+   * The published supply figures.
+   *
+   * A read, and the only view Core has of the Central Bank. There is no
+   * counterpart that writes, which is Phase 8's done-when expressed as an
+   * absence rather than as a guard.
+   */
+  getSupply(): Promise<SupplyReadModel | null>;
 }
