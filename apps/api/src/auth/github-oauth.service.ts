@@ -26,6 +26,18 @@ const tokenResponse = z.object({
 });
 
 /**
+ * How GitHub says no.
+ *
+ * `error` is a stable machine-readable code: `incorrect_client_credentials`,
+ * `redirect_uri_mismatch`, `bad_verification_code`. Which one it is decides
+ * where an operator looks, so it is worth reading rather than discarding.
+ */
+const tokenError = z.object({
+  error: z.string(),
+  error_description: z.string().optional(),
+});
+
+/**
  * The subset of GitHub's user payload Kreds stores.
  *
  * `id` is the only field that matters for identity. Everything else is display
@@ -45,6 +57,28 @@ export interface GitHubUser {
   readonly displayName: string | null;
   readonly email: string | null;
   readonly avatarUrl: string | null;
+}
+
+function parseJson(body: string): unknown {
+  try {
+    return JSON.parse(body) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * What GitHub said went wrong, in a form safe to write to a log.
+ *
+ * This deliberately never returns the raw body. On the success path that body
+ * holds an access token, and a helper that echoes whatever it is handed is one
+ * careless call away from printing a live credential into the logs.
+ */
+function reasonIn(body: string): string {
+  const parsed = tokenError.safeParse(parseJson(body));
+  if (!parsed.success) return "no error code in the response";
+  const { error, error_description } = parsed.data;
+  return error_description ? `${error} (${error_description})` : error;
 }
 
 /**
@@ -104,16 +138,20 @@ export class GitHubOAuthService {
       }),
     });
 
+    // Read the body once, as text, because both branches below need it and a
+    // `Response` body can only be consumed a single time.
+    const body = await response.text();
+
     if (!response.ok) {
-      this.logger.warn(`GitHub token exchange returned ${response.status}`);
+      this.logger.warn(`GitHub token exchange returned ${response.status}: ${reasonIn(body)}`);
       throw new UnauthorizedException("GitHub rejected the sign-in.");
     }
 
     // GitHub answers a bad code with HTTP 200 and an `error` field, so status
     // alone is not enough to conclude the exchange worked.
-    const parsed = tokenResponse.safeParse(await response.json());
+    const parsed = tokenResponse.safeParse(parseJson(body));
     if (!parsed.success) {
-      this.logger.warn("GitHub token response did not contain an access token.");
+      this.logger.warn(`GitHub refused the token exchange: ${reasonIn(body)}`);
       throw new UnauthorizedException("GitHub rejected the sign-in.");
     }
     return parsed.data.access_token;

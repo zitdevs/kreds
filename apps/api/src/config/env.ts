@@ -37,9 +37,18 @@ export const envSchema = z.object({
 
   DATABASE_URL: z.string().url(),
 
-  /** The OAuth App. Identifies the person signing in, and never touches code. */
-  AUTH_GITHUB_ID: z.string().min(1),
-  AUTH_GITHUB_SECRET: z.string().min(1),
+  /**
+   * The OAuth App. Identifies the person signing in, and never touches code.
+   *
+   * Trimmed, unlike `AUTH_SECRET`. These two are sent to GitHub and compared
+   * there byte for byte, so a value pasted into a dashboard with a trailing
+   * newline fails every exchange with `incorrect_client_credentials` while
+   * looking correct in the interface. `AUTH_SECRET` is only ever compared
+   * against itself, so whitespace in it is harmless and trimming it would
+   * invalidate every session already issued under the untrimmed key.
+   */
+  AUTH_GITHUB_ID: z.string().trim().min(1),
+  AUTH_GITHUB_SECRET: z.string().trim().min(1),
 });
 
 export type Env = z.infer<typeof envSchema>;
