@@ -35,7 +35,7 @@ export const faqs: Faq[] = [
   },
   {
     q: "Can I self-host Kreds?",
-    a: "Yes, free, at any team size, forever. Docker Compose with Postgres and Redis is in the repository, and the whole product is in the box, and nothing is held back to push you onto a paid plan. You bring your own GitHub App credentials, so your events never leave your infrastructure.",
+    a: "Yes, free, at any team size, forever. Docker Compose with Postgres and Redis is in the repository, and the whole product is in the box. Nothing is held back to push you onto a paid plan. You bring your own GitHub App credentials, so your events never leave your infrastructure.",
   },
   {
     q: "Can I use it inside my company?",
