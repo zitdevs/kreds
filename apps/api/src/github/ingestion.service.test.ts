@@ -73,6 +73,31 @@ describe("the pipeline stores before it understands", () => {
     expect(events.markProcessed).toHaveBeenCalledWith("raw-1");
   });
 
+  /**
+   * The repair path. A fact recorded before the recognition engine existed, or
+   * while it was deploying, is scored when the delivery is replayed. The gate
+   * this replaces would have made that permanently impossible: the fact was no
+   * longer new, so recognition was skipped forever, and work that happened
+   * stayed unrecognised because of when it happened.
+   *
+   * Paying twice is prevented on the ledger, which is keyed on the same
+   * idempotency key, rather than here.
+   */
+  it("still recognises a fact that was already on file, so a replay repairs it", async () => {
+    const { service, contributions } = harness({
+      recordDomainEvent: vi.fn(async () => ({
+        id: "fact-1",
+        idempotencyKey: "PULL_REQUEST_MERGED:77001:412",
+        isNew: false,
+      })),
+    });
+
+    const result = await service.ingest(delivery);
+
+    expect(result.outcome).toBe("DUPLICATE");
+    expect(contributions.recognise).toHaveBeenCalledOnce();
+  });
+
   it("reports a fact already on file as a duplicate", async () => {
     const { service } = harness({
       recordDomainEvent: vi.fn(async () => ({
