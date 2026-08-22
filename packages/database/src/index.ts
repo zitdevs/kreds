@@ -6,7 +6,7 @@
  * records what the domain already established.
  */
 
-export { createDatabase, type Database, type DatabaseOptions } from "./client.js";
+export { createDatabase, ping, type Database, type DatabaseOptions } from "./client.js";
 export {
   IdentityRepository,
   type ClaimResult,

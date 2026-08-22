@@ -28,7 +28,8 @@ This guide takes about 20 minutes, most of it spent in GitHub's settings.
 
 That last one is the only real constraint. GitHub pushes events to you; it
 cannot reach `localhost`. For local development use a tunnel. `cloudflared
-tunnel --url http://localhost:3000` or `ngrok http 3000` both work.
+tunnel --url http://localhost:4000` or `ngrok http 4000` both work. The tunnel points
+at the API, which is the service GitHub talks to.
 
 ## 1. Get the code
 
@@ -47,7 +48,7 @@ This one only identifies people signing in. It never touches code.
 2. Fill in:
    - **Application name**: `Kreds` (or `Kreds acme-labs`)
    - **Homepage URL**: your `KREDS_URL`
-   - **Authorization callback URL**: `<KREDS_URL>/api/auth/callback/github`
+   - **Authorization callback URL**: `<KREDS_API_URL>/auth/callback/github`
 3. Generate a client secret.
 4. Put the client ID and secret into `AUTH_GITHUB_ID` and `AUTH_GITHUB_SECRET`.
 
@@ -65,7 +66,7 @@ source code.
    - **GitHub App name**: `Kreds` (must be unique across GitHub, so add your org
      name if it is taken)
    - **Homepage URL**: your `KREDS_URL`
-   - **Webhook URL**: `<KREDS_URL>/api/github/webhook`
+   - **Webhook URL**: `<KREDS_API_URL>/github/webhook`
    - **Webhook secret**: generate one with `openssl rand -hex 32` and keep it
 3. **Repository permissions**, read-only, all three:
 
@@ -92,11 +93,12 @@ Fill in `.env`. Every value, and what it is for:
 
 ### Core
 
-| Variable       | Required | Notes                                                                                        |
-| -------------- | -------- | -------------------------------------------------------------------------------------------- |
-| `KREDS_URL`    | yes      | Public origin of your instance, no trailing slash. Used for OAuth callbacks and share links. |
-| `AUTH_SECRET`  | yes      | Session signing key. `openssl rand -base64 32`.                                              |
-| `DATABASE_URL` | yes      | Postgres connection string. The compose file wires this for you.                             |
+| Variable        | Required | Notes                                                                                           |
+| --------------- | -------- | ----------------------------------------------------------------------------------------------- |
+| `KREDS_URL`     | yes      | Public origin of the web app, no trailing slash. Where people land after signing in.            |
+| `KREDS_API_URL` | yes      | Public origin of the API, no trailing slash. GitHub talks to this one, so it must be reachable. |
+| `AUTH_SECRET`   | yes      | Session signing key. `openssl rand -base64 32`.                                                 |
+| `DATABASE_URL`  | yes      | Postgres connection string. The compose file wires this for you.                                |
 
 ### GitHub OAuth
 
@@ -195,8 +197,10 @@ kreds.example.com {
 
 Two things to get right:
 
-- `KREDS_URL` must be the **public HTTPS** origin, not `http://localhost:3000`.
-  OAuth callbacks and webhook signatures are checked against it.
+- `KREDS_URL` and `KREDS_API_URL` must both be **public HTTPS** origins, not
+  `http://localhost`. OAuth callbacks and webhook signatures are checked
+  against `KREDS_API_URL`, so getting that one wrong breaks sign-in and
+  ingestion at the same time.
 - Do not buffer or rewrite the request body on `/api/github/webhook`. Webhook
   signatures are computed over the raw bytes; a proxy that reformats JSON will
   break verification.
@@ -219,8 +223,8 @@ and nothing is lost. Awards are idempotent, so a redelivery cannot double-credit
 ### `redirect_uri_mismatch` on sign-in
 
 The OAuth App's callback URL must be exactly
-`<KREDS_URL>/api/auth/callback/github`: same scheme, same host, no trailing
-slash, no port mismatch.
+`<KREDS_API_URL>/auth/callback/github`: same scheme, same host, no trailing
+slash, no port mismatch. Note that it is the **API** origin, not the web one.
 
 ### `error: unable to parse private key`
 

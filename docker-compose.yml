@@ -37,19 +37,39 @@ services:
       timeout: 3s
       retries: 10
 
-  kreds:
-    image: ghcr.io/zitdevs/kreds:latest
+  # Identity, GitHub webhooks and the economy's write path. This is the service
+  # your GitHub App points at, so it is the one that has to be reachable from
+  # the internet.
+  api:
+    image: ghcr.io/zitdevs/kreds-api:latest
     restart: unless-stopped
     ports:
-      - "${PORT:-3000}:3000"
+      - "${API_PORT:-4000}:4000"
     env_file:
       - .env
     environment:
+      PORT: 4000
       DATABASE_URL: postgresql://${POSTGRES_USER:-kreds}:${POSTGRES_PASSWORD:-kreds}@db:5432/${POSTGRES_DB:-kreds}
       REDIS_URL: redis://redis:6379
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     depends_on:
       db: { condition: service_healthy }
       redis: { condition: service_healthy }
+
+  # The interface. Reads from the API and never touches Postgres directly.
+  web:
+    image: ghcr.io/zitdevs/kreds-web:latest
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    env_file:
+      - .env
+    depends_on:
+      api: { condition: service_healthy }
 
 volumes:
   kreds-db:

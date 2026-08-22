@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
@@ -28,4 +29,20 @@ export interface DatabaseOptions {
 export function createDatabase({ url, max = 10 }: DatabaseOptions) {
   const sql = postgres(url, { max, prepare: false });
   return drizzle(sql, { schema });
+}
+
+/**
+ * Whether the database answers.
+ *
+ * Lives here so callers never need to import drizzle to ask. A health endpoint
+ * reaching for `sql` would drag the query builder into every app that only
+ * wants to know if Postgres is up.
+ */
+export async function ping(db: Database): Promise<boolean> {
+  try {
+    await db.execute(sql`select 1`);
+    return true;
+  } catch {
+    return false;
+  }
 }
