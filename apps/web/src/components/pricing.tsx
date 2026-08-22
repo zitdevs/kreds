@@ -67,8 +67,8 @@ export function Pricing() {
       {/* the honest note: Growing undercuts Team past 26 seats and we say so */}
       <p className="text-ink-faint mt-6 text-center text-sm">
         Team is per-seat, Growing is flat. Past <span className="text-ink-dim">27 members</span>{" "}
-        Growing is the cheaper of the two &mdash; we would rather tell you than let you work it out
-        on the invoice.
+        Growing is the cheaper of the two, and we would rather tell you than let you work it out on
+        the invoice.
       </p>
 
       <div className="border-accent-deep bg-accent-wash rounded-card mt-10 flex flex-col items-start gap-4 border p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -80,7 +80,7 @@ export function Pricing() {
             </h3>
             <p className="text-ink-dim mt-1.5 text-sm leading-relaxed">
               If your project is public and non-commercial, the Team tier is yours at no cost.
-              Permanently &mdash; not a discount that expires.
+              Permanently, not a discount that expires.
             </p>
           </div>
         </div>

@@ -6,7 +6,7 @@ export const site = {
   // Kept under ~155 characters so search results show the whole thing,
   // differentiating clause included.
   description:
-    "Merged pull requests, code reviews and closed issues become a live leaderboard for your engineering team \u2014 weighted so helping others ship wins.",
+    "Merged pull requests, code reviews and closed issues become a live leaderboard for your engineering team, weighted so helping others ship wins.",
   author: "ZitDevs",
   authorUrl: "https://zitdevs.com",
 } as const;
