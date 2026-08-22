@@ -26,6 +26,20 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       /**
+       * Where every call to action on this site points. Sign-up is not a page
+       * here: it is the product, on its own origin.
+       *
+       * Temporary, unlike the redirects below. Those documentation paths are
+       * never coming back, so a 308 is honest. This one is a marketing entry
+       * point that could plausibly grow into a real page one day, a plan
+       * picker ahead of the sign-in, and a 308 is cached by browsers with no
+       * expiry. Undoing one means waiting out every visitor's cache.
+       *
+       * Next forwards the incoming query string when the destination carries
+       * none of its own, so `?plan=team` survives the hop.
+       */
+      { source: "/signup", destination: "https://app.kreds.sh", permanent: false },
+      /**
        * The documentation moved to its own origin. These paths were live, in
        * the sitemap and submitted to Search Console, so they redirect rather
        * than 404. Permanent, because they are never coming back.
