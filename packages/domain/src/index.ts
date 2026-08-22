@@ -206,6 +206,14 @@ export {
 } from "./economy/position.js";
 
 export {
+  due,
+  hasSettled,
+  settlementWindow,
+  settlesAt,
+  type SettlementWindow,
+} from "./economy/settlement.js";
+
+export {
   evaluateEligibility,
   trustBandFor,
   type EligibilityInput,

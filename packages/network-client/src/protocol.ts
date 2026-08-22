@@ -18,7 +18,7 @@
  * and this repository is public.
  */
 
-export const PROTOCOL_VERSION = "2";
+export const PROTOCOL_VERSION = "3";
 
 export type CandidateKind = "PULL_REQUEST_MERGED" | "REVIEW_SUBMITTED";
 
@@ -110,11 +110,59 @@ export interface EconomicDecision {
   readonly rulesVersion: string;
 }
 
-/** A projection Core may cache and show. Never a source, and never evidence. */
+/**
+ * Someone's standing inside one organization economy.
+ *
+ * Law IV, Organization Boundary: "GitHub-derived economic activity first
+ * belongs to the economy of the connected GitHub Organization." Value lands
+ * here before it is anything else, even when the organization uses official
+ * KRED at 1:1.
+ */
+export interface OrganizationStanding {
+  readonly organizationId: string;
+  /** Never negative (Law XXI). A decimal string, as everything monetary here is. */
+  readonly balance: string;
+  /** What may leave this organization context right now (Law VII). */
+  readonly withdrawable: string;
+  /**
+   * `Balance − Outstanding Debt`. **May be negative**, and is the only figure
+   * on this protocol that carries a sign.
+   *
+   * The debt itself does not cross. 19: Invariants keeps liabilities out of the
+   * supply equation, and a raw figure here would invite a page that adds it to
+   * something.
+   */
+  readonly netPosition: string;
+}
+
+/**
+ * A projection Core may cache and show. Never a source, and never evidence.
+ *
+ * There is no `balance` and no `withdrawable` at the top level, which is the
+ * point of the shape rather than an omission. Core cannot ask what somebody
+ * holds without saying in which context, because Law V says the context is not
+ * optional:
+ *
+ * > "A team using KRED 1:1 still requires organization-scoped positions,
+ * > settlement, debt, and risk controls before KRED becomes globally
+ * > withdrawable."
+ *
+ * 02 records that this is the law an implementer is most likely to reason
+ * around, on the grounds that a 1:1 team could be credited globally and
+ * directly. A flat number on this type would be that shortcut, already taken.
+ */
 export interface OfficialPosition {
   readonly gitHubUserId: number;
-  readonly balance: string;
-  readonly withdrawable: string;
+  /**
+   * Settled KRED that follows the holder, scoped to no organization.
+   *
+   * Law IX, Global KRED Belongs to the Holder: "One human, one global KRED
+   * wallet, regardless of how many orgs they belong to." An object, never a
+   * list.
+   */
+  readonly globalWallet: { readonly balance: string };
+  /** One entry per connected organization. Empty for a user in none. */
+  readonly organizations: readonly OrganizationStanding[];
   readonly asOf: string;
 }
 

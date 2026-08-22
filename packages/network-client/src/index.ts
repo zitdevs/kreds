@@ -24,6 +24,7 @@ export {
   type KredsNetworkClient,
   type NetworkIdentity,
   type OfficialPosition,
+  type OrganizationStanding,
   type SupplyReadModel,
 } from "./protocol.js";
 

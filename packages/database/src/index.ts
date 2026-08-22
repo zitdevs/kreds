@@ -35,3 +35,4 @@ export {
 export { InsufficientBalanceError, Ledger, type PostedTransaction } from "./repositories/ledger.js";
 export { runMigrations } from "./migrate.js";
 export * as schema from "./schema/index.js";
+export { Positions, type PositionQuery } from "./repositories/positions.js";

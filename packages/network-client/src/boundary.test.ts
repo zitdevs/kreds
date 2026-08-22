@@ -2,7 +2,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { HttpNetworkClient, NetworkUnavailableError } from "./http-client.js";
 import { OfflineNetworkClient } from "./offline-client.js";
-import { PROTOCOL_VERSION, type DecisionReason, type EconomicCandidate } from "./protocol.js";
+import {
+  PROTOCOL_VERSION,
+  type DecisionReason,
+  type EconomicCandidate,
+  type OfficialPosition,
+  type OrganizationStanding,
+} from "./protocol.js";
 
 const candidate: EconomicCandidate = {
   idempotencyKey: "merge:77001:412",
@@ -80,10 +86,12 @@ describe("Core submits evidence and cannot decide money", () => {
  * Adding a value here without adding it there is the failure this catches.
  */
 describe("the wire contract is pinned on both sides", () => {
-  it("declares protocol version 2", () => {
-    // Bumped when the supply read model was added. A route is part of the
-    // contract, so adding one moves the version and both pinned tests with it.
-    expect(PROTOCOL_VERSION).toBe("2");
+  it("declares protocol version 3", () => {
+    // v2 added the supply read model. v3 split `OfficialPosition` into a global
+    // wallet and a list of organization standings: the shape of a payload is as
+    // much of the contract as the routes are, and a Core reading v2's flat
+    // `balance` off a v3 body would read `undefined` as a balance.
+    expect(PROTOCOL_VERSION).toBe("3");
   });
 
   it("carries exactly these decision reasons, in this order", () => {
@@ -235,5 +243,76 @@ describe("an outage is not a decision", () => {
       { headers: Record<string, string> },
     ];
     expect(init.headers["X-Kreds-Protocol-Version"]).toBe(PROTOCOL_VERSION);
+  });
+});
+
+describe("a wallet and an organization position stay separate on the wire", () => {
+  /**
+   * Phase 9's done-when: "A user's global wallet and organization-specific
+   * economic position are clearly separate concepts."
+   *
+   * Checked by the compiler on this side too. The Network declares the same
+   * shape independently, and neither repository imports the other, so both
+   * halves have to be pinned or the separation exists in one of them only.
+   */
+  it("offers no flat balance anybody could read without a context", () => {
+    const position: OfficialPosition = {
+      gitHubUserId: 1,
+      globalWallet: { balance: "124000" },
+      organizations: [
+        {
+          organizationId: "org_zitdevs",
+          balance: "32000",
+          withdrawable: "18000",
+          netPosition: "32000",
+        },
+      ],
+      asOf: "2026-08-22T12:00:00.000Z",
+    };
+
+    // @ts-expect-error a position has no balance of its own, only per context
+    const flatBalance = position.balance;
+    // @ts-expect-error and nothing is withdrawable except out of an organization
+    const flatWithdrawable = position.withdrawable;
+
+    expect(flatBalance).toBeUndefined();
+    expect(flatWithdrawable).toBeUndefined();
+    expect(position.globalWallet.balance).toBe("124000");
+  });
+
+  /**
+   * Law IX: "One human, one global KRED wallet, regardless of how many orgs
+   * they belong to." Many organizations, one wallet.
+   */
+  it("gives many organizations and exactly one wallet", () => {
+    const position: OfficialPosition = {
+      gitHubUserId: 1,
+      globalWallet: { balance: "0" },
+      organizations: [
+        { organizationId: "org_a", balance: "100", withdrawable: "0", netPosition: "100" },
+        { organizationId: "org_b", balance: "0", withdrawable: "0", netPosition: "-18000" },
+      ],
+      asOf: "2026-08-22T12:00:00.000Z",
+    };
+
+    expect(Array.isArray(position.organizations)).toBe(true);
+    expect(Array.isArray(position.globalWallet)).toBe(false);
+  });
+
+  /**
+   * 23: "The leaderboard may still show `-180 K`, the gameplay is unchanged.
+   * What changed is that the accounting system now knows the user owns **zero**
+   * KRED and owes `180`, rather than believing that negative money exists."
+   */
+  it("lets a net position go negative and never a balance", () => {
+    const underwater: OrganizationStanding = {
+      organizationId: "org_a",
+      balance: "0",
+      withdrawable: "0",
+      netPosition: "-18000",
+    };
+
+    expect(underwater.netPosition.startsWith("-")).toBe(true);
+    expect(underwater.balance.startsWith("-")).toBe(false);
   });
 });

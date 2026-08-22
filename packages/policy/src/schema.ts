@@ -192,6 +192,90 @@ export const policySchema = z.object({
     dailyCaps: z.union([notPublished, z.unknown()]),
     unclaimedIdentitiesEligible: z.boolean(),
   }),
+
+  /**
+   * The settlement window, and the two laws that hang off it.
+   *
+   * 11: Debt, Settlement and Extraction Protection: "New rewards do not become
+   * immediately withdrawable." The window is what separates earned from
+   * withdrawable, and it is the mechanism Law VII depends on: without it, an
+   * attacker extracts before the liability lands.
+   */
+  settlement: z.object({
+    normalWindowHours: z.number().int().positive(),
+    /** Longer where risk is elevated. Operational policy, deliberately withheld. */
+    riskAdjustedWindows: notPublished,
+    /** Law VIII. */
+    earningsRepayDebtFirst: z.literal(true),
+    /**
+     * Law XXI, pinned rather than read.
+     *
+     * A policy file that permitted negative balances would let two accounts at
+     * zero mint spendable KRED by reviewing each other, which is the founding
+     * accounting bug Amendment A01 closed. Kreds refuses to load such a file
+     * rather than handling it downstream.
+     */
+    negativeBalancesPermitted: z.literal(false),
+    /**
+     * Law VII, via 19: Invariants: "A negative net position has
+     * `Withdrawable = 0`". The chapter adds: "There is no partial exception, no
+     * 'but the pending portion', no manual override."
+     */
+    withdrawableWhileNetPositionNegative: z.literal(0),
+  }),
+
+  /**
+   * How a position is put together.
+   *
+   * 23: Review Funding, Debt and Credit, Economic position. Note that
+   * `positionFields` does not list `available`: the published policy names six
+   * recorded quantities, and available is a derived display figure that
+   * 11 defines in words and no published text gives a formula for.
+   */
+  accounting: z.object({
+    /** Law XXI again, from the other side. */
+    minimumBalance: z.literal(0),
+    negativeBalancesPermitted: z.literal(false),
+    netPositionFormula: z.string().min(1),
+    /**
+     * False, and pinned.
+     *
+     * 23 records that Amendment A01 §54 shows an example that folds
+     * receivables into the headline figure, contradicting its own §4 formula,
+     * and that the repository implements §4. Folding them in would recreate,
+     * in the display layer, the confusion the amendment exists to remove.
+     */
+    pendingReceivablesIncludedInNetPosition: z.literal(false),
+    positionFields: z.array(z.string().min(1)).nonempty(),
+    settlementOrdering: z.array(z.string().min(1)).nonempty(),
+  }),
+
+  /**
+   * Law XXIV, Unfunded Work Is a Claim, Not Currency.
+   *
+   * Three of these are pinned to `false` because a receivable that became
+   * transferable would be a second money supply with none of the first one's
+   * controls.
+   */
+  receivables: z.object({
+    countedInKredSupply: z.literal(false),
+    transferable: z.literal(false),
+    spendable: z.literal(false),
+    withdrawable: z.literal(false),
+    paymentOrdering: z.string().min(1),
+    paidBeforeAuthorEarnings: z.literal(true),
+    closedWithoutMergeRetentionRatio: z.number().min(0).max(1),
+    closedWithoutMergeRemainderCancelled: z.boolean(),
+    /**
+     * True. 23, Interpretation decision (A03): settling receivables gross
+     * "would create a fee arbitrage: colluding accounts would deliberately
+     * route reviews through the unfunded state to dodge the fee."
+     */
+    settlementAppliesProtocolFee: z.literal(true),
+  }),
+
+  /** 23, Who owes the debt. */
+  debtTypes: z.array(z.string().min(1)).nonempty(),
 });
 
 export type Policy = z.infer<typeof policySchema>;
