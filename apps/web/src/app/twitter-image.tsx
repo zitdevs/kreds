@@ -6,5 +6,7 @@
  * output. Editing only opengraph-image.tsx leaves `twitter:image` on its old
  * URL, so X keeps serving the previously cached card. Touch this file too
  * whenever the card changes.
+ *
+ * Last bumped: Merge K brand mark replaced the bullet in the card header.
  */
 export { default, alt, size, contentType } from "./opengraph-image";

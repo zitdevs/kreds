@@ -40,7 +40,7 @@ export const contribution: PointsRow[] = [
 
 export const feed = [
   {
-    value: "+18.00 K",
+    value: "+18.00",
     who: "mariel-dev",
     what: "merged",
     target: "api#412",
@@ -48,16 +48,23 @@ export const feed = [
     mint: true,
   },
   {
-    value: "-12.00 K",
+    value: "-12.00",
     who: "you",
     what: "paid shu-codes for reviewing",
     target: "web#188",
     when: "22m",
   },
-  { value: "+11.76 K", who: "tomas-r", what: "reviewed", target: "infra#88", when: "1h" },
-  { value: "+34 pts", who: "ana-builds", what: "reviewed", target: "api#437", when: "3h" },
+  { value: "+11.76", who: "tomas-r", what: "reviewed", target: "infra#88", when: "1h" },
   {
-    value: "+0.00 K",
+    value: "+34 pts",
+    who: "ana-builds",
+    what: "reviewed",
+    target: "api#437",
+    when: "3h",
+    points: true,
+  },
+  {
+    value: "+0.00",
     who: "dependabot",
     what: "opened",
     target: "web#190",

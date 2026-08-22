@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { KredsMark } from "./brand";
 import { GitHub } from "./icons";
 
 export interface NavItem {
@@ -23,9 +24,7 @@ export interface FooterGroup {
 export function Brand({ href = "/", label = "Kreds" }: { href?: string; label?: string }) {
   return (
     <Link href={href} className="flex items-center gap-2.5" aria-label={`${label} home`}>
-      <span aria-hidden className="text-accent text-lg leading-none">
-        &#8227;
-      </span>
+      <KredsMark size={20} />
       <span className="text-[0.95rem] font-semibold tracking-tight">{label}</span>
     </Link>
   );

@@ -75,7 +75,7 @@ export const links = {
 export const minted = [
   {
     action: "Pull request merged to main",
-    value: "5 to 35 K",
+    value: "5 to 35",
     note: "issued from the Central Bank reserve, scaled by quality score",
   },
 ] as const;
@@ -83,7 +83,7 @@ export const minted = [
 export const transferred = [
   {
     action: "Code review",
-    value: "5 to 40 K",
+    value: "5 to 40",
     note: "paid by the pull request author, less a 2% protocol fee",
   },
 ] as const;
