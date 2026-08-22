@@ -27,7 +27,7 @@ export function LeaderboardShowcase() {
     <Section
       eyebrow="The boards"
       title="Two leaderboards, because they answer different questions."
-      lead="One asks who is economically liquid. The other asks who is doing the work. They are allowed to disagree — and when they do, that is information rather than a problem."
+      lead="One asks who is economically liquid. The other asks who is doing the work. They are allowed to disagree, and when they do, that is information rather than a problem."
     >
       <div className="grid gap-5 lg:grid-cols-2">
         <Board label="Economy" command="kreds board --net">
@@ -60,7 +60,7 @@ export function LeaderboardShowcase() {
             ))}
           </ul>
           <p className="border-line text-ink-dim border-t px-5 py-3.5 text-xs leading-relaxed">
-            Net position, not balance. A KRED balance is never negative —{" "}
+            Net position, not balance. A KRED balance is never negative.{" "}
             <span className="text-ink">dan-ships</span> holds zero and owes 204 K for review he has
             not funded yet.
           </p>
@@ -103,7 +103,7 @@ export function LeaderboardShowcase() {
           </span>{" "}
           <span className="text-ink-dim">
             He ships more than anyone and reviews almost nothing, so he owes the people who reviewed
-            him. Specialising is legitimate — the deficit still has to be funded.
+            him. Specialising is legitimate, and the deficit still has to be funded.
           </span>
         </p>
       </div>
@@ -138,7 +138,7 @@ export function LeaderboardShowcase() {
 
           <p className="text-ink-dim border-line mt-6 border-t pt-4 text-xs leading-relaxed">
             Reviews move existing KRED rather than creating it. If they minted, two accounts
-            reviewing each other would print supply forever — no quality bar survives that, because
+            reviewing each other would print supply forever. No quality bar survives that, because
             the attacker controls both sides.
           </p>
         </div>

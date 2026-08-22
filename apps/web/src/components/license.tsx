@@ -5,7 +5,7 @@ import { links } from "@/lib/site";
 
 const allowed = [
   "View, fork and study the source",
-  "Self-host it — laptop, VPS, your own cloud",
+  "Self-host it: laptop, VPS, your own cloud",
   "Use it inside your company, at any size, in production",
   "Modify it for your own needs",
   "Contribute changes back",
@@ -22,7 +22,7 @@ export function License() {
       id="license"
       eyebrow="Licensing"
       title="Source-available. We won't call it open source."
-      lead="Kreds is licensed under the Business Source License 1.1 — the same one Sentry, Cal.com and CockroachDB use. It does not meet the OSI definition, and pretending otherwise would be the first dishonest thing on this page."
+      lead="Kreds is licensed under the Business Source License 1.1, the same one Sentry, Cal.com and CockroachDB use. It does not meet the OSI definition, and pretending otherwise would be the first dishonest thing on this page."
     >
       <div className="grid gap-5 lg:grid-cols-[1.15fr_1fr] lg:items-start">
         <div className="border-line bg-line rounded-card grid gap-px overflow-hidden border sm:grid-cols-2">
@@ -79,7 +79,7 @@ export function License() {
             <h3 className="text-[0.95rem] font-semibold tracking-tight">Why not MIT?</h3>
             <p className="text-ink-dim mt-2.5 text-sm leading-relaxed">
               Because a permissive license lets a cloud provider host Kreds, sell it, and put
-              nothing back — and there is no version of that story where the Community tier stays
+              nothing back, and there is no version of that story where the Community tier stays
               free. The BSL draws exactly one line and leaves everything else intact.
             </p>
           </div>

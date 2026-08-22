@@ -11,7 +11,7 @@ export function Pricing() {
       id="pricing"
       eyebrow="Pricing"
       title="Generous where it counts."
-      lead="Self-hosting is free at any size, always. The hosted plans exist so you don't have to run it — and the Community tier is a real product, not a trial with a countdown."
+      lead="Self-hosting is free at any size, always. The hosted plans exist so you don't have to run it, and the Community tier is a real product, not a trial with a countdown."
     >
       <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-4">
         {plans.map((plan) => (
@@ -64,7 +64,7 @@ export function Pricing() {
         ))}
       </div>
 
-      {/* the honest note — Growing undercuts Team past 26 seats and we say so */}
+      {/* the honest note: Growing undercuts Team past 26 seats and we say so */}
       <p className="text-ink-faint mt-6 text-center text-sm">
         Team is per-seat, Growing is flat. Past <span className="text-ink-dim">27 members</span>{" "}
         Growing is the cheaper of the two &mdash; we would rather tell you than let you work it out

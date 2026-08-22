@@ -15,7 +15,7 @@ const features = [
   {
     icon: GitHub,
     title: "GitHub login",
-    body: "OAuth for identity, a GitHub App for activity. Two grants, deliberately separate — no member ever hands over code access.",
+    body: "OAuth for identity, a GitHub App for activity. Two grants, deliberately separate, so no member ever hands over code access.",
   },
   {
     icon: Bolt,

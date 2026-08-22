@@ -5,7 +5,7 @@ faster.
 
 ## Questions and ideas
 
-**[GitHub Discussions](https://github.com/zitdevs/kreds/discussions)** — how do I
+**[GitHub Discussions](https://github.com/zitdevs/kreds/discussions)**. How do I
 do X, is this a good idea, what is the roadmap, show us what your team built.
 
 Start here for anything that isn't clearly a bug.
@@ -20,11 +20,11 @@ What makes a bug report actually fixable:
 - what you expected, and what happened instead
 - steps to reproduce, ideally from a fresh install
 - your setup: hosted or self-hosted, version, browser
-- relevant logs — with tokens and secrets removed
+- relevant logs, with tokens and secrets removed
 
 ## Self-hosting trouble
 
-Read [docs/self-hosting.md](docs/self-hosting.md) first — the
+Read [docs/self-hosting.md](docs/self-hosting.md) first. The
 [Troubleshooting](docs/self-hosting.md#troubleshooting) section covers the
 failures we see most: webhooks that never arrive, OAuth callback mismatches, and
 the GitHub App private key format.
@@ -39,7 +39,7 @@ and the GitHub org.
 ## Commercial licensing
 
 Want to offer Kreds as a hosted service, or need terms the BSL does not grant?
-Email **[contact@zitdevs.com](mailto:contact@zitdevs.com)** — that conversation is
+Email **[contact@zitdevs.com](mailto:contact@zitdevs.com)**. That conversation is
 welcome, not a trap.
 
 ## Free for open source
@@ -54,5 +54,5 @@ Never in a public issue. See [SECURITY.md](SECURITY.md).
 ## Response times
 
 Kreds is maintained by a small team at [ZitDevs](https://zitdevs.com). Community
-support is best-effort — usually a few days. Paid plans get a real SLA; that is
+support is best-effort, usually a few days. Paid plans get a real SLA, and that is
 most of what you are paying for.

@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# Kreds — self-hosted stack
+# Kreds self-hosted stack
 #
 #   cp .env.example .env    # fill in your GitHub credentials
 #   docker compose up -d

@@ -17,8 +17,8 @@ body:
       label: What happened?
       description: What did you expect, and what happened instead?
       placeholder: |
-        I expected the merged PR to award 25 Kreds.
-        The activity feed shows the merge but the total did not change.
+        I expected the merged PR to issue KRED to the author.
+        The activity feed shows the merge but the balance did not change.
     validations:
       required: true
 

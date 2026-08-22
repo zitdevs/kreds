@@ -3,7 +3,7 @@
  *
  * The FAQPage structured data in layout.tsx is generated from this exact
  * array. Google requires the marked-up answers to match what a visitor can
- * actually see on the page — keeping one copy makes that true by
+ * actually see on the page. Keeping one copy makes that true by
  * construction rather than by discipline.
  */
 export type Faq = { q: string; a: string };
@@ -11,11 +11,11 @@ export type Faq = { q: string; a: string };
 export const faqs: Faq[] = [
   {
     q: "Is Kreds open source?",
-    a: "No, and we will not claim otherwise. Kreds is source-available under the Business Source License 1.1. The source is public, you can run it, modify it and contribute to it — but the license restricts one thing (offering it as a competing hosted service), and that restriction is what puts it outside the OSI definition. Each version becomes Apache 2.0 four years after release.",
+    a: "No, and we will not claim otherwise. Kreds is source-available under the Business Source License 1.1. The source is public, you can run it, modify it and contribute to it, but the license restricts one thing (offering it as a competing hosted service), and that restriction is what puts it outside the OSI definition. Each version becomes Apache 2.0 four years after release.",
   },
   {
     q: "Can I self-host Kreds?",
-    a: "Yes, free, at any team size, forever. Docker Compose with Postgres and Redis is in the repository, and the whole product is in the box — nothing is held back to push you onto a paid plan. You bring your own GitHub App credentials, so your events never leave your infrastructure.",
+    a: "Yes, free, at any team size, forever. Docker Compose with Postgres and Redis is in the repository, and the whole product is in the box, and nothing is held back to push you onto a paid plan. You bring your own GitHub App credentials, so your events never leave your infrastructure.",
   },
   {
     q: "Can I use it inside my company?",
@@ -23,11 +23,11 @@ export const faqs: Faq[] = [
   },
   {
     q: "Can I create a hosted competitor with it?",
-    a: "No — that is the single thing the license forbids. You cannot offer Kreds to third parties on a hosted or embedded basis in order to compete with our paid version, and you cannot sell managed Kreds hosting without a commercial agreement. If that is what you want to build, email us; the conversation is welcome rather than a trap.",
+    a: "No. That is the single thing the license forbids. You cannot offer Kreds to third parties on a hosted or embedded basis in order to compete with our paid version, and you cannot sell managed Kreds hosting without a commercial agreement. If that is what you want to build, email us; the conversation is welcome rather than a trap.",
   },
   {
     q: "Is Kreds free for open-source projects?",
-    a: "Yes. If your project is public and non-commercial, the hosted Team tier is free permanently — not a discount that expires. Open an issue with a link to your organization and we will enable it.",
+    a: "Yes. If your project is public and non-commercial, the hosted Team tier is free permanently, not a discount that expires. Open an issue with a link to your organization and we will enable it.",
   },
   {
     q: "What integrations are planned?",
@@ -35,7 +35,7 @@ export const faqs: Faq[] = [
   },
   {
     q: "Does Kreds read our source code?",
-    a: "No. The GitHub App asks for read access to metadata, pull requests and issues — never file contents. It receives pull_request, pull_request_review and issues webhooks, which carry titles, authors and states. That is everything Kreds needs to score.",
+    a: "No. The GitHub App asks for read access to metadata, pull requests and issues, never file contents. It receives pull_request, pull_request_review and issues webhooks, which carry titles, authors and states. That is everything Kreds needs to score.",
   },
   {
     q: "Will a redelivered webhook award Kreds twice?",

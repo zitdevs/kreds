@@ -1,7 +1,7 @@
 # Contributing to Kreds
 
 Thanks for being here. Kreds is source-available and development happens in the
-open — issues, roadmap, and the reasoning behind decisions are all public.
+open: issues, roadmap, and the reasoning behind decisions are all public.
 
 ## Ways to help
 
@@ -48,7 +48,7 @@ CI runs the same three. If they pass locally they pass there.
 ```
 kreds/
 ├── apps/
-│   └── web/              Next.js — marketing site (kreds.sh)
+│   └── web/              Next.js marketing site (kreds.sh)
 │       └── src/
 │           ├── app/      App Router entry, metadata, SEO routes
 │           ├── components/
@@ -71,7 +71,7 @@ need the same button, we will add it then.
 - **Explain the why.** The diff already says what changed.
 - **Screenshots for UI changes.** Light and dark if the change touches both.
 
-Small, focused PRs get reviewed fast. Large ones sit — not out of spite, but
+Small, focused PRs get reviewed fast. Large ones sit, not out of spite but
 because nobody has a free hour.
 
 ## Code conventions

@@ -7,7 +7,7 @@ const cards = [
   {
     icon: GitHub,
     title: "Contributions welcome",
-    body: "Bug reports, docs fixes, new achievement ideas, integrations. No CLA — we only ask that what you send is yours to send.",
+    body: "Bug reports, docs fixes, new achievement ideas, integrations. No CLA, we only ask that what you send is yours to send.",
     href: links.contributing,
     cta: "Read the contributing guide",
   },
@@ -21,7 +21,7 @@ const cards = [
   {
     icon: Users,
     title: "Built in the open",
-    body: "Roadmap, design decisions and the trade-offs behind them all live in Discussions. Disagree in public — that is the point.",
+    body: "Roadmap, design decisions and the trade-offs behind them all live in Discussions. Disagree in public. That is the point.",
     href: links.discussions,
     cta: "Join the discussion",
   },

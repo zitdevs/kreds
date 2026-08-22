@@ -35,7 +35,7 @@ export function Hero() {
 
           <p className="text-ink-dim mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed sm:text-lg">
             Merging a pull request <span className="text-ink">creates</span> KRED. Getting it
-            reviewed <span className="text-ink">costs</span> you some — paid to whoever reviewed it.
+            reviewed <span className="text-ink">costs</span> you some, paid to whoever reviewed it.
             An economy where helping someone ship is the way to get ahead.
           </p>
 
@@ -69,7 +69,7 @@ export function Hero() {
           </div>
         </div>
 
-        {/* the award ledger — one line per thing that happened */}
+        {/* the award ledger: one line per thing that happened */}
         <div className="animate-rise mx-auto mt-16 max-w-lg [animation-delay:120ms]">
           <div className="border-line bg-surface/60 rounded-card border p-2 shadow-2xl shadow-black/40 backdrop-blur">
             <div className="border-line flex items-center gap-2 border-b px-3 py-2">

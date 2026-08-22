@@ -6,7 +6,7 @@ import { links, site } from "@/lib/site";
 
 /**
  * Only channels that actually exist. Adding another means one entry here and
- * one line in .github/FUNDING.yml — not a link that 404s on a launch day.
+ * one line in .github/FUNDING.yml, not a link that 404s on a launch day.
  */
 const otherWays = [
   {

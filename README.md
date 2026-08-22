@@ -4,9 +4,9 @@
 
 **The leaderboard for your engineering team.**
 
-Kreds turns the work your team already does on GitHub — merged pull requests, code
-reviews, closed issues — into a live leaderboard. Not a vanity commit counter:
-the scoring is weighted so that helping someone else ship beats shipping alone.
+Kreds turns the work your team already does on GitHub into a live leaderboard:
+merged pull requests, code reviews, closed issues. Not a vanity commit counter.
+The scoring is weighted so that helping someone else ship beats shipping alone.
 
 [kreds.sh](https://kreds.sh) &nbsp;·&nbsp; [Docs](https://kreds.sh/docs) &nbsp;·&nbsp; [Self-hosting](docs/self-hosting.md) &nbsp;·&nbsp; [Pricing](https://kreds.sh/#pricing) &nbsp;·&nbsp; [Sponsor](https://github.com/sponsors/zitdevs)
 
@@ -21,7 +21,7 @@ the scoring is weighted so that helping someone else ship beats shipping alone.
 
 > [!NOTE]
 > Kreds is **source-available**, not OSI open source. You can read it, run it,
-> and contribute to it — you just can't resell it as a competing hosted product.
+> and contribute to it. You just can't resell it as a competing hosted product.
 > The plain-language version is in [Licensing](#licensing) below.
 
 ## Screenshots
@@ -29,8 +29,8 @@ the scoring is weighted so that helping someone else ship beats shipping alone.
 > [!IMPORTANT]
 > The application UI is in active development. This repository currently holds
 > the marketing site, the licensing and the self-hosting path. Screenshots of
-> the leaderboard, activity feed and profile land with the first app release —
-> follow [Discussions](https://github.com/zitdevs/kreds/discussions) if you want
+> the leaderboard, activity feed and profile land with the first app release.
+> Follow [Discussions](https://github.com/zitdevs/kreds/discussions) if you want
 > to know when.
 
 ## What Kreds is
@@ -39,22 +39,31 @@ Every engineering team has work that is invisible on a contribution graph. The
 thorough review at 6pm. The flaky test someone finally fixed. The person who
 unblocks three others before lunch.
 
-Kreds makes that visible. It listens to GitHub events and awards points for the
-things that actually move a team forward:
+Kreds makes that visible. It listens to GitHub events and scores the things that
+actually move a team forward, through two systems that never touch each other.
 
-| Action                                   | Default Kreds              |
-| ---------------------------------------- | -------------------------- |
-| Pull request merged to `main` / `master` | 25                         |
-| Code review submitted                    | 15                         |
-| Your pull request gets approved          | 10                         |
-| Issue closed                             | 10                         |
-| Five-day contribution streak             | 50                         |
-| Finish the week at #1                    | 100                        |
-| Commit pushed                            | 1 &nbsp;_(off by default)_ |
+**Contribution Points** are recognition. Cumulative, never spent, no supply.
 
-Every value is configurable per team. The ratio is the design: two reviews beat
-one merge, which is why "commit pushed" ships turned off — it is the one rule
-that rewards volume over collaboration.
+| Action              | Points   |
+| ------------------- | -------- |
+| Merged pull request | 10 to 50 |
+| Code review         | 10 to 60 |
+| Issue resolved      | 5 to 20  |
+
+**KRED** is currency, with a fixed supply and a double-entry ledger.
+
+| Action                                   | KRED    | Source                                         |
+| ---------------------------------------- | ------- | ---------------------------------------------- |
+| Pull request merged to `main` / `master` | 5 to 35 | Issued from the Central Bank reserve           |
+| Code review                              | 5 to 40 | Paid by the pull request author, less a 2% fee |
+
+Merging creates KRED. Reviewing moves it. The author pays for help improving
+their work, which is the whole opinion of the product expressed as an accounting
+rule. If reviews created currency instead, two accounts could review each other
+and print unlimited supply.
+
+Self reviews, bot reviews and reviews filed after the merge are worth zero. Full
+detail in [docs/kreds-rules.md](docs/kreds-rules.md).
 
 ## Why it exists
 
@@ -82,8 +91,8 @@ pnpm dev                  # http://localhost:3000
 
 You will need two things from GitHub, and they are different on purpose:
 
-1. **An OAuth App** — identifies the person signing in (`read:user`, `read:org`).
-2. **A GitHub App** — installed once on your org, delivers `pull_request`,
+1. **An OAuth App** identifies the person signing in (`read:user`, `read:org`).
+2. **A GitHub App**, installed once on your org, delivers `pull_request`,
    `pull_request_review` and `issues` webhooks. This is where all activity comes
    from. No member ever grants access to code.
 
@@ -98,7 +107,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-- Runs anywhere Docker runs — your laptop, a VPS, your own Kubernetes.
+- Runs anywhere Docker runs: your laptop, a VPS, your own Kubernetes.
 - Bring your own GitHub App credentials. Your events never leave your infra.
 - Postgres + Redis, both in the compose file.
 - No license key, no phone-home, no seat check.
@@ -110,15 +119,15 @@ Full guide: **[docs/self-hosting.md](docs/self-hosting.md)**
 The hosted version at [kreds.sh](https://kreds.sh) exists so you don't have to run
 it yourself. Self-hosting is always free.
 
-| Plan           | Price                  | For                                                 |
-| -------------- | ---------------------- | --------------------------------------------------- |
-| **Community**  | Free                   | Up to 20 members, 1 team, unlimited repos           |
-| **Team**       | $2.99 / member / month | Unlimited members, integrations, API, seasons       |
-| **Growing**    | $79 / month flat       | Up to 50 members — cheaper than Team from 27 people |
-| **Enterprise** | Custom                 | SSO/SAML, SCIM, audit logs, SLA, on-prem            |
+| Plan           | Price                  | For                                                |
+| -------------- | ---------------------- | -------------------------------------------------- |
+| **Community**  | Free                   | Up to 20 members, 1 team, unlimited repos          |
+| **Team**       | $2.99 / member / month | Unlimited members, integrations, API, seasons      |
+| **Growing**    | $79 / month flat       | Up to 50 members, cheaper than Team from 27 people |
+| **Enterprise** | Custom                 | SSO/SAML, SCIM, audit logs, SLA, on-prem           |
 
 **Free forever for verified open-source projects.** If your work is public, so is
-ours — open an issue with a link to your org and we'll flip the switch.
+ours. Open an issue with a link to your org and we'll flip the switch.
 
 Full breakdown: [kreds.sh/#pricing](https://kreds.sh/#pricing)
 
@@ -130,22 +139,22 @@ Change License set to Apache 2.0. In plain language:
 |     |                                                          |
 | --- | -------------------------------------------------------- |
 | ✅  | View, fork and study the source                          |
-| ✅  | Self-host it — laptop, VPS, your own cloud               |
+| ✅  | Self-host it: laptop, VPS, your own cloud                |
 | ✅  | Use it inside your company, at any size, in production   |
 | ✅  | Contribute changes back                                  |
 | ❌  | Resell it as a competing hosted product                  |
 | ❌  | Monetize a hosted version without a commercial agreement |
 
 Each released version converts to **Apache 2.0** four years after its release.
-Nothing gets rug-pulled — it only gets more permissive with time.
+Nothing gets rug-pulled. It only gets more permissive with time.
 
 Being straight with you: this is **source-available, not open source**. It does
 not meet the OSI definition, and we are not going to call it something it isn't.
-If you need a commercial license, reach out — [contact@zitdevs.com](mailto:contact@zitdevs.com).
+If you need a commercial license, reach out: [contact@zitdevs.com](mailto:contact@zitdevs.com).
 
 ## Contributing
 
-Contributions are genuinely welcome — bug reports, docs fixes, new achievement
+Contributions are genuinely welcome. Bug reports, docs fixes, new achievement
 ideas, integrations.
 
 ```bash
@@ -172,7 +181,7 @@ what keeps the Community tier free and generous rather than a trial in disguise.
 
 If Kreds helps your team, consider supporting development. Not in a position to?
 Star the repo, file a bug report with a reproduction, or tell us why Kreds did
-not work for your team — that helps too.
+not work for your team. That helps too.
 
 ## Docs
 

@@ -9,8 +9,8 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: `${site.name} — ${site.tagline}`,
-    template: `%s — ${site.name}`,
+    default: `${site.name}: ${site.tagline}`,
+    template: `%s | ${site.name}`,
   },
   description: site.description,
   applicationName: site.name,
@@ -32,13 +32,13 @@ export const metadata: Metadata = {
     type: "website",
     url: site.url,
     siteName: site.name,
-    title: `${site.name} — ${site.tagline}`,
+    title: `${site.name}: ${site.tagline}`,
     description: site.description,
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: `${site.name} — ${site.tagline}`,
+    title: `${site.name}: ${site.tagline}`,
     description: site.description,
   },
   robots: {
@@ -69,7 +69,7 @@ export const viewport: Viewport = {
  * each other by @id.
  *
  * The FAQ and pricing entries are generated from the same modules the page
- * renders from — structured data that disagrees with the visible page is worse
+ * renders from. Structured data that disagrees with the visible page is worse
  * than none at all.
  */
 const structuredData = {

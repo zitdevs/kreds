@@ -32,7 +32,7 @@ export function SelfHosting() {
       id="self-hosting"
       eyebrow="Self-hosting"
       title="Run it yourself. Free, at any size."
-      lead="Self-hosting is a first-class path, not a grudging concession. The whole product is in the box — no feature is held back to push you onto the hosted plan."
+      lead="Self-hosting is a first-class path, not a grudging concession. The whole product is in the box, and no feature is held back to push you onto the hosted plan."
     >
       <div className="grid min-w-0 gap-5 lg:grid-cols-[1fr_1.05fr] lg:items-start">
         <div className="border-line bg-line rounded-card grid gap-px overflow-hidden border sm:grid-cols-2">

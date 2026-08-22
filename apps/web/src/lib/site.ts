@@ -26,7 +26,7 @@ export const analytics = {
 } as const;
 
 /**
- * Microsoft Clarity — heatmaps and session replay.
+ * Microsoft Clarity: heatmaps and session replay.
  *
  * Unlike Umami this is NOT cookieless: the loader declares `_clck` plus the
  * Microsoft Advertising identifiers `_uetmsclkid` and `_uetvid`, all with a
@@ -56,7 +56,7 @@ export const links = {
 
 /**
  * How value moves. Sourced from the public economic policy (rules v0.3) in
- * zitdevs/kreds-laws — never invented here, and never restated from memory.
+ * zitdevs/kreds-laws. Never invented here, and never restated from memory.
  *
  * The split is the point, and it is Law III: shipping *creates* value, reviewing
  * *circulates* it. A review is paid by the author out of existing KRED, so two
@@ -65,7 +65,7 @@ export const links = {
 export const minted = [
   {
     action: "Pull request merged to main",
-    value: "5 – 35 K",
+    value: "5 to 35 K",
     note: "issued from the Central Bank reserve, scaled by quality score",
   },
 ] as const;
@@ -73,16 +73,16 @@ export const minted = [
 export const transferred = [
   {
     action: "Code review",
-    value: "5 – 40 K",
+    value: "5 to 40 K",
     note: "paid by the pull request author, less a 2% protocol fee",
   },
 ] as const;
 
-/** A separate system. Never converts to KRED, in either direction — Law XXVI. */
+/** A separate system. Never converts to KRED, in either direction, per Law XXVI. */
 export const points = [
-  { action: "Merged pull request", value: "10 – 50 pts" },
-  { action: "Code review", value: "10 – 60 pts" },
-  { action: "Issue resolved", value: "5 – 20 pts" },
+  { action: "Merged pull request", value: "10 to 50 pts" },
+  { action: "Code review", value: "10 to 60 pts" },
+  { action: "Issue resolved", value: "5 to 20 pts" },
 ] as const;
 
 /** Worth nothing, on purpose. */

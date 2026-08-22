@@ -2,7 +2,7 @@
  * Sample data for the showcase. Not real people.
  *
  * The two boards disagree on purpose: dan-ships leads contribution and trails
- * the economy. That is not a bug in the data, it is Law XXV — specialising in
+ * the economy. That is not a bug in the data, it is Law XXV: specialising in
  * shipping is legitimate work, and it still leaves a review deficit to fund.
  */
 

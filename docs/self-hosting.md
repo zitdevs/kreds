@@ -1,7 +1,7 @@
 # Self-hosting Kreds
 
 Kreds is designed to run in your own infrastructure. No license key, no
-phone-home, no seat check — the whole product is in the box.
+phone-home, no seat check. The whole product is in the box.
 
 This guide takes about 20 minutes, most of it spent in GitHub's settings.
 
@@ -21,13 +21,13 @@ This guide takes about 20 minutes, most of it spent in GitHub's settings.
 |                       |                                                    |
 | --------------------- | -------------------------------------------------- |
 | Docker                | 24+ with Compose v2                                |
-| Postgres              | 15+ — provided by the compose file                 |
-| Redis                 | 7+ — provided by the compose file, optional        |
+| Postgres              | 15+, provided by the compose file                  |
+| Redis                 | 7+, provided by the compose file, optional         |
 | A GitHub organization | You need admin rights to install an App on it      |
 | A public HTTPS URL    | GitHub must be able to reach your webhook endpoint |
 
 That last one is the only real constraint. GitHub pushes events to you; it
-cannot reach `localhost`. For local development use a tunnel — `cloudflared
+cannot reach `localhost`. For local development use a tunnel. `cloudflared
 tunnel --url http://localhost:3000` or `ngrok http 3000` both work.
 
 ## 1. Get the code
@@ -45,13 +45,13 @@ This one only identifies people signing in. It never touches code.
 1. Go to **Settings → Developer settings → OAuth Apps → New OAuth App**
    ([direct link](https://github.com/settings/developers)).
 2. Fill in:
-   - **Application name**: `Kreds` (or `Kreds — acme-labs`)
+   - **Application name**: `Kreds` (or `Kreds acme-labs`)
    - **Homepage URL**: your `KREDS_URL`
    - **Authorization callback URL**: `<KREDS_URL>/api/auth/callback/github`
 3. Generate a client secret.
 4. Put the client ID and secret into `AUTH_GITHUB_ID` and `AUTH_GITHUB_SECRET`.
 
-Kreds requests `read:user` and `read:org` at sign-in — enough to know who someone
+Kreds requests `read:user` and `read:org` at sign-in, enough to know who someone
 is and which organizations they belong to. Nothing more.
 
 ## 3. Create a GitHub App
@@ -62,12 +62,12 @@ source code.
 
 1. Go to **Organization settings → Developer settings → GitHub Apps → New GitHub App**.
 2. Fill in:
-   - **GitHub App name**: `Kreds` (must be unique across GitHub — add your org
+   - **GitHub App name**: `Kreds` (must be unique across GitHub, so add your org
      name if it is taken)
    - **Homepage URL**: your `KREDS_URL`
    - **Webhook URL**: `<KREDS_URL>/api/github/webhook`
    - **Webhook secret**: generate one with `openssl rand -hex 32` and keep it
-3. **Repository permissions** — read-only, all three:
+3. **Repository permissions**, read-only, all three:
 
    | Permission    | Access                  |
    | ------------- | ----------------------- |
@@ -79,12 +79,12 @@ source code.
 5. Create the App, then:
    - note the **App ID**
    - generate a **client secret**
-   - generate a **private key** — this downloads a `.pem` file
+   - generate a **private key**, which downloads a `.pem` file
 6. **Install the App** on your organization and choose which repositories it can
    see. Only what you select here is ever counted.
 
-Turning on the optional "commit pushed" rule later also needs the `Push` event —
-you can add it without recreating the App.
+Turning on the optional "commit pushed" rule later also needs the `Push` event.
+You can add it without recreating the App.
 
 ## 4. Configure the environment
 
@@ -123,15 +123,15 @@ Fill in `.env`. Every value, and what it is for:
 > ```
 >
 > Paste the result as one line. Alternatively base64 it
-> (`base64 -i key.pem | tr -d '\n'`) — Kreds accepts either form.
+> (`base64 -i key.pem | tr -d '\n'`). Kreds accepts either form.
 
 ### Optional
 
-| Variable            | Default | Notes                                                                                                           |
-| ------------------- | ------- | --------------------------------------------------------------------------------------------------------------- |
-| `REDIS_URL`         | unset   | Queue for webhook processing. Without it, events are handled in-process — fine for small teams, not for bursts. |
-| `KREDS_SUPERADMINS` | unset   | Comma-separated GitHub logins that bypass team admin checks on this instance.                                   |
-| `PORT`              | `3000`  | Host port the container binds to.                                                                               |
+| Variable            | Default | Notes                                                                                                             |
+| ------------------- | ------- | ----------------------------------------------------------------------------------------------------------------- |
+| `REDIS_URL`         | unset   | Queue for webhook processing. Without it, events are handled in-process, fine for small teams but not for bursts. |
+| `KREDS_SUPERADMINS` | unset   | Comma-separated GitHub logins that bypass team admin checks on this instance.                                     |
+| `PORT`              | `3000`  | Host port the container binds to.                                                                                 |
 
 ## 5. Start it
 
@@ -154,7 +154,7 @@ docker compose up -d
 ```
 
 Migrations run automatically on boot. We do not ship destructive migrations in
-patch releases — but take a backup first anyway.
+patch releases, but take a backup first anyway.
 
 Pin a version rather than tracking `latest` in production:
 
@@ -169,7 +169,7 @@ release notes.
 
 ## Backups
 
-Everything that matters is in Postgres. Redis is a cache and a queue — losing it
+Everything that matters is in Postgres. Redis is a cache and a queue, so losing it
 costs you at most the events in flight.
 
 ```bash
@@ -208,18 +208,18 @@ Two things to get right:
 Check delivery first. In your GitHub App settings, open **Advanced → Recent
 Deliveries**. You will see one of three things:
 
-- **No deliveries at all** — the webhook URL is wrong, or GitHub cannot reach it.
-- **Deliveries with a non-2xx response** — the response body says why.
-- **Deliveries returning 401** — `GITHUB_WEBHOOK_SECRET` does not match the
+- **No deliveries at all.** The webhook URL is wrong, or GitHub cannot reach it.
+- **Deliveries with a non-2xx response.** The response body says why.
+- **Deliveries returning 401.** `GITHUB_WEBHOOK_SECRET` does not match the
   secret configured on the App.
 
 GitHub keeps failed deliveries for redelivery. Fix the cause, hit **Redeliver**,
-and nothing is lost — awards are idempotent, so a redelivery cannot double-credit.
+and nothing is lost. Awards are idempotent, so a redelivery cannot double-credit.
 
 ### `redirect_uri_mismatch` on sign-in
 
 The OAuth App's callback URL must be exactly
-`<KREDS_URL>/api/auth/callback/github` — same scheme, same host, no trailing
+`<KREDS_URL>/api/auth/callback/github`: same scheme, same host, no trailing
 slash, no port mismatch.
 
 ### `error: unable to parse private key`
@@ -229,17 +229,17 @@ The PEM lost its newlines, or you pasted the public key. See the note in
 
 ### A member is missing from the leaderboard
 
-They have to sign in once before they can be scored — Kreds needs to map a GitHub
+They have to sign in once before they can be scored, because Kreds needs to map a GitHub
 account to a team member. Until then their activity is recorded but unattributed.
 
 ### Events arrive but totals look wrong
 
 Kreds stores the amount awarded at the time of the award. If an admin changed a
-rule value, past awards deliberately keep their original amount — the season is
+rule value, past awards deliberately keep their original amount. The season is
 never rewritten underneath people. The awards ledger on each profile shows the
 value each award was granted with.
 
 ---
 
 Still stuck? Open a [Discussion](https://github.com/zitdevs/kreds/discussions)
-with your `docker compose logs kreds` output — secrets removed.
+with your `docker compose logs kreds` output, secrets removed.

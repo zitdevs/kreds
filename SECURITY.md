@@ -6,7 +6,7 @@
 
 Report privately through either:
 
-- **[GitHub Security Advisories](https://github.com/zitdevs/kreds/security/advisories/new)** — preferred
+- **[GitHub Security Advisories](https://github.com/zitdevs/kreds/security/advisories/new)** (preferred)
 - **[contact@zitdevs.com](mailto:contact@zitdevs.com)**
 
 Please include:
@@ -37,7 +37,7 @@ would rather stay anonymous, and let you know when the fix ships.
 
 **Out of scope**
 
-- Vulnerabilities in third-party dependencies with no exploitable path in Kreds —
+- Vulnerabilities in third-party dependencies with no exploitable path in Kreds.
   report those upstream
 - Findings from automated scanners with no demonstrated impact
 - Social engineering, physical access, or denial of service

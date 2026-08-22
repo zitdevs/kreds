@@ -5,7 +5,7 @@
 
    Dark only, deliberately. Kreds is a tool people open next to a terminal and
    a diff view; a light theme would be a second design to maintain and nobody
-   asked for it. If that changes, every colour below is a token — swap the
+   asked for it. If that changes, every colour below is a token, so swap the
    values, not the components.
 --------------------------------------------------------------------------- */
 
@@ -25,7 +25,7 @@
   --color-ink-dim: #9aa5b1;
   --color-ink-faint: #6b7784;
 
-  /* accents — one green, one amber. Amber is only ever a Kreds number. */
+  /* accents: one green, one amber. Amber is only ever a Kreds number. */
   --color-accent: #5ee9a4;
   --color-accent-deep: #2f8f63;
   --color-accent-wash: #0f2019;

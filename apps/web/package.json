@@ -2,7 +2,7 @@
   "name": "@kreds/web",
   "version": "0.1.0",
   "private": true,
-  "description": "Marketing site for Kreds — kreds.sh",
+  "description": "Marketing site for Kreds, kreds.sh",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

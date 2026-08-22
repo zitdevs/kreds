@@ -3,7 +3,7 @@
 Kreds is **source-available**, not open source. We would rather say that plainly
 than dress it up.
 
-The full legal text is in [LICENSE](../LICENSE) — the
+The full legal text is in [LICENSE](../LICENSE): the
 [Business Source License 1.1](https://mariadb.com/bsl11/), the same license used
 by Sentry, Cal.com, HashiCorp's Terraform and CockroachDB.
 
@@ -12,7 +12,7 @@ by Sentry, Cal.com, HashiCorp's Terraform and CockroachDB.
 |     |                                                          |
 | --- | -------------------------------------------------------- |
 | ✅  | Read, fork and study the source                          |
-| ✅  | Self-host it — laptop, VPS, your own cloud               |
+| ✅  | Self-host it: laptop, VPS, your own cloud                |
 | ✅  | Use it inside your company, at any size, in production   |
 | ✅  | Modify it for your own needs                             |
 | ✅  | Contribute changes back                                  |
@@ -22,7 +22,7 @@ by Sentry, Cal.com, HashiCorp's Terraform and CockroachDB.
 ## Why not MIT or Apache?
 
 Because a permissive license lets a cloud provider take Kreds, host it, sell it,
-and put nothing back — and there is no version of that story where the project
+and put nothing back, and there is no version of that story where the project
 survives to keep its Community tier free.
 
 The BSL draws exactly one line: **do not sell Kreds as a service in competition
@@ -31,7 +31,7 @@ with us.** Everything else you would expect from open source stays intact.
 ## It becomes Apache 2.0
 
 Every released version converts to the **Apache License 2.0** four years after
-release. That is written into the license itself — not a promise in a blog post
+release. That is written into the license itself, not a promise in a blog post
 we can walk back.
 
 Concretely: v0.1.0 is Apache 2.0 on **2030-08-21**. From that date it is
@@ -70,7 +70,7 @@ Your contributions also convert to Apache 2.0 on the same four-year clock.
 
 ## Free for open source
 
-If your project is public and non-commercial, the hosted Team tier is free —
+If your project is public and non-commercial, the hosted Team tier is free,
 permanently, not as a trial. Open an issue with a link to your organization.
 
 ## Commercial licenses

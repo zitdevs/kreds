@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
    * www -> apex, 308, path and query preserved.
    *
    * Cloudflare sits in front, so a Redirect Rule there would bounce www at the
-   * edge without ever hitting Railway — cheaper, and worth adding. This stays
+   * edge without ever hitting Railway, which is cheaper and worth adding. This stays
    * regardless: it is version-controlled, it survives a dashboard change nobody
    * remembers making, and if the edge rule fires first this simply never runs.
    */
