@@ -19,6 +19,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
+    # The repository tests run against a real Postgres. The things worth
+    # checking there, unique constraints, upserts and transactions, are exactly
+    # the things a fake would not have.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kreds
+          POSTGRES_PASSWORD: kreds
+          POSTGRES_DB: kreds_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kreds -d kreds_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://kreds:kreds@localhost:5432/kreds_test
+
     steps:
       - name: Checkout
         uses: actions/checkout@v7
