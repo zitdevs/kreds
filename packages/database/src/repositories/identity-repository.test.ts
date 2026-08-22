@@ -5,6 +5,7 @@ import { gitHubUserId } from "@kreds/domain";
 
 import { createDatabase, type Database } from "../client.js";
 import { runMigrations } from "../migrate.js";
+import { dirname, join } from "node:path";
 import { IdentityRepository } from "./identity-repository.js";
 
 /**
@@ -26,7 +27,10 @@ let repository: IdentityRepository;
 describeWithDatabase("IdentityRepository", () => {
   beforeEach(async () => {
     db ??= createDatabase({ url: url as string, max: 1 });
-    await runMigrations(db);
+    // Explicit folder: this file runs through vitest rather than the compiled
+    // CommonJS build, where the default resolution lives.
+    const here = dirname(new URL(import.meta.url).pathname);
+    await runMigrations(url as string, join(here, "..", "..", "migrations"));
     // Identities reference users, so the order matters.
     await db.execute(sql`truncate table github_identities, users cascade`);
     repository = new IdentityRepository(db);
