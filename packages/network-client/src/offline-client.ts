@@ -4,6 +4,7 @@ import type {
   KredsNetworkClient,
   NetworkIdentity,
   OfficialPosition,
+  SupplyReadModel,
 } from "./protocol.js";
 
 /**
@@ -56,6 +57,17 @@ export class OfflineNetworkClient implements KredsNetworkClient {
   }
 
   async getNetworkIdentity(_gitHubUserId: number): Promise<NetworkIdentity | null> {
+    return null;
+  }
+
+  /**
+   * Nothing, because there is no Official supply here to report.
+   *
+   * Not zero. An instance with no Network is not an instance where five million
+   * KRED exist and none circulate; it is one where the question does not apply,
+   * and answering it with numbers would invite somebody to display them.
+   */
+  async getSupply(): Promise<SupplyReadModel | null> {
     return null;
   }
 }

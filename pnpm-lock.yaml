@@ -26,6 +26,9 @@ importers:
       '@kreds/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@kreds/network-client':
+        specifier: workspace:*
+        version: link:../../packages/network-client
       '@kreds/policy':
         specifier: workspace:*
         version: link:../../packages/policy

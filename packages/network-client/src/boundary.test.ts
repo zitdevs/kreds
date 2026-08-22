@@ -29,6 +29,24 @@ describe("Core submits evidence and cannot decide money", () => {
    * offered a way to write a balance, the boundary would be a convention, and
    * conventions get an exception added to them under deadline.
    */
+  /**
+   * Phase 8's done-when, from this side: "no Core endpoint can mint Official
+   * KRED." The supply is readable and there is no counterpart that writes,
+   * which states it as an absence rather than as a guard somebody could later
+   * add an exception to.
+   */
+  it("can read the supply and has no way to change it", () => {
+    const surface = [
+      ...Object.getOwnPropertyNames(HttpNetworkClient.prototype),
+      ...Object.getOwnPropertyNames(OfflineNetworkClient.prototype),
+    ];
+
+    expect(surface).toContain("getSupply");
+    for (const name of surface) {
+      expect(name).not.toMatch(/^(setSupply|mint|issue|burn|adjustSupply)/i);
+    }
+  });
+
   it("exposes no method that writes an Official balance", () => {
     const surface = [
       ...Object.getOwnPropertyNames(HttpNetworkClient.prototype),
@@ -62,8 +80,10 @@ describe("Core submits evidence and cannot decide money", () => {
  * Adding a value here without adding it there is the failure this catches.
  */
 describe("the wire contract is pinned on both sides", () => {
-  it("declares protocol version 1", () => {
-    expect(PROTOCOL_VERSION).toBe("1");
+  it("declares protocol version 2", () => {
+    // Bumped when the supply read model was added. A route is part of the
+    // contract, so adding one moves the version and both pinned tests with it.
+    expect(PROTOCOL_VERSION).toBe("2");
   });
 
   it("carries exactly these decision reasons, in this order", () => {
@@ -125,6 +145,15 @@ describe("an instance with no Network still works", () => {
     const client = new OfflineNetworkClient();
     expect(await client.getOfficialPosition(4242)).toBeNull();
     expect(await client.getNetworkIdentity(4242)).toBeNull();
+  });
+
+  /**
+   * Not zero. An instance with no Network is not one where five million KRED
+   * exist and none circulate; it is one where the question does not apply, and
+   * answering it with numbers would invite somebody to display them.
+   */
+  it("reports no supply at all, rather than a supply of nothing", async () => {
+    expect(await new OfflineNetworkClient().getSupply()).toBeNull();
   });
 });
 
