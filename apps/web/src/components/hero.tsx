@@ -26,7 +26,7 @@ export function Hero() {
             className="border-line bg-surface/70 text-ink-dim hover:border-line-strong hover:text-ink inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-xs transition-colors"
           >
             <span className="bg-accent h-1.5 w-1.5 rounded-full" aria-hidden />
-            Source-available · BSL 1.1
+            Open source · AGPLv3
           </Link>
 
           <h1 className="text-gradient mt-7 text-balance text-4xl font-semibold tracking-tight sm:text-6xl sm:leading-[1.05]">

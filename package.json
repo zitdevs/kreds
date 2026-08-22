@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "The leaderboard for your engineering team.",
-  "license": "BUSL-1.1",
+  "license": "AGPL-3.0-only",
   "engines": {
     "node": ">=20.11.0"
   },

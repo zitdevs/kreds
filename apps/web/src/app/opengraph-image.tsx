@@ -82,7 +82,7 @@ export default function OpenGraphImage() {
         }}
       >
         <span>kreds.sh</span>
-        <span>Source-available · Self-hostable</span>
+        <span>Open source · AGPLv3 · Self-hostable</span>
       </div>
     </div>,
     size,

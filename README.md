@@ -11,7 +11,7 @@ The scoring is weighted so that helping someone else ship beats shipping alone.
 [kreds.sh](https://kreds.sh) &nbsp;·&nbsp; [Docs](https://kreds.sh/docs) &nbsp;·&nbsp; [Self-hosting](docs/self-hosting.md) &nbsp;·&nbsp; [Pricing](https://kreds.sh/#pricing) &nbsp;·&nbsp; [Sponsor](https://github.com/sponsors/zitdevs)
 
 [![CI](https://github.com/zitdevs/kreds/actions/workflows/ci.yml/badge.svg)](https://github.com/zitdevs/kreds/actions/workflows/ci.yml)
-[![License: BUSL-1.1](https://img.shields.io/badge/license-BUSL--1.1-6ee7a0)](LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-6ee7a0)](LICENSE)
 [![Self-host](https://img.shields.io/badge/self--host-docker-8b949e)](docs/self-hosting.md)
 [![Sponsor](https://img.shields.io/badge/sponsor-%E2%99%A5-e8b464)](https://github.com/sponsors/zitdevs)
 
@@ -20,9 +20,10 @@ The scoring is weighted so that helping someone else ship beats shipping alone.
 ---
 
 > [!NOTE]
-> Kreds is **source-available**, not OSI open source. You can read it, run it,
-> and contribute to it. You just can't resell it as a competing hosted product.
-> The plain-language version is in [Licensing](#licensing) below.
+> **Kreds Core is open source under AGPLv3.** Run it, change it, sell services
+> around it. The Official Kreds Network, which powers the shared KRED economy on
+> kreds.sh, is separate infrastructure. See
+> [Open source at the core](#open-source-at-the-core).
 
 ## Screenshots
 
@@ -131,26 +132,52 @@ ours. Open an issue with a link to your org and we'll flip the switch.
 
 Full breakdown: [kreds.sh/#pricing](https://kreds.sh/#pricing)
 
-## Licensing
+## Open source at the core
 
-Kreds is licensed under the [Business Source License 1.1](LICENSE), with the
-Change License set to Apache 2.0. In plain language:
+Kreds Core is licensed under [AGPLv3](LICENSE). Run it yourself, inspect every
+part of the system, modify it, and contribute back.
 
-|     |                                                          |
-| --- | -------------------------------------------------------- |
-| ✅  | View, fork and study the source                          |
-| ✅  | Self-host it: laptop, VPS, your own cloud                |
-| ✅  | Use it inside your company, at any size, in production   |
-| ✅  | Contribute changes back                                  |
-| ❌  | Resell it as a competing hosted product                  |
-| ❌  | Monetize a hosted version without a commercial agreement |
+|     |                                               |
+| --- | --------------------------------------------- |
+| ✅  | Read, fork and study the source               |
+| ✅  | Self-host it: laptop, VPS, your own cloud     |
+| ✅  | Use it commercially, in a company of any size |
+| ✅  | Modify it however you like                    |
+| ✅  | Sell services around it, including hosting it |
+| ✅  | Contribute changes back                       |
 
-Each released version converts to **Apache 2.0** four years after its release.
-Nothing gets rug-pulled. It only gets more permissive with time.
+AGPLv3 has one obligation that ordinary GPL does not: **if you modify Kreds and
+offer that modified version as a service over a network, its users must be
+offered the source of your modified version.** Run it unmodified, or modify it
+for your own team, and nothing changes for you.
 
-Being straight with you: this is **source-available, not open source**. It does
-not meet the OSI definition, and we are not going to call it something it isn't.
-If you need a commercial license, reach out: [contact@zitdevs.com](mailto:contact@zitdevs.com).
+It does not prohibit commercial use, and it does not stop you charging for
+hosting. The [LICENSE](LICENSE) is authoritative; [docs/licensing.md](docs/licensing.md)
+is the plain-language version.
+
+### Three layers, on purpose
+
+```text
+Kreds Core        AGPLv3, open source, runs standalone
+Kreds Network     Public protocol specification
+kreds.sh          Official hosted service on the Official Kreds Network
+```
+
+The **Official Kreds Network** is separate, proprietary infrastructure: the
+Official KRED ledger and its fixed supply, the Central Bank, global settlement,
+network identity and the risk systems that keep the shared economy honest. It is
+not in this repository.
+
+That is not the good parts held back. It is the part that only exists because the
+economy is shared, and whose anti-abuse rules stop working the moment they are
+public. Everything that does not require a shared network is open, and a
+self-hosted Kreds runs a complete economy without ever talking to kreds.sh.
+
+Details: [Kreds Core and the Kreds Network](docs/architecture/kreds-core-vs-network.md).
+
+The code is AGPLv3 with no added conditions. The **name** is governed separately
+in [TRADEMARKS.md](TRADEMARKS.md), which is permissive about honest use and
+strict about presenting a fork as the official service.
 
 ## Contributing
 
@@ -185,14 +212,17 @@ not work for your team. That helps too.
 
 ## Docs
 
-|                                            |                                             |
-| ------------------------------------------ | ------------------------------------------- |
-| [Self-hosting guide](docs/self-hosting.md) | Docker, GitHub App setup, upgrades, backups |
-| [Kreds rules](docs/kreds-rules.md)         | How scoring works and how to tune it        |
-| [Licensing FAQ](docs/licensing.md)         | What BSL means for you, in plain terms      |
-| [Contributing](CONTRIBUTING.md)            | Local setup, conventions, PR flow           |
-| [Security](SECURITY.md)                    | Reporting a vulnerability                   |
-| [Support](SUPPORT.md)                      | Where to ask questions                      |
+|                                                               |                                             |
+| ------------------------------------------------------------- | ------------------------------------------- |
+| [Self-hosting guide](docs/self-hosting.md)                    | Docker, GitHub App setup, upgrades, backups |
+| [Kreds rules](docs/kreds-rules.md)                            | How scoring works and how to tune it        |
+| [Licensing](docs/licensing.md)                                | What AGPLv3 means for you, in plain terms   |
+| [Contributing](CONTRIBUTING.md)                               | Local setup, conventions, PR flow           |
+| [Core vs Network](docs/architecture/kreds-core-vs-network.md) | What is open, what is not, and why          |
+| [Economic Constitution](ECONOMIC_CONSTITUTION.md)             | The 34 laws the economy runs on             |
+| [Trademarks](TRADEMARKS.md)                                   | Using the Kreds name                        |
+| [Security](SECURITY.md)                                       | Reporting a vulnerability                   |
+| [Support](SUPPORT.md)                                         | Where to ask questions                      |
 
 ---
 

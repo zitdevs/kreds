@@ -1,7 +1,8 @@
 # Contributing to Kreds
 
-Thanks for being here. Kreds is source-available and development happens in the
-open: issues, roadmap, and the reasoning behind decisions are all public.
+Thanks for being here. Kreds Core is open source under AGPLv3, and development
+happens in the open: issues, roadmap, and the reasoning behind decisions are all
+public.
 
 ## Ways to help
 
@@ -88,8 +89,8 @@ because nobody has a free hour.
 
 ## Licensing of contributions
 
-Kreds is licensed under the [Business Source License 1.1](LICENSE). By submitting
-a contribution you agree that:
+Kreds Core is licensed under [AGPLv3](LICENSE). By submitting a contribution you
+agree that:
 
 - your contribution is licensed under the same terms as the project, and
 - you have the right to submit it (it is your own work, or you have permission).

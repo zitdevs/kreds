@@ -38,9 +38,12 @@ and the GitHub org.
 
 ## Commercial licensing
 
-Want to offer Kreds as a hosted service, or need terms the BSL does not grant?
-Email **[contact@zitdevs.com](mailto:contact@zitdevs.com)**. That conversation is
-welcome, not a trap.
+You do not need our permission to host Kreds. AGPLv3 already allows it, including
+commercially. If you modify it first, its users need to be offered your source.
+
+What does need a conversation is connecting an instance to the Official Kreds
+Network, or using the Kreds name for a service. Email
+**[contact@zitdevs.com](mailto:contact@zitdevs.com)**.
 
 ## Free for open source
 

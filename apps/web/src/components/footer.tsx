@@ -45,7 +45,7 @@ export function Footer() {
               <span className="text-[0.95rem] font-semibold tracking-tight">Kreds</span>
             </Link>
             <p className="text-ink-dim mt-3.5 max-w-xs text-sm leading-relaxed">
-              {site.tagline} Source-available, self-hostable, and free for open source.
+              {site.tagline} Open source, self-hostable, and free for open-source teams.
             </p>
             <Link
               href={links.github}
@@ -87,9 +87,9 @@ export function Footer() {
             <span className="font-mono">{site.domain}</span>
           </p>
           <p>
-            Source-available under{" "}
+            Kreds Core is{" "}
             <Link href={links.license} className="text-ink-dim hover:text-ink transition-colors">
-              BSL 1.1
+              AGPLv3
             </Link>
             {" · "}Apache 2.0 from 2030
           </p>

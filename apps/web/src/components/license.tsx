@@ -1,19 +1,36 @@
 import Link from "next/link";
 import { Section } from "@/components/ui/section";
-import { Check, Cross } from "@/components/ui/icons";
+import { Check } from "@/components/ui/icons";
 import { links } from "@/lib/site";
 
 const allowed = [
-  "View, fork and study the source",
-  "Self-host it: laptop, VPS, your own cloud",
-  "Use it inside your company, at any size, in production",
-  "Modify it for your own needs",
+  "Read, fork and study every part of the system",
+  "Self-host it, on your laptop or in production",
+  "Use it commercially, in a company of any size",
+  "Modify it however you like",
+  "Sell services around it, including hosting it",
   "Contribute changes back",
 ];
 
-const notAllowed = [
-  "Resell it as a competing hosted product",
-  "Monetize a hosted version without permission",
+const layers = [
+  {
+    name: "Kreds Core",
+    tag: "AGPLv3",
+    body: "Everything in the repository. GitHub integration, teams, contributions, leaderboards, a local economy with its own currency and ledger, self-hosting. A complete product on its own.",
+    open: true,
+  },
+  {
+    name: "Kreds Network Protocol",
+    tag: "Public spec",
+    body: "The boundary between the two. How an instance registers, signs events and talks to the Network. It describes how to communicate, not how the Network decides.",
+    open: true,
+  },
+  {
+    name: "Official Kreds Network",
+    tag: "Private",
+    body: "The shared global economy: Official KRED and its fixed supply, the Central Bank, global settlement, network identity, the risk systems. Separate infrastructure, not in the repository.",
+    open: false,
+  },
 ];
 
 export function License() {
@@ -21,78 +38,83 @@ export function License() {
     <Section
       id="license"
       eyebrow="Licensing"
-      title="Source-available. We won't call it open source."
-      lead="Kreds is licensed under the Business Source License 1.1, the same one Sentry, Cal.com and CockroachDB use. It does not meet the OSI definition, and pretending otherwise would be the first dishonest thing on this page."
+      title="Open source. Not the version of that word that means nothing."
+      lead="Kreds Core is AGPLv3. Inspect it, fork it, self-host it, improve it, charge money for it. The Official Kreds Network is separate infrastructure, and that separation is the point rather than a catch."
     >
-      <div className="grid gap-5 lg:grid-cols-[1.15fr_1fr] lg:items-start">
-        <div className="border-line bg-line rounded-card grid gap-px overflow-hidden border sm:grid-cols-2">
-          <div className="bg-surface/60 p-6">
-            <h3 className="text-accent font-mono text-xs uppercase tracking-[0.14em]">You can</h3>
-            <ul className="mt-4 flex flex-col gap-3">
-              {allowed.map((item) => (
-                <li key={item} className="flex gap-2.5 text-sm">
-                  <Check className="text-accent mt-0.5 h-4 w-4 shrink-0" />
-                  <span className="text-ink-dim leading-snug">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="bg-surface/60 p-6">
-            <h3 className="text-danger font-mono text-xs uppercase tracking-[0.14em]">
-              You can&rsquo;t
-            </h3>
-            <ul className="mt-4 flex flex-col gap-3">
-              {notAllowed.map((item) => (
-                <li key={item} className="flex gap-2.5 text-sm">
-                  <Cross className="text-danger mt-0.5 h-4 w-4 shrink-0" />
-                  <span className="text-ink-dim leading-snug">{item}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="text-ink-faint mt-6 text-xs leading-relaxed">
-              The line is whether you are serving your own organization or selling to third parties.
-              Running Kreds for a client as part of consulting work is fine. Launching
-              &ldquo;managed Kreds hosting&rdquo; is not.
+      <div className="grid gap-5 lg:grid-cols-[1fr_1.1fr] lg:items-start">
+        <div className="border-line bg-surface/60 rounded-card border p-6">
+          <h3 className="text-accent font-mono text-xs uppercase tracking-[0.14em]">You can</h3>
+          <ul className="mt-4 flex flex-col gap-3">
+            {allowed.map((item) => (
+              <li key={item} className="flex gap-2.5 text-sm">
+                <Check className="text-accent mt-0.5 h-4 w-4 shrink-0" />
+                <span className="text-ink-dim leading-snug">{item}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="border-line mt-6 border-t pt-5">
+            <h3 className="text-[0.95rem] font-semibold tracking-tight">The one obligation</h3>
+            <p className="text-ink-dim mt-2.5 text-sm leading-relaxed">
+              If you <span className="text-ink">modify</span> Kreds and offer that modified version
+              as a service over a network, its users must be offered the source of your version. Run
+              it unmodified, or modify it for your own team, and nothing changes for you.
+            </p>
+            <p className="text-ink-faint mt-3 text-sm leading-relaxed">
+              AGPLv3 does not prohibit commercial use, and it does not stop you charging for
+              hosting. Anyone who told you otherwise confused it with a non-commercial licence.
             </p>
           </div>
         </div>
 
-        <div className="border-line bg-surface/50 rounded-card flex flex-col gap-5 border p-6">
-          <div>
-            <h3 className="text-[0.95rem] font-semibold tracking-tight">
-              It becomes Apache 2.0 on a fixed date
-            </h3>
-            <p className="text-ink-dim mt-2.5 text-sm leading-relaxed">
-              Every released version converts to the Apache License 2.0 four years after release.
-              That is written into the license itself, not promised in a blog post we could walk
-              back. Kreds only ever gets more permissive.
-            </p>
+        <div className="flex flex-col gap-5">
+          <div className="border-line bg-surface/50 divide-line rounded-card flex flex-col divide-y border">
+            {layers.map((layer) => (
+              <div key={layer.name} className="flex flex-col gap-2 p-5">
+                <div className="flex items-center gap-3">
+                  <span className="text-[0.95rem] font-semibold tracking-tight">{layer.name}</span>
+                  <span
+                    className={`rounded border px-2 py-0.5 font-mono text-[0.65rem] ${
+                      layer.open
+                        ? "border-accent-deep bg-accent-wash text-accent"
+                        : "border-line-strong text-ink-faint"
+                    }`}
+                  >
+                    {layer.tag}
+                  </span>
+                </div>
+                <p className="text-ink-dim text-sm leading-relaxed">{layer.body}</p>
+              </div>
+            ))}
           </div>
 
-          <div className="border-line bg-bg flex items-center gap-4 rounded-lg border px-4 py-3 font-mono text-xs">
-            <span className="text-ink-dim">v0.1.0</span>
-            <span aria-hidden className="bg-line-strong h-px flex-1" />
-            <span className="text-accent">Apache 2.0 · 2030-08-21</span>
-          </div>
-
-          <div>
-            <h3 className="text-[0.95rem] font-semibold tracking-tight">Why not MIT?</h3>
-            <p className="text-ink-dim mt-2.5 text-sm leading-relaxed">
-              Because a permissive license lets a cloud provider host Kreds, sell it, and put
-              nothing back, and there is no version of that story where the Community tier stays
-              free. The BSL draws exactly one line and leaves everything else intact.
-            </p>
-          </div>
+          <p className="text-ink-dim text-sm leading-relaxed">
+            The Network is not the good parts held back. It is the part that only exists because the
+            economy is shared, and whose anti-abuse rules stop working the moment they are public. A
+            self-hosted Kreds runs a complete economy without ever talking to kreds.sh.
+          </p>
 
           <div className="border-line flex flex-wrap gap-x-5 gap-y-2 border-t pt-4 text-sm">
+            <Link href={links.github} className="text-accent py-1.5 hover:underline">
+              View source
+            </Link>
             <Link href={links.license} className="text-accent py-1.5 hover:underline">
-              Read the LICENSE
+              Read the license
             </Link>
-            <Link href={links.licenseDoc} className="text-accent py-1.5 hover:underline">
-              Licensing FAQ
+            <Link href={links.constitution} className="text-accent py-1.5 hover:underline">
+              Economic Constitution
             </Link>
-            <Link href={links.contact} className="text-ink-dim hover:text-ink transition-colors">
-              Commercial license
+            <Link
+              href={links.architecture}
+              className="text-ink-dim hover:text-ink py-1.5 transition-colors"
+            >
+              Core vs Network
+            </Link>
+            <Link
+              href={links.trademarks}
+              className="text-ink-dim hover:text-ink py-1.5 transition-colors"
+            >
+              Trademarks
             </Link>
           </div>
         </div>

@@ -1,94 +1,93 @@
 # Licensing, in plain terms
 
-Kreds is **source-available**, not open source. We would rather say that plainly
-than dress it up.
+Kreds Core is **open source** under the
+[GNU Affero General Public License v3.0](../LICENSE).
 
-The full legal text is in [LICENSE](../LICENSE): the
-[Business Source License 1.1](https://mariadb.com/bsl11/), the same license used
-by Sentry, Cal.com, HashiCorp's Terraform and CockroachDB.
+Not source-available. Not open-core with the good parts removed. The repository
+you are reading is the whole product, and you can run it, change it and build a
+business on it.
 
-## The short version
+## What you can do
 
 |     |                                                          |
 | --- | -------------------------------------------------------- |
-| ✅  | Read, fork and study the source                          |
-| ✅  | Self-host it: laptop, VPS, your own cloud                |
-| ✅  | Use it inside your company, at any size, in production   |
-| ✅  | Modify it for your own needs                             |
+| ✅  | Read, fork and study every part of the system            |
+| ✅  | Self-host it, on your laptop or in production            |
+| ✅  | Use it commercially, inside a company of any size        |
+| ✅  | Modify it however you like                               |
+| ✅  | Sell services around it, including hosting it for others |
 | ✅  | Contribute changes back                                  |
-| ❌  | Resell it as a competing hosted product                  |
-| ❌  | Monetize a hosted version without a commercial agreement |
 
-## Why not MIT or Apache?
+AGPLv3 does not prohibit commercial use. It does not prohibit selling. It does
+not prohibit hosting Kreds for other people. Anyone who tells you otherwise has
+confused it with a non-commercial licence.
 
-Because a permissive license lets a cloud provider take Kreds, host it, sell it,
-and put nothing back, and there is no version of that story where the project
-survives to keep its Community tier free.
+## The one obligation
 
-The BSL draws exactly one line: **do not sell Kreds as a service in competition
-with us.** Everything else you would expect from open source stays intact.
+AGPLv3 has a single requirement that ordinary GPL does not:
 
-## It becomes Apache 2.0
+> If you modify Kreds and let people use that modified version over a network,
+> the users of that service must be offered the source of your modified version.
 
-Every released version converts to the **Apache License 2.0** four years after
-release. That is written into the license itself, not a promise in a blog post
-we can walk back.
+That is the whole of it. Run it unmodified and nothing changes for you. Modify it
+for your own team and nothing changes for you either, because your team is not a
+third party being served over a network. Modify it and offer it publicly as a
+service, and your users get the same right to the source that you had.
 
-Concretely: v0.1.0 is Apache 2.0 on **2030-08-21**. From that date it is
-unambiguously open source, forever, no matter what happens to ZitDevs.
+The [LICENSE](../LICENSE) is the authoritative text. This page is a summary for
+humans and loses to the licence wherever the two disagree.
 
-The direction is one-way. Kreds only ever gets more permissive.
+## Why AGPL and not MIT
 
-## What counts as "competing"
+Because Kreds is infrastructure that a hosting company could take, improve
+privately, and sell back to the same community that built it. AGPL keeps
+improvements flowing in both directions.
 
-The one thing the license forbids is offering Kreds to third parties on a hosted
-or embedded basis in order to compete with our paid version.
+It is a deliberately even trade: you get everything, and if you distribute a
+changed version as a service, so does everyone else.
 
-**Fine:**
+## Kreds Core is not the Kreds Network
 
-- Running Kreds for your company's engineering team, at any size
-- Running it for several teams inside the same organization
-- Running it for a client as part of consulting work you do for them
-- Bundling it into an internal platform your company uses
-- Modifying it heavily and running your fork internally
+This licence covers **Kreds Core**, which is the software in this repository.
 
-**Not fine without talking to us:**
+The **Official Kreds Network** is separate infrastructure. It runs the shared
+global economy behind Official KRED: the Central Bank, global settlement, network
+identity, cross-organization trust and the risk systems that keep the supply
+honest. It is proprietary and it is not in this repository.
 
-- Launching `kreds-cloud.io` and charging teams to use it
-- Adding Kreds to your SaaS product as a paid feature for your customers
-- Offering "managed Kreds hosting" as a commercial service
+That separation is the point rather than a catch. A shared economy needs a single
+authoritative ledger and anti-abuse systems whose rules are not public, or the
+protections stop working the moment someone reads them. Everything that does not
+require a shared network is open.
 
-The distinction is whether you are serving **your own organization** or
-**selling to third parties**.
+```text
+Kreds Core        AGPLv3, open source, runs standalone
+Kreds Network     Public protocol specification
+Official Network  Private infrastructure behind kreds.sh
+```
+
+A self-hosted Kreds runs its own economy, its own currency and its own rules,
+with no dependency on kreds.sh. Joining the Official Network is an option, never
+a requirement. See
+[Kreds Core and the Kreds Network](architecture/kreds-core-vs-network.md).
 
 ## Contributions
 
-Contributions are welcome and are licensed under the same terms as the project.
-There is no CLA. We only ask that what you submit is genuinely yours to submit.
+Contributions are licensed under AGPLv3, the same as the project. There is no
+CLA. We only ask that what you submit is genuinely yours to submit.
 
-Your contributions also convert to Apache 2.0 on the same four-year clock.
+## Trademarks are separate
+
+The licence covers the code. It does not grant rights to the Kreds name, the
+logo, or to present a fork as the official service. Those rules live in
+[TRADEMARKS.md](../TRADEMARKS.md), which is deliberately permissive about honest
+use and strict about impersonation.
 
 ## Free for open source
 
-If your project is public and non-commercial, the hosted Team tier is free,
-permanently, not as a trial. Open an issue with a link to your organization.
+If your project is public and non-commercial, the hosted Team tier on kreds.sh is
+free permanently. Open an issue with a link to your organization.
 
-## Commercial licenses
+## Questions
 
-Need terms the BSL does not grant? That conversation is welcome, not a trap.
-Email **[contact@zitdevs.com](mailto:contact@zitdevs.com)** and tell us what you want
-to build.
-
-## Is this really not open source?
-
-No, and we will not claim otherwise. The Open Source Initiative's definition
-requires no restriction on field of use, and the BSL restricts one. Projects that
-call BSL "open source" are stretching a word that has a specific meaning.
-
-What we will claim: the source is public, you can run it, you can change it, you
-can contribute to it, and it becomes properly open source on a fixed date.
-
----
-
-_This page is a summary written for humans. Where it and [LICENSE](../LICENSE)
-disagree, the LICENSE governs._
+Anything the licence does not answer: [contact@zitdevs.com](mailto:contact@zitdevs.com).

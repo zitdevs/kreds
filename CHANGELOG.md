@@ -22,9 +22,9 @@ active development and lands next.
 - **Marketing site** (`apps/web`). Next.js 15, TypeScript, Tailwind 4. Hero,
   how-it-works, features, leaderboard showcase, pricing, self-hosting, licensing,
   community, sponsorship, and FAQ.
-- **Business Source License 1.1**, Change License Apache 2.0, converting four
-  years after each release. Internal and production use explicitly granted;
-  competing hosted offerings are not.
+- **AGPLv3.** Kreds Core is open source. Commercial use, self-hosting, forks and
+  modification are all permitted; a modified version offered as a network service
+  has to offer its users the corresponding source.
 - **Self-hosting path.** `docker-compose.yml` with Postgres and Redis, an
   annotated environment reference, and [docs/self-hosting.md](docs/self-hosting.md).
 - **Community files.** Contributing guide, code of conduct, security policy,

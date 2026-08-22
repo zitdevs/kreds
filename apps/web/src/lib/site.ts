@@ -47,6 +47,10 @@ export const links = {
   licenseDoc: "https://github.com/zitdevs/kreds/blob/main/docs/licensing.md",
   selfHosting: "https://github.com/zitdevs/kreds/blob/main/docs/self-hosting.md",
   rules: "https://github.com/zitdevs/kreds/blob/main/docs/kreds-rules.md",
+  constitution: "https://github.com/zitdevs/kreds/blob/main/ECONOMIC_CONSTITUTION.md",
+  architecture:
+    "https://github.com/zitdevs/kreds/blob/main/docs/architecture/kreds-core-vs-network.md",
+  trademarks: "https://github.com/zitdevs/kreds/blob/main/TRADEMARKS.md",
   contributing: "https://github.com/zitdevs/kreds/blob/main/CONTRIBUTING.md",
   changelog: "https://github.com/zitdevs/kreds/blob/main/CHANGELOG.md",
   docs: "https://github.com/zitdevs/kreds/tree/main/docs",
@@ -55,7 +59,7 @@ export const links = {
 } as const;
 
 /**
- * How value moves. Sourced from the public economic policy (rules v0.3) in
+ * How value moves. Sourced from the public economic policy (rules v0.4) in
  * zitdevs/kreds-laws. Never invented here, and never restated from memory.
  *
  * The split is the point, and it is Law III: shipping *creates* value, reviewing

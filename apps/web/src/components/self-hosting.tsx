@@ -31,8 +31,8 @@ export function SelfHosting() {
     <Section
       id="self-hosting"
       eyebrow="Self-hosting"
-      title="Run it yourself. Free, at any size."
-      lead="Self-hosting is a first-class path, not a grudging concession. The whole product is in the box, and no feature is held back to push you onto the hosted plan."
+      title="Run an independent Kreds economy on your own infrastructure."
+      lead="Self-host Kreds anywhere. Your instance runs its own currency, its own monetary policy, its own treasury and its own rules, with no dependency on kreds.sh and nothing held back to push you onto a hosted plan."
     >
       <div className="grid min-w-0 gap-5 lg:grid-cols-[1fr_1.05fr] lg:items-start">
         <div className="border-line bg-line rounded-card grid gap-px overflow-hidden border sm:grid-cols-2">
@@ -75,6 +75,12 @@ export function SelfHosting() {
               Deploy it yourself
             </Button>
           </div>
+
+          <p className="text-ink-dim text-sm leading-relaxed">
+            An independent self-hosted economy does not automatically participate in the Official
+            Kreds Network. Your currency is yours, and it is not Official KRED. Connecting later is
+            an option through the Kreds Network protocol, never a requirement.
+          </p>
 
           <p className="text-ink-faint text-sm leading-relaxed">
             One caveat we would rather say up front: GitHub has to reach your webhook endpoint, so a

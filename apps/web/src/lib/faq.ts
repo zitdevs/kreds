@@ -11,7 +11,27 @@ export type Faq = { q: string; a: string };
 export const faqs: Faq[] = [
   {
     q: "Is Kreds open source?",
-    a: "No, and we will not claim otherwise. Kreds is source-available under the Business Source License 1.1. The source is public, you can run it, modify it and contribute to it, but the license restricts one thing (offering it as a competing hosted service), and that restriction is what puts it outside the OSI definition. Each version becomes Apache 2.0 four years after release.",
+    a: "Yes. Kreds Core is licensed under AGPLv3, which is an OSI-approved open source license. Not source-available, not open-core with the interesting parts removed. The repository is the whole product.",
+  },
+  {
+    q: "Can I use Kreds commercially?",
+    a: "Yes. AGPLv3 permits commercial use, and your company can self-host it at any size without asking anyone. You can also charge money for services around it, including hosting it for other people.",
+  },
+  {
+    q: "Can I modify Kreds and offer it as a service?",
+    a: "Yes, subject to AGPLv3. The one obligation the license adds is this: if people interact with your modified version over a network, they have to be offered the corresponding source of that modified version. Run it unmodified and nothing changes. Modify it for your own team and nothing changes either, because your team is not a third party being served over a network.",
+  },
+  {
+    q: "Is the Official Kreds Network open source?",
+    a: "No. The Official Kreds Network is separate, proprietary infrastructure: the Official KRED ledger and its fixed supply, the Central Bank, global settlement, network identity and the risk systems. A shared economy needs one authoritative ledger, and anti-abuse rules stop working when they are published. Everything that does not require a shared network is open.",
+  },
+  {
+    q: "Does self-hosted Kreds need kreds.sh?",
+    a: "No. A self-hosted instance is independent by default. It runs its own economy, its own currency, its own supply, its own treasury and its own monetary policy, with no dependency on kreds.sh and no automatic participation in the Official Network.",
+  },
+  {
+    q: "Can a self-hosted instance join the Network later?",
+    a: "That is what the Kreds Network protocol is for. Joining can bring Official KRED, network identity, official settlement and participation in the global economy, and it requires meeting the Network's integrity requirements. Joining preserves history rather than resetting balances.",
   },
   {
     q: "Can I self-host Kreds?",

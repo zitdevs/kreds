@@ -38,8 +38,8 @@ export function Community() {
   return (
     <Section
       eyebrow="Community"
-      title="Source-available, still community-first."
-      lead="A restricted license is not an excuse for a closed process. Issues, roadmap and reasoning are public, and open-source teams get the paid tier for free."
+      title="Open source, and run like it."
+      lead="Issues, roadmap and the reasoning behind decisions are all public, contributions are licensed the same as the project with no CLA, and open-source teams get the paid tier for free."
     >
       <div className="border-line bg-line rounded-card grid gap-px overflow-hidden border sm:grid-cols-2">
         {cards.map((card) => (
