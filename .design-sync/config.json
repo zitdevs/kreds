@@ -1,0 +1,274 @@
+{
+  "projectId": "b5e4d9a5-729d-45bb-a439-eb3598fbd87e",
+  "pkg": "@kreds/ui",
+  "globalName": "KredsUI",
+  "shape": "package",
+  "srcDir": "src",
+  "tsconfig": "../../.design-sync/tsconfig.design-sync.json",
+  "buildCmd": "node .ds-sync/node_modules/@tailwindcss/cli/dist/index.mjs -i .design-sync/tailwind-entry.css -o packages/ui/.ds-css/kreds.css",
+  "cssEntry": ".ds-css/kreds.css",
+  "extraFonts": ["../../.design-sync/fonts.css"],
+  "tokensPkg": "@kreds/ui",
+  "tokensGlob": "src/styles/*.css",
+  "readmeHeader": ".design-sync/conventions.md",
+  "extraEntries": [
+    "../../apps/web/src/components/hero.tsx",
+    "../../apps/web/src/components/nav.tsx",
+    "../../apps/web/src/components/features.tsx",
+    "../../apps/web/src/components/how-it-works.tsx",
+    "../../apps/web/src/components/leaderboard-showcase.tsx",
+    "../../apps/web/src/components/pricing.tsx",
+    "../../apps/web/src/components/faq.tsx",
+    "../../apps/web/src/components/community.tsx",
+    "../../apps/web/src/components/license.tsx",
+    "../../apps/web/src/components/self-hosting.tsx",
+    "../../apps/web/src/components/sponsor.tsx",
+    "../../apps/web/src/components/footer.tsx"
+  ],
+  "componentSrcMap": {
+    "ArrowRight": "src/icons.tsx",
+    "Bolt": "src/icons.tsx",
+    "Book": "src/icons.tsx",
+    "Brand": "src/site-chrome.tsx",
+    "Button": "src/button.tsx",
+    "Chart": "src/icons.tsx",
+    "Check": "src/icons.tsx",
+    "Chevron": "src/icons.tsx",
+    "Community": "../../apps/web/src/components/community.tsx",
+    "Cross": "src/icons.tsx",
+    "Eye": "src/icons.tsx",
+    "Eyebrow": "src/section.tsx",
+    "Faq": "../../apps/web/src/components/faq.tsx",
+    "Features": "../../apps/web/src/components/features.tsx",
+    "Flame": "src/icons.tsx",
+    "Footer": "../../apps/web/src/components/footer.tsx",
+    "GitHub": "src/icons.tsx",
+    "GitMerge": "src/icons.tsx",
+    "Heart": "src/icons.tsx",
+    "Hero": "../../apps/web/src/components/hero.tsx",
+    "HowItWorks": "../../apps/web/src/components/how-it-works.tsx",
+    "LeaderboardShowcase": "../../apps/web/src/components/leaderboard-showcase.tsx",
+    "License": "../../apps/web/src/components/license.tsx",
+    "Nav": "../../apps/web/src/components/nav.tsx",
+    "Plug": "src/icons.tsx",
+    "Pricing": "../../apps/web/src/components/pricing.tsx",
+    "Section": "src/section.tsx",
+    "SelfHosting": "../../apps/web/src/components/self-hosting.tsx",
+    "Server": "src/icons.tsx",
+    "Shield": "src/icons.tsx",
+    "SiteFooter": "src/site-chrome.tsx",
+    "SiteHeader": "src/site-chrome.tsx",
+    "Sparkle": "src/icons.tsx",
+    "Sponsor": "../../apps/web/src/components/sponsor.tsx",
+    "Target": "src/icons.tsx",
+    "Terminal": "src/icons.tsx",
+    "Trophy": "src/icons.tsx",
+    "Users": "src/icons.tsx"
+  },
+  "dtsPropsFor": {
+    "ArrowRight": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "Bolt": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "Book": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "Brand": "/** Where the wordmark links. Defaults to `/`. */\n  href?: string;\n  /** The wordmark text. Defaults to `Kreds`. */\n  label?: string;",
+    "Button": "/** Every Button is a link \u2014 this is the destination. */\n  href: string;\n  /** `primary` is the green fill, `secondary` an outlined surface, `ghost` bare text. */\n  variant?: 'primary' | 'secondary' | 'ghost';\n  size?: 'md' | 'lg';\n  children: React.ReactNode;\n  className?: string;\n  target?: string;\n  rel?: string;\n  'aria-label'?: string;",
+    "Chart": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "Check": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "Chevron": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "Community": "/** No props: the section renders its own copy from the site's content modules. */",
+    "Cross": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "Eye": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "Eyebrow": "/** The short accent label above a section heading. Rendered uppercase in mono. */\n  children: React.ReactNode;",
+    "Faq": "/** No props: the section renders its own copy from the site's content modules. */",
+    "Features": "/** No props: the section renders its own copy from the site's content modules. */",
+    "Flame": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "Footer": "/** No props: the section renders its own copy from the site's content modules. */",
+    "GitHub": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "GitMerge": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "Heart": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "Hero": "/** No props: the section renders its own copy from the site's content modules. */",
+    "HowItWorks": "/** No props: the section renders its own copy from the site's content modules. */",
+    "LeaderboardShowcase": "/** No props: the section renders its own copy from the site's content modules. */",
+    "License": "/** No props: the section renders its own copy from the site's content modules. */",
+    "Nav": "/** No props: the section renders its own copy from the site's content modules. */",
+    "Plug": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "Pricing": "/** No props: the section renders its own copy from the site's content modules. */",
+    "SelfHosting": "/** No props: the section renders its own copy from the site's content modules. */",
+    "Server": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "Shield": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "SiteFooter": "/** Link columns. Each group is a titled list of `{ label, href }`. */\n  groups: readonly {\n    readonly title: string;\n    readonly items: readonly { readonly label: string; readonly href: string }[];\n  }[];\n  tagline: string;\n  githubUrl: string;\n  githubLabel: string;\n  author: string;\n  authorUrl: string;\n  domain: string;\n  licenseHref: string;\n  brandHref?: string;",
+    "SiteHeader": "/** `{ label, href }` per link. */\n  items: readonly { readonly label: string; readonly href: string }[];\n  githubUrl: string;\n  brandHref?: string;\n  /** Rendered at the right edge. A call to action on marketing, a search box later on docs. */\n  action?: React.ReactNode;\n  /** Shown next to the wordmark, so a reader always knows which surface they are on. */\n  badge?: string;",
+    "Sparkle": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "Sponsor": "/** No props: the section renders its own copy from the site's content modules. */",
+    "Target": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "Terminal": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "Trophy": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;",
+    "Users": "/** Sized with utility classes; `h-4 w-4` is the size the DS uses inline in text. */\n  className?: string;\n  /** Inherits `currentColor` by default \u2014 colour it with a text utility. */\n  color?: string;\n  width?: string | number;\n  height?: string | number;\n  style?: React.CSSProperties;\n  role?: string;\n  'aria-hidden'?: boolean | 'true' | 'false';\n  'aria-label'?: string;"
+  },
+  "overrides": {
+    "ArrowRight": {
+      "viewport": "1200x240"
+    },
+    "Bolt": {
+      "viewport": "1200x240"
+    },
+    "Book": {
+      "viewport": "1200x240"
+    },
+    "Brand": {
+      "viewport": "1200x260"
+    },
+    "Button": {
+      "viewport": "1200x230"
+    },
+    "Chart": {
+      "viewport": "1200x240"
+    },
+    "Check": {
+      "viewport": "1200x240"
+    },
+    "Chevron": {
+      "viewport": "1200x240"
+    },
+    "Community": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "Cross": {
+      "viewport": "1200x240"
+    },
+    "Eye": {
+      "viewport": "1200x240"
+    },
+    "Eyebrow": {
+      "viewport": "1200x420"
+    },
+    "Faq": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "Features": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "Flame": {
+      "viewport": "1200x240"
+    },
+    "Footer": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "GitHub": {
+      "viewport": "1200x240"
+    },
+    "GitMerge": {
+      "viewport": "1200x240"
+    },
+    "Heart": {
+      "viewport": "1200x240"
+    },
+    "Hero": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "HowItWorks": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "LeaderboardShowcase": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "License": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "Nav": {
+      "cardMode": "single",
+      "viewport": "1280x200"
+    },
+    "Plug": {
+      "viewport": "1200x240"
+    },
+    "Pricing": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "SelfHosting": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "Server": {
+      "viewport": "1200x240"
+    },
+    "Shield": {
+      "viewport": "1200x240"
+    },
+    "SiteFooter": {
+      "cardMode": "column",
+      "viewport": "1200x620"
+    },
+    "SiteHeader": {
+      "cardMode": "column",
+      "viewport": "1200x430"
+    },
+    "Sparkle": {
+      "viewport": "1200x240"
+    },
+    "Sponsor": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "Target": {
+      "viewport": "1200x240"
+    },
+    "Terminal": {
+      "viewport": "1200x240"
+    },
+    "Trophy": {
+      "viewport": "1200x240"
+    },
+    "Users": {
+      "viewport": "1200x240"
+    }
+  },
+  "docsMap": {
+    "ArrowRight": "../../.design-sync/docs/ArrowRight.md",
+    "Bolt": "../../.design-sync/docs/Bolt.md",
+    "Book": "../../.design-sync/docs/Book.md",
+    "Brand": "../../.design-sync/docs/Brand.md",
+    "Button": "../../.design-sync/docs/Button.md",
+    "Chart": "../../.design-sync/docs/Chart.md",
+    "Check": "../../.design-sync/docs/Check.md",
+    "Chevron": "../../.design-sync/docs/Chevron.md",
+    "Community": "../../.design-sync/docs/Community.md",
+    "Cross": "../../.design-sync/docs/Cross.md",
+    "Eye": "../../.design-sync/docs/Eye.md",
+    "Eyebrow": "../../.design-sync/docs/Eyebrow.md",
+    "Faq": "../../.design-sync/docs/Faq.md",
+    "Features": "../../.design-sync/docs/Features.md",
+    "Flame": "../../.design-sync/docs/Flame.md",
+    "Footer": "../../.design-sync/docs/Footer.md",
+    "GitHub": "../../.design-sync/docs/GitHub.md",
+    "GitMerge": "../../.design-sync/docs/GitMerge.md",
+    "Heart": "../../.design-sync/docs/Heart.md",
+    "Hero": "../../.design-sync/docs/Hero.md",
+    "HowItWorks": "../../.design-sync/docs/HowItWorks.md",
+    "LeaderboardShowcase": "../../.design-sync/docs/LeaderboardShowcase.md",
+    "License": "../../.design-sync/docs/License.md",
+    "Nav": "../../.design-sync/docs/Nav.md",
+    "Plug": "../../.design-sync/docs/Plug.md",
+    "Pricing": "../../.design-sync/docs/Pricing.md",
+    "Section": "../../.design-sync/docs/Section.md",
+    "SelfHosting": "../../.design-sync/docs/SelfHosting.md",
+    "Server": "../../.design-sync/docs/Server.md",
+    "Shield": "../../.design-sync/docs/Shield.md",
+    "SiteFooter": "../../.design-sync/docs/SiteFooter.md",
+    "SiteHeader": "../../.design-sync/docs/SiteHeader.md",
+    "Sparkle": "../../.design-sync/docs/Sparkle.md",
+    "Sponsor": "../../.design-sync/docs/Sponsor.md",
+    "Target": "../../.design-sync/docs/Target.md",
+    "Terminal": "../../.design-sync/docs/Terminal.md",
+    "Trophy": "../../.design-sync/docs/Trophy.md",
+    "Users": "../../.design-sync/docs/Users.md"
+  }
+}

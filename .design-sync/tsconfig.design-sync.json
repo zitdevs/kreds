@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "strict": true,
+    "skipLibCheck": true,
+    "baseUrl": "..",
+    "paths": {
+      "@/*": ["apps/web/src/*"],
+      "@kreds/ui": ["packages/ui/src/index.ts"],
+      "next/link": [".design-sync/shims/next-link.tsx"]
+    }
+  }
+}
