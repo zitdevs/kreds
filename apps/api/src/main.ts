@@ -27,10 +27,12 @@ async function bootstrap(): Promise<void> {
   // open against Postgres until they time out.
   app.enableShutdownHooks();
 
-  // The web app is a different origin, so the session cookie only travels if
+  // The product is a different origin, so the session cookie only travels if
   // credentials are allowed and the origin is named exactly. A wildcard is not
-  // permitted with credentials, and that restriction is the useful part.
-  app.enableCors({ origin: config.get("KREDS_URL", { infer: true }), credentials: true });
+  // permitted alongside credentials, and that restriction is the useful part.
+  // Only the product is listed: the marketing and documentation sites never
+  // read a session, so granting them one would widen the surface for nothing.
+  app.enableCors({ origin: config.get("KREDS_APP_URL", { infer: true }), credentials: true });
 
   const port = config.get("PORT", { infer: true });
   await app.listen(port, "0.0.0.0");

@@ -18,8 +18,13 @@ export const envSchema = z.object({
 
   /** Public origin of the API itself. OAuth callbacks are built from this. */
   KREDS_API_URL: z.string().url(),
-  /** Where a finished sign-in sends the person back to. */
+  /** The marketing site. Not where a sign-in lands. */
   KREDS_URL: z.string().url(),
+  /**
+   * The product. Where a finished sign-in returns to, and the one origin
+   * allowed to read a session, since it is the only thing that needs one.
+   */
+  KREDS_APP_URL: z.string().url(),
 
   /**
    * Session signing key.

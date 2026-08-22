@@ -60,7 +60,22 @@ services:
       db: { condition: service_healthy }
       redis: { condition: service_healthy }
 
-  # The interface. Reads from the API and never touches Postgres directly.
+  # The product. Reads from the API and never touches Postgres directly.
+  app:
+    image: ghcr.io/zitdevs/kreds-app:latest
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3002}:3000"
+    env_file:
+      - .env
+    environment:
+      # Baked into the browser bundle at build time, so it has to be the origin
+      # a browser can reach, not an internal service name.
+      NEXT_PUBLIC_KREDS_API_URL: ${KREDS_API_URL:-http://localhost:4000}
+    depends_on:
+      api: { condition: service_healthy }
+
+  # The marketing site. Public, and independent of everything above.
   web:
     image: ghcr.io/zitdevs/kreds-web:latest
     restart: unless-stopped
@@ -68,8 +83,6 @@ services:
       - "${WEB_PORT:-3000}:3000"
     env_file:
       - .env
-    depends_on:
-      api: { condition: service_healthy }
 
 volumes:
   kreds-db:

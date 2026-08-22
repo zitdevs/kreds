@@ -25,7 +25,7 @@ interface SessionUser {
  */
 @Controller("auth")
 export class AuthController {
-  private readonly webUrl: string;
+  private readonly appUrl: string;
 
   constructor(
     private readonly oauth: GitHubOAuthService,
@@ -33,7 +33,7 @@ export class AuthController {
     private readonly identities: IdentityRepository,
     config: ConfigService<Env, true>,
   ) {
-    this.webUrl = config.get("KREDS_URL", { infer: true });
+    this.appUrl = config.get("KREDS_APP_URL", { infer: true });
   }
 
   /** Start the flow. The state cookie is what makes the callback trustworthy. */
@@ -61,7 +61,7 @@ export class AuthController {
     // The person pressed Cancel on GitHub's consent screen. Not an error worth
     // a stack trace, just a sign-in that did not happen.
     if (error) {
-      response.redirect(`${this.webUrl}/?signin=cancelled`);
+      response.redirect(`${this.appUrl}/?signin=cancelled`);
       return;
     }
 
@@ -86,8 +86,8 @@ export class AuthController {
     });
 
     // 09: Identity, "Your Kreds history starts before your Kreds account does."
-    // The web app shows a different first screen when work was already waiting.
-    response.redirect(`${this.webUrl}/?welcome=${hadPriorHistory ? "returning" : "new"}`);
+    // The product shows a different first screen when work was already waiting.
+    response.redirect(`${this.appUrl}/?welcome=${hadPriorHistory ? "returning" : "new"}`);
   }
 
   /** Who the caller is, or `null`. The web app's session check. */

@@ -93,12 +93,13 @@ Fill in `.env`. Every value, and what it is for:
 
 ### Core
 
-| Variable        | Required | Notes                                                                                           |
-| --------------- | -------- | ----------------------------------------------------------------------------------------------- |
-| `KREDS_URL`     | yes      | Public origin of the web app, no trailing slash. Where people land after signing in.            |
-| `KREDS_API_URL` | yes      | Public origin of the API, no trailing slash. GitHub talks to this one, so it must be reachable. |
-| `AUTH_SECRET`   | yes      | Session signing key. `openssl rand -base64 32`.                                                 |
-| `DATABASE_URL`  | yes      | Postgres connection string. The compose file wires this for you.                                |
+| Variable        | Required | Notes                                                                                                        |
+| --------------- | -------- | ------------------------------------------------------------------------------------------------------------ |
+| `KREDS_URL`     | yes      | Public origin of the marketing site, no trailing slash.                                                      |
+| `KREDS_APP_URL` | yes      | Public origin of the product. Where a finished sign-in lands, and the only origin allowed to read a session. |
+| `KREDS_API_URL` | yes      | Public origin of the API, no trailing slash. GitHub talks to this one, so it must be reachable.              |
+| `AUTH_SECRET`   | yes      | Session signing key. `openssl rand -base64 32`.                                                              |
+| `DATABASE_URL`  | yes      | Postgres connection string. The compose file wires this for you.                                             |
 
 ### GitHub OAuth
 
@@ -142,7 +143,7 @@ docker compose up -d
 docker compose logs -f kreds
 ```
 
-Open your `KREDS_URL`, sign in with GitHub, create a team, and pick the
+Open your `KREDS_APP_URL`, sign in with GitHub, create a team, and pick the
 repositories the App can see.
 
 Kreds backfills the last 30 days of pull requests, reviews and issues on first
@@ -197,10 +198,12 @@ kreds.example.com {
 
 Two things to get right:
 
-- `KREDS_URL` and `KREDS_API_URL` must both be **public HTTPS** origins, not
-  `http://localhost`. OAuth callbacks and webhook signatures are checked
-  against `KREDS_API_URL`, so getting that one wrong breaks sign-in and
-  ingestion at the same time.
+- `KREDS_URL`, `KREDS_APP_URL` and `KREDS_API_URL` must all be **public HTTPS**
+  origins, not `http://localhost`. OAuth callbacks and webhook signatures are
+  checked against `KREDS_API_URL`, so getting that one wrong breaks sign-in and
+  ingestion at the same time. `KREDS_APP_URL` is the origin CORS allows, so
+  getting it wrong leaves people signed in with a product that cannot read the
+  session it just issued them.
 - Do not buffer or rewrite the request body on `/api/github/webhook`. Webhook
   signatures are computed over the raw bytes; a proxy that reformats JSON will
   break verification.
