@@ -14,11 +14,11 @@ export function Hero() {
     <section className="relative overflow-hidden">
       {/* backdrop: grid field, faded out toward the edges, with one soft glow */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="grid-field absolute inset-0 opacity-60 [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_20%,transparent_75%)]" />
-        <div className="animate-sheen absolute left-1/2 top-[-18rem] h-[34rem] w-[54rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,#5ee9a4_0%,transparent_62%)] opacity-[0.13] blur-3xl" />
+        <div className="grid-field absolute inset-0 [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_20%,transparent_75%)] opacity-60" />
+        <div className="animate-sheen absolute top-[-18rem] left-1/2 h-[34rem] w-[54rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,#5ee9a4_0%,transparent_62%)] opacity-[0.13] blur-3xl" />
       </div>
 
-      <div className="relative mx-auto max-w-6xl px-5 pb-16 pt-20 sm:px-8 sm:pb-24 sm:pt-28">
+      <div className="relative mx-auto max-w-6xl px-5 pt-20 pb-16 sm:px-8 sm:pt-28 sm:pb-24">
         <div className="animate-rise mx-auto max-w-3xl text-center">
           <Link
             href={links.license}
@@ -28,11 +28,11 @@ export function Hero() {
             Open source · AGPLv3
           </Link>
 
-          <h1 className="text-gradient mt-7 text-balance text-4xl font-semibold tracking-tight sm:text-6xl sm:leading-[1.05]">
+          <h1 className="text-gradient mt-7 text-4xl font-semibold tracking-tight text-balance sm:text-6xl sm:leading-[1.05]">
             The leaderboard for your engineering team.
           </h1>
 
-          <p className="text-ink-dim mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed sm:text-lg">
+          <p className="text-ink-dim mx-auto mt-6 max-w-xl text-base leading-relaxed text-pretty sm:text-lg">
             Merging a pull request <span className="text-ink">creates</span> KRED. Getting it
             reviewed <span className="text-ink">costs</span> you some, paid to whoever reviewed it.
             An economy where helping someone ship is the way to get ahead.

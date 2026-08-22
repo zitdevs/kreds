@@ -11,7 +11,7 @@ function Sidebar({ current }: { current?: string }) {
         if (pages.length === 0) return null;
         return (
           <div key={section.id} className="mb-7">
-            <h2 className="text-ink-faint mb-2.5 text-[0.7rem] font-semibold uppercase tracking-[0.14em]">
+            <h2 className="text-ink-faint mb-2.5 text-[0.7rem] font-semibold tracking-[0.14em] uppercase">
               {section.title}
             </h2>
             <ul className="space-y-0.5">
@@ -45,7 +45,7 @@ function OnThisPage({ headings }: { headings: readonly Heading[] }) {
   if (headings.length < 2) return null;
   return (
     <nav aria-label="On this page" className="text-sm">
-      <h2 className="text-ink-faint mb-2.5 text-[0.7rem] font-semibold uppercase tracking-[0.14em]">
+      <h2 className="text-ink-faint mb-2.5 text-[0.7rem] font-semibold tracking-[0.14em] uppercase">
         On this page
       </h2>
       <ul className="space-y-1.5">

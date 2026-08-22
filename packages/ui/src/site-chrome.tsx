@@ -51,7 +51,7 @@ export function SiteHeader({ items, githubUrl, brandHref, action, badge }: SiteH
         <div className="flex items-center gap-2.5">
           <Brand {...(brandHref ? { href: brandHref } : {})} />
           {badge ? (
-            <span className="border-line text-ink-faint hidden rounded-md border px-1.5 py-0.5 font-mono text-[0.65rem] uppercase tracking-wide sm:inline">
+            <span className="border-line text-ink-faint hidden rounded-md border px-1.5 py-0.5 font-mono text-[0.65rem] tracking-wide uppercase sm:inline">
               {badge}
             </span>
           ) : null}
@@ -126,7 +126,7 @@ export function SiteFooter({
 
           {groups.map((group) => (
             <div key={group.title}>
-              <h3 className="text-ink-faint font-mono text-xs uppercase tracking-[0.12em]">
+              <h3 className="text-ink-faint font-mono text-xs tracking-[0.12em] uppercase">
                 {group.title}
               </h3>
               <ul className="mt-4 flex flex-col gap-2.5">

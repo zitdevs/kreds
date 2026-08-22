@@ -97,7 +97,7 @@ export function LeaderboardShowcase() {
       </div>
 
       <div className="border-accent-deep bg-accent-wash rounded-card mt-5 border px-6 py-5">
-        <p className="text-pretty text-sm leading-relaxed">
+        <p className="text-sm leading-relaxed text-pretty">
           <span className="text-ink font-medium">
             dan-ships leads contribution and trails the economy.
           </span>{" "}
@@ -112,7 +112,7 @@ export function LeaderboardShowcase() {
         <div className="border-line bg-surface/60 rounded-card border p-6">
           <h3 className="text-[0.95rem] font-semibold tracking-tight">How value moves</h3>
 
-          <p className="text-accent mt-5 font-mono text-xs uppercase tracking-[0.14em]">Created</p>
+          <p className="text-accent mt-5 font-mono text-xs tracking-[0.14em] uppercase">Created</p>
           {minted.map((rule) => (
             <div key={rule.action} className="mt-2.5 flex flex-col gap-1">
               <div className="flex items-baseline justify-between gap-4 text-sm">
@@ -123,7 +123,7 @@ export function LeaderboardShowcase() {
             </div>
           ))}
 
-          <p className="text-accent mt-6 font-mono text-xs uppercase tracking-[0.14em]">
+          <p className="text-accent mt-6 font-mono text-xs tracking-[0.14em] uppercase">
             Circulated
           </p>
           {transferred.map((rule) => (
@@ -157,7 +157,7 @@ export function LeaderboardShowcase() {
           </div>
 
           <div className="border-line bg-surface/50 rounded-card border p-6">
-            <h3 className="text-ink-faint font-mono text-xs uppercase tracking-[0.14em]">
+            <h3 className="text-ink-faint font-mono text-xs tracking-[0.14em] uppercase">
               Worth nothing, on purpose
             </h3>
             <ul className="mt-4 flex flex-col gap-2.5">
