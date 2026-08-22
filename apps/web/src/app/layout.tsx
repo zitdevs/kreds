@@ -134,8 +134,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <head>
-        {/* The only third-party origin the page touches. */}
+        {/*
+          Umami and Clarity are the only third-party origins this page touches.
+          Preconnecting warms DNS and TLS while the HTML is still parsing, so
+          the first beacon does not pay for a cold handshake.
+        */}
         <link rel="preconnect" href={analytics.origin} />
+        <link rel="preconnect" href="https://www.clarity.ms" />
         {/*
           A plain deferred tag rather than next/script: `afterInteractive`
           waits for hydration, so anyone who leaves before React boots is

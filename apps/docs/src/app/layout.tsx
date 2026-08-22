@@ -87,6 +87,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <head>
         {/*
+          Umami and Clarity are the only third-party origins this page touches.
+          Preconnecting warms DNS and TLS while the HTML is still parsing, so
+          the first beacon does not pay for a cold handshake.
+        */}
+        <link rel="preconnect" href={analytics.origin} />
+        <link rel="preconnect" href="https://www.clarity.ms" />
+        {/*
           Clarity's own loader, kept as they ship it. It is not optional
           boilerplate: the tag at clarity.ms/tag/<id> calls window.clarity()
           on its first line, so without this queue stub defined first it
@@ -99,7 +106,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <script
           defer
-          src={analytics.scriptUrl}
+          src={analytics.src}
           data-website-id={analytics.websiteId}
           data-domains={analytics.domains}
         />
