@@ -3,6 +3,8 @@ import {
   bigint,
   boolean,
   index,
+  integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -135,6 +137,25 @@ export const repositories = pgTable(
     observedAt: timestamp("observed_at", { withTimezone: true }).notNull().defaultNow(),
     /** Null while covered. Set when the repository leaves the installation. */
     removedAt: timestamp("removed_at", { withTimezone: true }),
+
+    /**
+     * Public relevance, and deliberately not trust.
+     *
+     * Computed from signals GitHub already shows the world, with open source
+     * weights. It is here for contribution UX, for local economies, and so a
+     * self-hosted instance can function with no Network at all.
+     *
+     * It is **not** `trustTier` and nothing may copy it into that column. The
+     * scoring that gates Official issuance is unpublished and belongs to the
+     * Risk Engine; a relevance score that could become an eligibility tier
+     * would put issuance behind numbers anyone can read off a GitHub page.
+     */
+    relevanceScore: integer("relevance_score"),
+    /** How many distinct signals were present. Law XXXI's breadth requirement. */
+    relevanceBreadth: integer("relevance_breadth"),
+    /** The raw signals and which of them could not be fetched. */
+    relevanceSignals: jsonb("relevance_signals"),
+    relevanceMeasuredAt: timestamp("relevance_measured_at", { withTimezone: true }),
   },
   (table) => [
     index("repositories_installation_id_idx").on(table.gitHubInstallationId),

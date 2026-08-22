@@ -139,6 +139,16 @@ export {
 } from "./github/github.js";
 
 export {
+  RELEVANCE_SIGNALS,
+  SUGGESTED_REFERENCES,
+  relevanceOf,
+  type RelevanceReferences,
+  type RelevanceSignals,
+  type RepositoryRelevance,
+  type SignalContribution,
+} from "./github/relevance.js";
+
+export {
   EVENT_STATUSES,
   buildIdempotencyKey,
   type DomainEvent,
