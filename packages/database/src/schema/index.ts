@@ -10,3 +10,11 @@ export {
   repositoryRelations,
   repositoryTrustTier,
 } from "./github.js";
+export {
+  domainEventRelations,
+  domainEventType,
+  domainEvents,
+  eventStatus,
+  gitHubEventRelations,
+  gitHubEvents,
+} from "./events.js";

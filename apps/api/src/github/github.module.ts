@@ -3,6 +3,7 @@ import { Module } from "@nestjs/common";
 import { DatabaseModule } from "../database/database.module.js";
 import { GitHubAppService } from "./github-app.service.js";
 import { GitHubWebhookController } from "./github-webhook.controller.js";
+import { IngestionService } from "./ingestion.service.js";
 import { InstallationService } from "./installation.service.js";
 
 /**
@@ -16,7 +17,7 @@ import { InstallationService } from "./installation.service.js";
 @Module({
   imports: [DatabaseModule],
   controllers: [GitHubWebhookController],
-  providers: [GitHubAppService, InstallationService],
+  providers: [GitHubAppService, InstallationService, IngestionService],
   exports: [GitHubAppService],
 })
 export class GitHubModule {}

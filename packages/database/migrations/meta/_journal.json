@@ -15,6 +15,13 @@
       "when": 1787394289288,
       "tag": "0001_long_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787396396367,
+      "tag": "0002_orange_absorbing_man",
+      "breakpoints": true
     }
   ]
 }

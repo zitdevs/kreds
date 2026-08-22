@@ -13,7 +13,7 @@ import { ConfigService } from "@nestjs/config";
 import type { Request } from "express";
 
 import type { Env } from "../config/env.js";
-import { InstallationService } from "./installation.service.js";
+import { IngestionService } from "./ingestion.service.js";
 import { isSignatureValid, SIGNATURE_HEADER } from "./webhook-signature.js";
 
 /**
@@ -34,7 +34,7 @@ export class GitHubWebhookController {
   private readonly secret: string | undefined;
 
   constructor(
-    private readonly installations: InstallationService,
+    private readonly ingestion: IngestionService,
     config: ConfigService<Env, true>,
   ) {
     this.secret = config.get("GITHUB_WEBHOOK_SECRET", { infer: true });
@@ -77,7 +77,9 @@ export class GitHubWebhookController {
       throw new UnauthorizedException("Body was not JSON.");
     }
 
-    const outcome = await this.installations.handle(eventType, payload);
-    return { delivery: deliveryId ?? null, outcome };
+    if (!deliveryId) throw new UnauthorizedException("Missing delivery id.");
+
+    const result = await this.ingestion.ingest({ deliveryId, eventType, payload });
+    return { delivery: deliveryId, outcome: result.outcome };
   }
 }
