@@ -6,6 +6,7 @@ import { validateEnv } from "./config/env.js";
 import { ContributionModule } from "./contribution/contribution.module.js";
 import { DatabaseModule } from "./database/database.module.js";
 import { EligibilityModule } from "./eligibility/eligibility.module.js";
+import { RelevanceModule } from "./relevance/relevance.module.js";
 import { GitHubModule } from "./github/github.module.js";
 import { HealthController } from "./health/health.controller.js";
 
@@ -17,6 +18,7 @@ import { HealthController } from "./health/health.controller.js";
     GitHubModule,
     ContributionModule,
     EligibilityModule,
+    RelevanceModule,
   ],
   controllers: [HealthController],
 })

@@ -310,6 +310,72 @@ export class InstallationRepository {
     return row ? toRepository(row) : null;
   }
 
+  /**
+   * Store a repository's public relevance.
+   *
+   * Deliberately a separate method from anything that writes `trustTier`, and
+   * it never touches that column. Relevance is computed from public signals
+   * with open source weights; the tier gates Official issuance and is decided
+   * elsewhere from signals this package cannot see. Keeping them apart at the
+   * write is what stops one becoming the other by accident.
+   */
+  async recordRelevance(
+    gitHubRepositoryId: number,
+    relevance: { score: number; breadth: number; signals: unknown },
+  ): Promise<void> {
+    await this.db
+      .update(repositories)
+      .set({
+        relevanceScore: relevance.score,
+        relevanceBreadth: relevance.breadth,
+        relevanceSignals: relevance.signals,
+        relevanceMeasuredAt: new Date(),
+      })
+      .where(eq(repositories.gitHubRepositoryId, gitHubRepositoryId));
+  }
+
+  /** The stored relevance, with the age a caller needs to decide if it is stale. */
+  async findRelevance(gitHubRepositoryId: number): Promise<{
+    score: number;
+    breadth: number;
+    signals: unknown;
+    measuredAt: Date;
+  } | null> {
+    const [row] = await this.db
+      .select({
+        score: repositories.relevanceScore,
+        breadth: repositories.relevanceBreadth,
+        signals: repositories.relevanceSignals,
+        measuredAt: repositories.relevanceMeasuredAt,
+      })
+      .from(repositories)
+      .where(eq(repositories.gitHubRepositoryId, gitHubRepositoryId))
+      .limit(1);
+
+    if (!row || row.score === null || row.breadth === null || !row.measuredAt) return null;
+    return {
+      score: row.score,
+      breadth: row.breadth,
+      signals: row.signals,
+      measuredAt: row.measuredAt,
+    };
+  }
+
+  /** The installation currently covering a repository, if one still does. */
+  async findInstallationFor(gitHubRepositoryId: number): Promise<number | null> {
+    const [row] = await this.db
+      .select({ id: repositories.gitHubInstallationId })
+      .from(repositories)
+      .where(
+        and(
+          eq(repositories.gitHubRepositoryId, gitHubRepositoryId),
+          isNull(repositories.removedAt),
+        ),
+      )
+      .limit(1);
+    return row?.id ?? null;
+  }
+
   async findRepository(gitHubRepositoryId: number): Promise<Repository | null> {
     const [row] = await this.db
       .select()
