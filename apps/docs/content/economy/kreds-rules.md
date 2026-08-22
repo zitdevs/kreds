@@ -1,3 +1,17 @@
+<!--
+  Every number on this page comes from public/policy/kreds-rules-public-v0.4.json
+  in zitdevs/kreds-laws, read alongside chapter 21 (Default Economy). That
+  repository is the authoritative source, and rulesVersion v0.4 is the version
+  this page reflects.
+
+  Not a generated file. Nothing regenerates it when the policy moves, so a
+  version bump upstream leaves this page silently wrong until someone re-checks
+  it against the new policy file.
+
+  Deliberately absent: anything from kreds-laws/internal. Exact risk thresholds,
+  trust gates and detection heuristics are operational and stay private.
+-->
+
 # How Kreds are awarded
 
 Kreds exist to answer one question honestly: **who is moving this team forward?**

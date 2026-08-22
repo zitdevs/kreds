@@ -1,3 +1,19 @@
+<!--
+  Derived from chapter 24 (Contribution Points) and Amendment A02 in
+  zitdevs/kreds-laws, at rulesVersion v0.4. That repository is the authoritative
+  source. Where this page and the source disagree, the source is right and this
+  page is a bug.
+
+  Not a generated file, and deliberately not labelled as one: kreds-laws has no
+  CONTRIBUTION_RULES.md to generate it from. This is an explainer written here,
+  from the chapters named above, so it goes stale by hand and has to be
+  re-checked when the policy version moves.
+
+  Deliberately absent: exact thresholds, trust gates and detection heuristics.
+  Those govern the Official Kreds Network and stay private, because a published
+  threshold is a published way around it.
+-->
+
 # Contribution Rules
 
 > How Kreds recognises work, and why recognition is deliberately not payment.
