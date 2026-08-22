@@ -137,6 +137,19 @@ export {
 } from "./github/github.js";
 
 export {
+  EVENT_STATUSES,
+  buildIdempotencyKey,
+  type DomainEvent,
+  type DomainEventType,
+  type EventStatus,
+  type PullRequestClosed,
+  type PullRequestMerged,
+  type RepositoryConnected,
+  type RepositoryDisconnected,
+  type ReviewSubmitted,
+} from "./events/domain-event.js";
+
+export {
   type Contribution,
   type ContributionKind,
   type ContributionScore,

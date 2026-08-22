@@ -19,5 +19,11 @@ export {
   type InstallationWithRepositories,
   type RepositoryInput,
 } from "./repositories/installation-repository.js";
+export {
+  EventStore,
+  type RawDelivery,
+  type RecordedDelivery,
+  type RecordedDomainEvent,
+} from "./repositories/event-store.js";
 export { runMigrations } from "./migrate.js";
 export * as schema from "./schema/index.js";
