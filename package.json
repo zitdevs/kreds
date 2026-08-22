@@ -17,7 +17,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "pnpm -r --if-present lint",
-    "prepare": "husky",
+    "prepare": "husky && pnpm --filter './packages/*' --if-present build",
     "start": "pnpm --filter @kreds/web start",
     "test": "pnpm -r test",
     "test:affected": "sh scripts/test-affected.sh",
