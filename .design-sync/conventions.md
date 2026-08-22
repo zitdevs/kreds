@@ -1,15 +1,17 @@
 # Building with the Kreds design system
 
-Kreds is **dark only, deliberately**: there is no light theme, and `styles.css`
+Kreds is **dark only, deliberately**: there is no light theme, and the stylesheet
 paints the page `--color-bg` with `--color-ink` text for you. Design on the dark
 ground; never put a Kreds component on a white surface.
 
 ## Setup
 
 There is **no provider and no theme wrapper**. Every component is plain
-presentational React, so import it and render it. Load `styles.css`; everything
-else (tokens, the Geist faces, component CSS) is reachable from its `@import`
-closure.
+presentational React, so import it and render it. Load the bundle's
+`styles.css`; everything else (tokens, the Geist faces, component CSS) is
+reachable from its `@import` closure. Working in the repository instead, that
+role is played by each app's `globals.css`, described under
+[Where the truth lives](#where-the-truth-lives).
 
 One API note that catches people: **`Button` is always a link.** It takes
 `href`, never `onClick`. The same is true of the links inside `SiteHeader`,
@@ -52,10 +54,25 @@ the point.
 
 ## Where the truth lives
 
+Two layouts, because this file ships in two places. Inside the published design
+system bundle:
+
 - `_ds/<folder>/tokens/tokens.css`: every token, with the reasoning in comments.
 - `_ds/<folder>/tokens/prose.css`: the `.prose` rules for long-form documents.
 - `_ds/<folder>/styles.css`: the entry that pulls in tokens, fonts and component CSS.
 - `components/<group>/<Name>/<Name>.d.ts` and `<Name>.prompt.md`: the exact props.
+
+Inside the `zitdevs/kreds` repository those same things live here:
+
+- `packages/ui/src/styles/tokens.css` and `packages/ui/src/styles/prose.css`.
+- There is no single `styles.css`. Each app imports what it needs in its own
+  `src/app/globals.css`, and adds `@source "../../../../packages/ui/src"` so
+  Tailwind generates the utilities the shared components use. Miss that line and
+  the components render unstyled, because Tailwind only emits classes it finds
+  in files it scans.
+- Props live in the components: `packages/ui/src/{button,section,icons,site-chrome}.tsx`.
+  The `web` group is `apps/web/src/components/`, which is app code pulled into
+  the bundle rather than part of the package.
 
 Read the real files before styling; they beat any summary here.
 
