@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, GitHub, Heart, Server } from "@/components/ui/icons";
 import { links, site } from "@/lib/site";
+import { ArrowRight, Button, GitHub, Heart, Server } from "@kreds/ui";
 
 const ledger = [
   { value: "+18.00", text: "api#128 merged", meta: "minted", accent: false },

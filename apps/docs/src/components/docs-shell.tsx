@@ -1,18 +1,18 @@
 import Link from "next/link";
 
-import { DOC_GROUPS, DOC_PAGES, type DocPage, type Heading } from "@/lib/docs";
+import { SECTIONS, pagesIn, type DocPage, type Heading } from "@/lib/content";
 import { links } from "@/lib/site";
 
 function Sidebar({ current }: { current?: string }) {
   return (
     <nav aria-label="Documentation" className="text-sm">
-      {DOC_GROUPS.map((group) => {
-        const pages = DOC_PAGES.filter((page) => page.group === group);
+      {SECTIONS.map((section) => {
+        const pages = pagesIn(section.id);
         if (pages.length === 0) return null;
         return (
-          <div key={group} className="mb-7">
+          <div key={section.id} className="mb-7">
             <h2 className="text-ink-faint mb-2.5 text-[0.7rem] font-semibold uppercase tracking-[0.14em]">
-              {group}
+              {section.title}
             </h2>
             <ul className="space-y-0.5">
               {pages.map((page) => {
@@ -20,7 +20,7 @@ function Sidebar({ current }: { current?: string }) {
                 return (
                   <li key={page.slug}>
                     <Link
-                      href={`/docs/${page.slug}`}
+                      href={`/${page.slug}`}
                       aria-current={active ? "page" : undefined}
                       className={`-ml-px block border-l py-1.5 pl-3.5 transition-colors ${
                         active
@@ -67,10 +67,10 @@ function OnThisPage({ headings }: { headings: readonly Heading[] }) {
 /**
  * Three columns on a wide screen, one on a phone.
  *
- * The sidebars are `min-w-0` inside the grid because a long unbroken heading in
- * the table of contents will otherwise inflate its track and push the page into
- * horizontal scroll, which is the exact bug that cost 47 pixels on the landing
- * page once already.
+ * Every track is `min-w-0` because a long unbroken heading in the table of
+ * contents will otherwise inflate its track and push the page into horizontal
+ * scroll, which is the exact bug that cost 47 pixels on the marketing page once
+ * already.
  */
 export function DocsShell({
   page,
@@ -87,7 +87,7 @@ export function DocsShell({
         Two render sites for one component. On a phone the full index is around
         nine hundred pixels of navigation sitting between the reader and the
         first paragraph, so it collapses into a disclosure. A CSS-only approach
-        does not work here: a closed `details` hides its contents at the browser
+        does not work: a closed `details` hides its contents at the browser
         level, and no media query reopens it.
       */}
       <details className="border-line bg-surface/40 rounded-card min-w-0 border px-4 py-3 lg:hidden">
@@ -96,15 +96,17 @@ export function DocsShell({
           <span className="text-ink-faint ml-2 text-xs">Browse</span>
         </summary>
         <div className="mt-5">
-          <Sidebar current={page?.slug} />
+          <Sidebar {...(page ? { current: page.slug } : {})} />
         </div>
       </details>
 
       <aside className="hidden min-w-0 lg:sticky lg:top-24 lg:block lg:self-start">
-        <Sidebar current={page?.slug} />
+        <Sidebar {...(page ? { current: page.slug } : {})} />
       </aside>
 
-      <main className="min-w-0">{children}</main>
+      <main id="main" className="min-w-0">
+        {children}
+      </main>
 
       <aside className="hidden min-w-0 xl:sticky xl:top-24 xl:block xl:self-start">
         {headings ? <OnThisPage headings={headings} /> : null}
@@ -114,23 +116,23 @@ export function DocsShell({
 }
 
 /**
- * The line that makes the whole approach legible to a reader: this page is a
- * rendering of a file in the repository, and here is that file.
+ * The line that makes the whole approach legible: this page is a rendering of a
+ * file in the repository, and here is that file.
  */
 export function SourceNote({ page }: { page: DocPage }) {
   return (
     <p className="text-ink-faint border-line mt-14 border-t pt-6 text-sm">
       This page renders{" "}
       <a
-        href={`${links.repoBlob}/${page.source}`}
+        href={`${links.contentBlob}/${page.source}`}
         rel="noreferrer"
         className="text-ink-dim hover:text-accent underline underline-offset-4 transition-colors"
       >
-        {page.source}
+        content/{page.source}
       </a>{" "}
       from the repository. Same file, whether you read it here or after cloning.{" "}
       <a
-        href={`${links.github}/edit/main/${page.source}`}
+        href={`${links.contentEdit}/${page.source}`}
         rel="noreferrer"
         className="text-ink-dim hover:text-accent underline underline-offset-4 transition-colors"
       >

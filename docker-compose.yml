@@ -5,7 +5,7 @@
 #   docker compose up -d
 #   open http://localhost:3000
 #
-# Guide: https://kreds.sh/docs/self-hosting
+# Guide: https://docs.kreds.sh/getting-started/self-hosting
 # ---------------------------------------------------------------------------
 name: kreds
 

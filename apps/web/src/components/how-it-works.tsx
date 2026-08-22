@@ -1,6 +1,4 @@
-import { Section } from "@/components/ui/section";
-import { GitHub, Plug, Terminal, Trophy } from "@/components/ui/icons";
-
+import { GitHub, Plug, Section, Terminal, Trophy } from "@kreds/ui";
 const steps = [
   {
     icon: GitHub,

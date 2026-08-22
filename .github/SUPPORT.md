@@ -24,8 +24,8 @@ What makes a bug report actually fixable:
 
 ## Self-hosting trouble
 
-Read [docs/self-hosting.md](docs/self-hosting.md) first. The
-[Troubleshooting](docs/self-hosting.md#troubleshooting) section covers the
+Read [docs/self-hosting.md](https://docs.kreds.sh/getting-started/self-hosting) first. The
+[Troubleshooting](https://docs.kreds.sh/getting-started/self-hosting#troubleshooting) section covers the
 failures we see most: webhooks that never arrive, OAuth callback mismatches, and
 the GitHub App private key format.
 

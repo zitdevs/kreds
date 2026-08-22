@@ -43,25 +43,22 @@ export const links = {
   discussions: "https://github.com/zitdevs/kreds/discussions",
   issues: "https://github.com/zitdevs/kreds/issues",
   goodFirstIssue: "https://github.com/zitdevs/kreds/labels/good%20first%20issue",
-  /** Where a repository-relative markdown link resolves to when the file is not published here. */
-  repoBlob: "https://github.com/zitdevs/kreds/blob/main",
   license: "https://github.com/zitdevs/kreds/blob/main/LICENSE",
 
   /**
-   * The documents render at kreds.sh/docs from the same markdown that lives in
-   * the repository, so these point at the site rather than at GitHub. One
-   * source, two surfaces: nothing is copied, so nothing can drift.
+   * Documentation lives on its own origin now. These are absolute because they
+   * leave this app entirely.
    */
-  docs: "/docs",
-  licenseDoc: "/docs/licensing",
-  selfHosting: "/docs/self-hosting",
-  rules: "/docs/rules",
-  constitution: "/docs/constitution",
-  architecture: "/docs/architecture",
-  trademarks: "/docs/trademarks",
-  contributionRules: "/docs/contribution-rules",
+  docs: "https://docs.kreds.sh",
+  licenseDoc: "https://docs.kreds.sh/legal/licensing",
+  selfHosting: "https://docs.kreds.sh/getting-started/self-hosting",
+  rules: "https://docs.kreds.sh/economy/kreds-rules",
+  constitution: "https://docs.kreds.sh/economy/constitution",
+  contributionRules: "https://docs.kreds.sh/economy/contribution-rules",
+  architecture: "https://docs.kreds.sh/architecture/core-and-network",
+  trademarks: "https://docs.kreds.sh/legal/trademarks",
 
-  contributing: "https://github.com/zitdevs/kreds/blob/main/CONTRIBUTING.md",
+  contributing: "https://github.com/zitdevs/kreds/blob/main/.github/CONTRIBUTING.md",
   changelog: "https://github.com/zitdevs/kreds/blob/main/CHANGELOG.md",
   sponsors: "https://github.com/sponsors/zitdevs",
   contact: "mailto:contact@zitdevs.com",

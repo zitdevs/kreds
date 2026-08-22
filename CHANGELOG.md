@@ -26,7 +26,7 @@ active development and lands next.
   modification are all permitted; a modified version offered as a network service
   has to offer its users the corresponding source.
 - **Self-hosting path.** `docker-compose.yml` with Postgres and Redis, an
-  annotated environment reference, and [docs/self-hosting.md](docs/self-hosting.md).
+  annotated environment reference, and [docs/self-hosting.md](https://docs.kreds.sh/getting-started/self-hosting).
 - **Community files.** Contributing guide, code of conduct, security policy,
   support guide, issue and pull request templates, funding configuration.
 - **CI.** Lint, typecheck, format check and build on every push and pull

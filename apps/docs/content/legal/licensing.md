@@ -1,7 +1,7 @@
 # Licensing, in plain terms
 
 Kreds Core is **open source** under the
-[GNU Affero General Public License v3.0](../LICENSE).
+[GNU Affero General Public License v3.0](https://github.com/zitdevs/kreds/blob/main/LICENSE).
 
 Not source-available. Not open-core with the good parts removed. The repository
 you are reading is the whole product, and you can run it, change it and build a
@@ -34,7 +34,7 @@ for your own team and nothing changes for you either, because your team is not a
 third party being served over a network. Modify it and offer it publicly as a
 service, and your users get the same right to the source that you had.
 
-The [LICENSE](../LICENSE) is the authoritative text. This page is a summary for
+The [LICENSE](https://github.com/zitdevs/kreds/blob/main/LICENSE) is the authoritative text. This page is a summary for
 humans and loses to the licence wherever the two disagree.
 
 ## Why AGPL and not MIT
@@ -69,7 +69,7 @@ Official Network  Private infrastructure behind kreds.sh
 A self-hosted Kreds runs its own economy, its own currency and its own rules,
 with no dependency on kreds.sh. Joining the Official Network is an option, never
 a requirement. See
-[Kreds Core and the Kreds Network](architecture/kreds-core-vs-network.md).
+[Kreds Core and the Kreds Network](../architecture/core-and-network.md).
 
 ## Contributions
 
@@ -80,7 +80,7 @@ CLA. We only ask that what you submit is genuinely yours to submit.
 
 The licence covers the code. It does not grant rights to the Kreds name, the
 logo, or to present a fork as the official service. Those rules live in
-[TRADEMARKS.md](../TRADEMARKS.md), which is deliberately permissive about honest
+[TRADEMARKS.md](trademarks.md), which is deliberately permissive about honest
 use and strict about impersonation.
 
 ## Free for open source

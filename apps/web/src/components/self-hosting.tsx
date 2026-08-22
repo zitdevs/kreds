@@ -1,7 +1,5 @@
-import { Section } from "@/components/ui/section";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Book, Server, Shield, Terminal } from "@/components/ui/icons";
 import { links } from "@/lib/site";
+import { ArrowRight, Book, Button, Section, Server, Shield, Terminal } from "@kreds/ui";
 
 const points = [
   {

@@ -8,9 +8,9 @@ public.
 
 You do not need to write code to be useful:
 
-- **Report a bug.** Use the [bug report template](.github/ISSUE_TEMPLATE/bug_report.yml).
+- **Report a bug.** Use the [bug report template](ISSUE_TEMPLATE/bug_report.yml).
   A reproduction beats a description every time.
-- **Propose a feature.** Use the [feature request template](.github/ISSUE_TEMPLATE/feature_request.yml).
+- **Propose a feature.** Use the [feature request template](ISSUE_TEMPLATE/feature_request.yml).
   Tell us the problem before the solution.
 - **Improve the docs.** Anything confusing in `docs/` is a bug in the docs.
 - **Suggest an achievement or a Kreds rule.** These come from real teams; ours
@@ -89,7 +89,7 @@ because nobody has a free hour.
 
 ## Licensing of contributions
 
-Kreds Core is licensed under [AGPLv3](LICENSE). By submitting a contribution you
+Kreds Core is licensed under [AGPLv3](../LICENSE). By submitting a contribution you
 agree that:
 
 - your contribution is licensed under the same terms as the project, and

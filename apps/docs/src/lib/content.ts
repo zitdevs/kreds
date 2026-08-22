@@ -15,80 +15,107 @@ import type { Element, Root, Text } from "hast";
 import { links } from "@/lib/site";
 
 /**
- * The documents published to kreds.sh/docs.
+ * The documents this site publishes.
  *
- * This is an explicit allowlist, not a glob over the repository. A glob would
- * eventually publish a file somebody added without thinking about who reads it,
- * and this project already keeps a hard line between what is public and what is
- * not. Adding a page here is a deliberate act.
+ * An explicit allowlist, not a glob over `content/`. A glob eventually
+ * publishes a file somebody added without thinking about who reads it, and this
+ * project keeps a hard line between what is public and what is not. Adding a
+ * page here is a deliberate act.
  *
- * `source` is relative to the repository root. The markdown stays exactly where
- * it is: these pages render the same bytes that a self-hoster reads after
- * cloning, so the two can never drift apart.
+ * `source` is relative to `content/`, and the route mirrors the folder, so a
+ * reader who finds `content/economy/constitution.md` in the repository already
+ * knows it lives at `/economy/constitution`.
  */
 export interface DocPage {
   readonly slug: string;
   readonly source: string;
   readonly title: string;
   readonly summary: string;
-  readonly group: DocGroup;
+  readonly section: SectionId;
 }
 
-export type DocGroup = "Start here" | "The economy" | "Legal";
+export type SectionId = "getting-started" | "economy" | "architecture" | "legal";
 
-export const DOC_PAGES: readonly DocPage[] = [
+export interface DocSection {
+  readonly id: SectionId;
+  readonly title: string;
+  readonly blurb: string;
+}
+
+export const SECTIONS: readonly DocSection[] = [
   {
-    slug: "self-hosting",
-    source: "docs/self-hosting.md",
-    title: "Self-hosting",
-    summary: "Docker, the GitHub App setup, upgrades and backups. About twenty minutes.",
-    group: "Start here",
+    id: "getting-started",
+    title: "Getting started",
+    blurb: "Run Kreds yourself, on your own infrastructure.",
   },
   {
-    slug: "rules",
-    source: "docs/kreds-rules.md",
-    title: "Kreds rules",
-    summary: "What each action is worth, and how to tune it for your team.",
-    group: "Start here",
+    id: "economy",
+    title: "The economy",
+    blurb: "The laws the KRED economy runs on, and what each action is worth.",
   },
   {
-    slug: "architecture",
-    source: "docs/architecture/kreds-core-vs-network.md",
-    title: "Core and Network",
-    summary: "What is open source, what is not, and the reasoning behind the line.",
-    group: "Start here",
+    id: "architecture",
+    title: "Architecture",
+    blurb: "What is open source, what is not, and the reasoning behind the line.",
   },
   {
-    slug: "constitution",
-    source: "ECONOMIC_CONSTITUTION.md",
-    title: "Economic Constitution",
-    summary: "The thirty-four laws the KRED economy runs on. Everything else is subordinate.",
-    group: "The economy",
-  },
-  {
-    slug: "contribution-rules",
-    source: "CONTRIBUTION_RULES.md",
-    title: "Contribution rules",
-    summary: "How work is recognised, and why recognition is deliberately not payment.",
-    group: "The economy",
-  },
-  {
-    slug: "licensing",
-    source: "docs/licensing.md",
-    title: "Licensing",
-    summary: "What AGPLv3 means for you, in plain terms.",
-    group: "Legal",
-  },
-  {
-    slug: "trademarks",
-    source: "TRADEMARKS.md",
-    title: "Trademarks",
-    summary: "Using the Kreds name. Permissive about honest use, strict about passing off.",
-    group: "Legal",
+    id: "legal",
+    title: "Legal",
+    blurb: "The licence in plain terms, and how to use the Kreds name.",
   },
 ];
 
-export const DOC_GROUPS: readonly DocGroup[] = ["Start here", "The economy", "Legal"];
+export const DOC_PAGES: readonly DocPage[] = [
+  {
+    slug: "getting-started/self-hosting",
+    source: "getting-started/self-hosting.md",
+    title: "Self-hosting",
+    summary: "Docker, the GitHub App setup, upgrades and backups. About twenty minutes.",
+    section: "getting-started",
+  },
+  {
+    slug: "economy/constitution",
+    source: "economy/constitution.md",
+    title: "Economic Constitution",
+    summary: "The thirty-four laws the KRED economy runs on. Everything else is subordinate.",
+    section: "economy",
+  },
+  {
+    slug: "economy/kreds-rules",
+    source: "economy/kreds-rules.md",
+    title: "Kreds rules",
+    summary: "What each action is worth, and how to tune it for your team.",
+    section: "economy",
+  },
+  {
+    slug: "economy/contribution-rules",
+    source: "economy/contribution-rules.md",
+    title: "Contribution rules",
+    summary: "How work is recognised, and why recognition is deliberately not payment.",
+    section: "economy",
+  },
+  {
+    slug: "architecture/core-and-network",
+    source: "architecture/core-and-network.md",
+    title: "Core and Network",
+    summary: "The three layers, and why the anti-abuse half cannot be public.",
+    section: "architecture",
+  },
+  {
+    slug: "legal/licensing",
+    source: "legal/licensing.md",
+    title: "Licensing",
+    summary: "What AGPLv3 means for you, in plain terms.",
+    section: "legal",
+  },
+  {
+    slug: "legal/trademarks",
+    source: "legal/trademarks.md",
+    title: "Trademarks",
+    summary: "Using the Kreds name. Permissive about honest use, strict about passing off.",
+    section: "legal",
+  },
+];
 
 const bySource = new Map(DOC_PAGES.map((page) => [page.source, page]));
 
@@ -96,22 +123,25 @@ export function findDoc(slug: string): DocPage | undefined {
   return DOC_PAGES.find((page) => page.slug === slug);
 }
 
+export function pagesIn(section: SectionId): readonly DocPage[] {
+  return DOC_PAGES.filter((page) => page.section === section);
+}
+
 /**
- * Walk up from this file until the workspace root appears.
+ * Walk up from this file until the app root appears.
  *
- * The markdown lives outside `apps/web`, so the path cannot be relative to the
- * app. Resolving by marker rather than by a fixed number of `..` segments means
- * moving the app inside the monorepo does not silently break the docs build.
+ * Resolving by marker rather than by a fixed number of `..` segments means
+ * moving this file inside the app does not silently break the build.
  */
-function repositoryRoot(): string {
+function contentRoot(): string {
   let current = resolve(dirname(new URL(import.meta.url).pathname));
   for (let depth = 0; depth < 10; depth += 1) {
-    if (existsSync(join(current, "pnpm-workspace.yaml"))) return current;
+    if (existsSync(join(current, "content"))) return join(current, "content");
     const parent = dirname(current);
     if (parent === current) break;
     current = parent;
   }
-  throw new Error("could not locate the workspace root from the docs loader.");
+  throw new Error("could not locate the content directory.");
 }
 
 export interface Heading {
@@ -129,12 +159,12 @@ export interface RenderedDoc {
 /**
  * Rewrite the links a markdown file carries so they resolve on the web.
  *
- * A repository-relative link is written for someone reading on GitHub, where
- * `docs/self-hosting.md` is a real path. Three cases:
+ * These files are written to be readable on GitHub too, where a link like
+ * `../legal/licensing.md` is a real path. Three cases:
  *
- * 1. the target is published here, so it becomes a docs route;
- * 2. the target is a repository file that stays on GitHub, such as
- *    `CONTRIBUTING.md` or `LICENSE`, so it becomes a blob URL;
+ * 1. the target is published here, so it becomes a route on this site;
+ * 2. the target is a repository file that is not published, such as
+ *    `CONTRIBUTING.md`, so it becomes a GitHub blob URL;
  * 3. the link is already absolute or a bare anchor, so it is left alone.
  *
  * Anchors survive all three. Losing them would quietly break every deep link
@@ -158,8 +188,8 @@ function rewriteLinks(sourcePath: string) {
       node.properties = {
         ...node.properties,
         href: published
-          ? `/docs/${published.slug}${suffix}`
-          : `${links.repoBlob}/${resolved}${suffix}`,
+          ? `/${published.slug}${suffix}`
+          : `${links.contentBlob}/${resolved}${suffix}`,
         ...(published ? {} : { rel: ["noreferrer"] }),
       };
     });
@@ -193,23 +223,20 @@ function textOf(node: Element): string {
  *
  * The page renders its own heading from the registry, so keeping the file's
  * would print it twice. The registry title is also the one used in navigation
- * and in the page metadata, so this keeps a single source for it.
+ * and in the page metadata, which keeps a single source for it.
  */
-function stripLeadingTitle(into: { value?: string }) {
+function stripLeadingTitle() {
   return () => (tree: Root) => {
     const index = tree.children.findIndex(
       (child) => child.type === "element" && (child as Element).tagName === "h1",
     );
-    if (index === -1) return;
-    into.value = textOf(tree.children[index] as Element);
-    tree.children.splice(index, 1);
+    if (index !== -1) tree.children.splice(index, 1);
   };
 }
 
 export async function renderDoc(page: DocPage): Promise<RenderedDoc> {
-  const raw = await readFile(join(repositoryRoot(), page.source), "utf8");
+  const raw = await readFile(join(contentRoot(), page.source), "utf8");
   const headings: Heading[] = [];
-  const title: { value?: string } = {};
 
   const file = await unified()
     .use(remarkParse)
@@ -222,7 +249,7 @@ export async function renderDoc(page: DocPage): Promise<RenderedDoc> {
       behavior: "wrap",
       properties: { className: ["heading-anchor"] },
     })
-    .use(stripLeadingTitle(title))
+    .use(stripLeadingTitle())
     .use(collectHeadings(headings))
     .use(rewriteLinks(page.source))
     .use(rehypeStringify, { allowDangerousHtml: false })

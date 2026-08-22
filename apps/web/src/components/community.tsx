@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { Section } from "@/components/ui/section";
-import { Book, GitHub, Target, Users } from "@/components/ui/icons";
 import { links } from "@/lib/site";
+import { Book, GitHub, Section, Target, Users } from "@kreds/ui";
 
 const cards = [
   {

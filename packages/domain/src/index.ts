@@ -8,8 +8,8 @@
  *
  * Everything in this package is subordinate to the Kreds Economic Constitution.
  * Where a name, an invariant or a default appears below, the law that governs
- * it is cited at its definition. See `ECONOMIC_CONSTITUTION.md` at the root of
- * this repository.
+ * it is cited at its definition. See the Economic Constitution at
+ * docs.kreds.sh/economy/constitution.
  *
  * Three things are deliberately absent:
  *

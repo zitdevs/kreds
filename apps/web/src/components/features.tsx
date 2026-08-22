@@ -1,16 +1,15 @@
-import { Section } from "@/components/ui/section";
 import {
   Bolt,
   Chart,
   Flame,
   GitHub,
   Plug,
+  Section,
   Server,
   Sparkle,
   Target,
   Trophy,
-} from "@/components/ui/icons";
-
+} from "@kreds/ui";
 const features = [
   {
     icon: GitHub,

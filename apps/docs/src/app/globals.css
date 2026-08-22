@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@kreds/ui/styles/tokens.css";
+@import "@kreds/ui/styles/prose.css";
 
 /* Tailwind only generates the utilities it finds in scanned files, and the
    shared components live outside this app. */

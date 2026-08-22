@@ -1,4 +1,4 @@
-import { Section } from "@/components/ui/section";
+import { Section } from "@kreds/ui";
 import { contribution, economy, feed } from "@/lib/leaderboard-data";
 import { minted, points, transferred, worthless } from "@/lib/site";
 

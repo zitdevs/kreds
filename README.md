@@ -12,7 +12,7 @@ The scoring is weighted so that helping someone else ship beats shipping alone.
 
 [![CI](https://github.com/zitdevs/kreds/actions/workflows/ci.yml/badge.svg)](https://github.com/zitdevs/kreds/actions/workflows/ci.yml)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-6ee7a0)](LICENSE)
-[![Self-host](https://img.shields.io/badge/self--host-docker-8b949e)](docs/self-hosting.md)
+[![Self-host](https://img.shields.io/badge/self--host-docker-8b949e)](https://docs.kreds.sh/getting-started/self-hosting)
 [![Sponsor](https://img.shields.io/badge/sponsor-%E2%99%A5-e8b464)](https://github.com/sponsors/zitdevs)
 
 </div>
@@ -64,7 +64,7 @@ rule. If reviews created currency instead, two accounts could review each other
 and print unlimited supply.
 
 Self reviews, bot reviews and reviews filed after the merge are worth zero. Full
-detail in [docs/kreds-rules.md](docs/kreds-rules.md).
+detail in [docs/kreds-rules.md](https://docs.kreds.sh/economy/kreds-rules).
 
 ## Why it exists
 
@@ -97,7 +97,7 @@ You will need two things from GitHub, and they are different on purpose:
    `pull_request_review` and `issues` webhooks. This is where all activity comes
    from. No member ever grants access to code.
 
-Both are walked through step by step in [docs/self-hosting.md](docs/self-hosting.md).
+Both are walked through step by step in [docs/self-hosting.md](https://docs.kreds.sh/getting-started/self-hosting).
 
 ## Self-hosting
 
@@ -113,7 +113,7 @@ docker compose up -d
 - Postgres + Redis, both in the compose file.
 - No license key, no phone-home, no seat check.
 
-Full guide: **[docs/self-hosting.md](docs/self-hosting.md)**
+Full guide: **[docs/self-hosting.md](https://docs.kreds.sh/getting-started/self-hosting)**
 
 ## Pricing
 
@@ -152,7 +152,7 @@ offered the source of your modified version.** Run it unmodified, or modify it
 for your own team, and nothing changes for you.
 
 It does not prohibit commercial use, and it does not stop you charging for
-hosting. The [LICENSE](LICENSE) is authoritative; [docs/licensing.md](docs/licensing.md)
+hosting. The [LICENSE](LICENSE) is authoritative; [docs/licensing.md](https://docs.kreds.sh/legal/licensing)
 is the plain-language version.
 
 ### Three layers, on purpose
@@ -173,10 +173,10 @@ economy is shared, and whose anti-abuse rules stop working the moment they are
 public. Everything that does not require a shared network is open, and a
 self-hosted Kreds runs a complete economy without ever talking to kreds.sh.
 
-Details: [Kreds Core and the Kreds Network](docs/architecture/kreds-core-vs-network.md).
+Details: [Kreds Core and the Kreds Network](https://docs.kreds.sh/architecture/core-and-network).
 
 The code is AGPLv3 with no added conditions. The **name** is governed separately
-in [TRADEMARKS.md](TRADEMARKS.md), which is permissive about honest use and
+in [TRADEMARKS.md](https://docs.kreds.sh/legal/trademarks), which is permissive about honest use and
 strict about presenting a fork as the official service.
 
 ## Contributing
@@ -190,14 +190,14 @@ pnpm dev
 pnpm lint && pnpm typecheck
 ```
 
-Start with [CONTRIBUTING.md](CONTRIBUTING.md). Issues labelled
+Start with [CONTRIBUTING.md](.github/CONTRIBUTING.md). Issues labelled
 [`good first issue`](https://github.com/zitdevs/kreds/labels/good%20first%20issue)
 are scoped small on purpose. Development happens in the open: roadmap, design
 decisions and trade-offs all live in
 [Discussions](https://github.com/zitdevs/kreds/discussions).
 
 By contributing you agree your work is licensed under the same terms as the
-project. See [CONTRIBUTING.md](CONTRIBUTING.md#licensing-of-contributions).
+project. See [CONTRIBUTING.md](.github/CONTRIBUTING.md#licensing-of-contributions).
 
 ## Sponsorship
 
@@ -212,17 +212,17 @@ not work for your team. That helps too.
 
 ## Docs
 
-|                                                               |                                             |
-| ------------------------------------------------------------- | ------------------------------------------- |
-| [Self-hosting guide](docs/self-hosting.md)                    | Docker, GitHub App setup, upgrades, backups |
-| [Kreds rules](docs/kreds-rules.md)                            | How scoring works and how to tune it        |
-| [Licensing](docs/licensing.md)                                | What AGPLv3 means for you, in plain terms   |
-| [Contributing](CONTRIBUTING.md)                               | Local setup, conventions, PR flow           |
-| [Core vs Network](docs/architecture/kreds-core-vs-network.md) | What is open, what is not, and why          |
-| [Economic Constitution](ECONOMIC_CONSTITUTION.md)             | The 34 laws the economy runs on             |
-| [Trademarks](TRADEMARKS.md)                                   | Using the Kreds name                        |
-| [Security](SECURITY.md)                                       | Reporting a vulnerability                   |
-| [Support](SUPPORT.md)                                         | Where to ask questions                      |
+|                                                                          |                                             |
+| ------------------------------------------------------------------------ | ------------------------------------------- |
+| [Self-hosting guide](https://docs.kreds.sh/getting-started/self-hosting) | Docker, GitHub App setup, upgrades, backups |
+| [Kreds rules](https://docs.kreds.sh/economy/kreds-rules)                 | How scoring works and how to tune it        |
+| [Licensing](https://docs.kreds.sh/legal/licensing)                       | What AGPLv3 means for you, in plain terms   |
+| [Contributing](.github/CONTRIBUTING.md)                                  | Local setup, conventions, PR flow           |
+| [Core vs Network](https://docs.kreds.sh/architecture/core-and-network)   | What is open, what is not, and why          |
+| [Economic Constitution](https://docs.kreds.sh/economy/constitution)      | The 34 laws the economy runs on             |
+| [Trademarks](https://docs.kreds.sh/legal/trademarks)                     | Using the Kreds name                        |
+| [Security](.github/SECURITY.md)                                          | Reporting a vulnerability                   |
+| [Support](.github/SUPPORT.md)                                            | Where to ask questions                      |
 
 ---
 

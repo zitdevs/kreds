@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { Section } from "@/components/ui/section";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Heart } from "@/components/ui/icons";
 import { links, site } from "@/lib/site";
+import { ArrowRight, Button, Heart, Section } from "@kreds/ui";
 
 /**
  * Only channels that actually exist. Adding another means one entry here and

@@ -1,6 +1,5 @@
-import { Section } from "@/components/ui/section";
-import { Chevron } from "@/components/ui/icons";
 import { faqs } from "@/lib/faq";
+import { Chevron, Section } from "@kreds/ui";
 
 export function Faq() {
   return (

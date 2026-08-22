@@ -2,7 +2,7 @@
 
 > How Kreds recognises work, and why recognition is deliberately not payment.
 >
-> The companion document is [ECONOMIC_CONSTITUTION.md](ECONOMIC_CONSTITUTION.md),
+> The companion document is [ECONOMIC_CONSTITUTION.md](constitution.md),
 > which governs KRED. This one governs Contribution Points. They are separate
 > systems and the separation is load-bearing.
 
@@ -69,7 +69,7 @@ be bypassable by minting reputation.
 
 In the codebase this is enforced by the type system rather than by a runtime
 check. `Points` and `Kredbits` are distinct nominal types in
-[`@kreds/domain`](packages/domain), so a conversion is not something the code
+[`@kreds/domain`](https://github.com/zitdevs/kreds/blob/main/packages/domain), so a conversion is not something the code
 refuses to do. It is something that does not compile.
 
 ## Points do not decrease from economic activity
@@ -179,6 +179,6 @@ stops working when it becomes public.
 
 ---
 
-Governed by the [Kreds Economic Constitution](ECONOMIC_CONSTITUTION.md),
+Governed by the [Kreds Economic Constitution](constitution.md),
 Laws XXVI to XXVIII. Where this document and the constitution disagree, the
 constitution wins and this document is the bug.

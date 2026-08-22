@@ -164,7 +164,7 @@ services:
     image: ghcr.io/zitdevs/kreds:v0.1.0
 ```
 
-Breaking changes are called out in [CHANGELOG.md](../CHANGELOG.md) and in the
+Breaking changes are called out in [CHANGELOG.md](https://github.com/zitdevs/kreds/blob/main/CHANGELOG.md) and in the
 release notes.
 
 ## Backups

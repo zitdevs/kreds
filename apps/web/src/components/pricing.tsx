@@ -1,9 +1,7 @@
 import Link from "next/link";
-import { Section } from "@/components/ui/section";
-import { Button } from "@/components/ui/button";
-import { Check, Heart } from "@/components/ui/icons";
 import { plans } from "@/lib/pricing";
 import { links } from "@/lib/site";
+import { Button, Check, Heart, Section } from "@kreds/ui";
 
 export function Pricing() {
   return (

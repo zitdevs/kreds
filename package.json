@@ -10,15 +10,16 @@
   "packageManager": "pnpm@9.12.0",
   "scripts": {
     "dev": "pnpm --filter @kreds/web dev",
-    "build": "pnpm --filter @kreds/web build",
+    "build": "pnpm -r --filter './apps/*' build",
     "start": "pnpm --filter @kreds/web start",
-    "lint": "pnpm --filter @kreds/web lint",
+    "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "test:affected": "sh scripts/test-affected.sh",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "dev:docs": "pnpm --filter @kreds/docs dev"
   },
   "devDependencies": {
     "husky": "^9.1.7",

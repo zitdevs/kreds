@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { Section } from "@/components/ui/section";
-import { Check } from "@/components/ui/icons";
 import { links } from "@/lib/site";
+import { Check, Section } from "@kreds/ui";
 
 const allowed = [
   "Read, fork and study every part of the system",

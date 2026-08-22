@@ -1,0 +1,26 @@
+{
+  "name": "@kreds/ui",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "description": "The Kreds design system. React components and the design tokens every app shares.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles/tokens.css": "./src/styles/tokens.css",
+    "./styles/prose.css": "./src/styles/prose.css"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "next": "^15.0.0",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "next": "^15.5.0",
+    "react": "^19.0.0",
+    "typescript": "^5.6.3"
+  }
+}

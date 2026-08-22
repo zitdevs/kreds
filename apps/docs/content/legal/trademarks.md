@@ -1,6 +1,6 @@
 # Kreds Trademark Policy
 
-The [AGPLv3](LICENSE) gives you broad rights over the **code**. This policy
+The [AGPLv3](https://github.com/zitdevs/kreds/blob/main/LICENSE) gives you broad rights over the **code**. This policy
 covers the **names and marks**, which a software licence deliberately does not
 grant.
 
