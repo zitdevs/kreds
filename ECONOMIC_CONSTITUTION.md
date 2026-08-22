@@ -354,7 +354,7 @@ eventually walks through.
 > **Corrected in A03 audit round 2.** The first closed enumeration accidentally
 > excluded the two Central Bank programs that legitimately pay reviewers:
 > platform-funded rewards (reviewer #4+, simple re-approval) and protection
-> payments. That forbade flows which Law XXIII's gating and chapter 25
+> payments, thereby forbidding flows that Law XXIII's gating and chapter 25
 > explicitly regulate. The list now names them; it remains closed.
 
 ---
@@ -377,7 +377,7 @@ reviewer, then abandoning the debt. Without the eligibility gate, the facility
 would be the cheapest farm in the system.
 
 > **Amended by A03 (`v0.4`)** to add the eligibility clause. The A02 principle
-> _every path that moves reserve KRED into circulation gets the same gate_
+> (_every path that moves reserve KRED into circulation gets the same gate_)
 > covered platform-funded rewards but not credit draws.
 
 ---
