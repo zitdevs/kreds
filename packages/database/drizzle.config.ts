@@ -15,6 +15,7 @@ export default defineConfig({
   schema: [
     "./src/schema/identity.ts",
     "./src/schema/github.ts",
+    "./src/schema/access.ts",
     "./src/schema/events.ts",
     "./src/schema/contribution.ts",
     "./src/schema/ledger.ts",

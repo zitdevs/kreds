@@ -18,13 +18,14 @@
  */
 
 import v04 from "./snapshots/kreds-rules-public-v0.4.json";
+import v05 from "./snapshots/kreds-rules-public-v0.5.json";
 
 import { policySchema, type Policy } from "./schema.js";
 
 export { NOT_PUBLISHED, type NotPublished, type PointsRange, type Policy } from "./schema.js";
 
 /** Every policy version this build can read, newest last. */
-const SNAPSHOTS: readonly unknown[] = [v04];
+const SNAPSHOTS: readonly unknown[] = [v04, v05];
 
 const byVersion = new Map<string, Policy>();
 for (const raw of SNAPSHOTS) {

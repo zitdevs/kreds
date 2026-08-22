@@ -42,6 +42,18 @@ export const domainEventType = pgEnum("domain_event_type", [
  * investigation needs, and the alternative is discovering months later that the
  * evidence was discarded at the door.
  */
+/**
+ * How evidence reached Kreds.
+ *
+ * Law XXXV, A04: "from the source provider through a channel the beneficiary
+ * does not control." Exactly two channels, and the enum has no third member, so
+ * an event with no lawful provenance cannot be written at all.
+ */
+export const ingestionMode = pgEnum("ingestion_mode", [
+  "PROVIDER_WEBHOOK",
+  "SERVER_SIDE_DELEGATED_QUERY",
+]);
+
 export const gitHubEvents = pgTable(
   "github_events",
   {
@@ -57,6 +69,17 @@ export const gitHubEvents = pgTable(
      * separate because they catch different mistakes.
      */
     gitHubDeliveryId: text("github_delivery_id").notNull().unique(),
+    /**
+     * How this evidence reached Kreds.
+     *
+     * Law XXXV, A04: evidence arrives "from the source provider through a
+     * channel the beneficiary does not control", and there are exactly two such
+     * channels. Recorded on the row rather than inferred later, so an auditor
+     * can answer "where did this come from" without reconstructing it, and so
+     * that a row with no lawful provenance cannot be written at all: the column
+     * is not null and the enum has no third member.
+     */
+    ingestionMode: ingestionMode("ingestion_mode").notNull().default("PROVIDER_WEBHOOK"),
     /**
      * The installation GitHub named, if it named one.
      *

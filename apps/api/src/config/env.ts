@@ -93,6 +93,38 @@ export const envSchema = z.object({
    */
   GITHUB_APP_PRIVATE_KEY: optionalSecret,
   GITHUB_WEBHOOK_SECRET: optionalSecret,
+
+  /**
+   * The key that seals delegated authorization tokens at rest.
+   *
+   * 32 bytes of base64. Optional, and an instance without it simply cannot use
+   * the delegated-query ingestion path: webhooks keep working, and no token is
+   * stored anywhere. That is better than generating one, which would change on
+   * restart and silently orphan every stored authorization.
+   */
+  TOKEN_ENCRYPTION_KEY: optionalSecret,
+
+  /**
+   * Contribution Point allowances for contexts with no independent observer.
+   *
+   * 24: those caps "are operational policy and are not published", and this
+   * repository is public, so they cannot ship in it. An instance that does not
+   * set them awards nothing in unobserved contexts rather than awarding without
+   * a bound (Law XIX).
+   */
+  UNOBSERVED_POINTS_PER_DAY: z.coerce.number().int().nonnegative().optional(),
+  UNOBSERVED_POINTS_PER_MONTH: z.coerce.number().int().nonnegative().optional(),
+
+  /**
+   * How much provider traffic one user may cause.
+   *
+   * A04 moved this decision to Kreds. Under organization webhooks GitHub
+   * decided how much arrived; under delegated query one account with several
+   * thousand repositories would consume the whole allowance and starve
+   * everybody else.
+   */
+  DELEGATED_QUERY_REQUESTS_PER_WINDOW: z.coerce.number().int().positive().default(60),
+  DELEGATED_QUERY_WINDOW_MS: z.coerce.number().int().positive().default(900_000),
 });
 
 export type Env = z.infer<typeof envSchema>;

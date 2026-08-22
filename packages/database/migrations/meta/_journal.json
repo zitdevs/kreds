@@ -50,6 +50,13 @@
       "when": 1787417302867,
       "tag": "0006_tired_pride",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787425426400,
+      "tag": "0007_married_rogue",
+      "breakpoints": true
     }
   ]
 }

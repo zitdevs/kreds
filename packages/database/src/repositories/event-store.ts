@@ -1,16 +1,24 @@
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
-import type { DomainEvent, EventStatus, GitHubInstallationId } from "@kreds/domain";
+import type { DomainEvent, EventStatus, GitHubInstallationId, IngestionMode } from "@kreds/domain";
 
 import type { Database } from "../client.js";
 import { domainEvents, gitHubEvents } from "../schema/index.js";
 
-/** One webhook, as it arrived. */
+/** One piece of evidence, as it arrived from the provider. */
 export interface RawDelivery {
   readonly gitHubDeliveryId: string;
   readonly eventType: string;
   readonly action?: string | null;
   readonly gitHubInstallationId?: GitHubInstallationId | null;
   readonly payload: unknown;
+  /**
+   * Which of the two lawful channels this came through.
+   *
+   * Law XXXV, A04. Defaulted to the webhook rather than made required, because
+   * every row written before A04 arrived that way and Law XV does not permit
+   * history to be restated. New callers pass it.
+   */
+  readonly ingestionMode?: IngestionMode | null;
 }
 
 export interface RecordedDelivery {
@@ -77,6 +85,7 @@ export class EventStore {
         action: delivery.action ?? null,
         gitHubInstallationId: delivery.gitHubInstallationId ?? null,
         payload: delivery.payload,
+        ingestionMode: delivery.ingestionMode ?? "PROVIDER_WEBHOOK",
       })
       .onConflictDoNothing({ target: gitHubEvents.gitHubDeliveryId })
       .returning();

@@ -36,3 +36,17 @@ export { InsufficientBalanceError, Ledger, type PostedTransaction } from "./repo
 export { runMigrations } from "./migrate.js";
 export * as schema from "./schema/index.js";
 export { Positions, type PositionQuery } from "./repositories/positions.js";
+export {
+  Authorizations,
+  AuthorizationRevokedError,
+  RateBudgetExhaustedError,
+  type PollCandidate,
+  type RateBudget,
+} from "./repositories/authorizations.js";
+export {
+  redacted,
+  TokenCipher,
+  TokenDecryptionError,
+  TokenKeyError,
+  type SealedToken,
+} from "./crypto/token-cipher.js";

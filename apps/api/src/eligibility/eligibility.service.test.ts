@@ -1,3 +1,4 @@
+import { CURRENT_RULES_VERSION } from "@kreds/policy";
 import { describe, expect, it, vi } from "vitest";
 
 import { EligibilityService } from "./eligibility.service.js";
@@ -55,7 +56,10 @@ describe("Core may say locally eligible, and no more", () => {
 
   it("records the version that decided", async () => {
     const { service } = harness();
-    expect((await service.forMerge(merge())).rulesVersion).toBe("v0.4");
+    // From the policy rather than a literal. A hard-coded version made this go
+    // red on the A04 bump for the wrong reason: it was asserting the number,
+    // not that the service records whatever version actually decided.
+    expect((await service.forMerge(merge())).rulesVersion).toBe(CURRENT_RULES_VERSION);
   });
 
   /** Law XV again: the reasons must carry no threshold. */

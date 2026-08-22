@@ -2,6 +2,8 @@ import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { z } from "zod";
 
+import { SIGN_IN_SCOPES } from "../access/scopes.js";
+
 import { gitHubUserId, type GitHubUserId } from "@kreds/domain";
 
 import type { Env } from "../config/env.js";
@@ -16,8 +18,12 @@ const USER_URL = "https://api.github.com/user";
  * `.env.example` publishes this same pair, and the self-hosting guide promises
  * "This grant never touches your code." Adding a scope here would quietly break
  * that promise for every existing installation.
+ *
+ * A04 did not widen it. Ingesting private work needs a broader grant, and
+ * asking for it at sign-in would have sized one decision for the larger case.
+ * See `access/scopes.ts`.
  */
-const SCOPES = "read:user read:org";
+const SCOPES = SIGN_IN_SCOPES.join(" ");
 
 const tokenResponse = z.object({
   access_token: z.string().min(1),

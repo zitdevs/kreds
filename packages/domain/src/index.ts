@@ -265,3 +265,64 @@ export {
   type SupplyInputs,
   type SupplyReconciliation,
 } from "./invariants/supply.js";
+
+export {
+  CLIENT_ROLES,
+  ClientOriginatedEvidenceError,
+  factKey,
+  INGESTION_MODES,
+  provenance,
+  type ClientRole,
+  type IngestionMode,
+  type Provenance,
+} from "./access/provenance.js";
+
+export {
+  FeatureRequiresOrganizationError,
+  isAvailable,
+  landingFor,
+  ORGANIZATION_ONLY_FEATURES,
+  PERSONAL_FEATURES,
+  POSITION_SCOPES,
+  requireFeature,
+  type EventContext,
+  type Feature,
+  type Landing,
+  type OrganizationOnlyFeature,
+  type PersonalFeature,
+  type PositionScope,
+} from "./access/scope.js";
+
+export {
+  BindingNotVerifiedError,
+  decideBinding,
+  requireVerifiedAuthority,
+  type BindingDecision,
+  type BindingEvidence,
+  type BindingRefusal,
+  type OrganizationGrant,
+} from "./access/binding.js";
+
+export {
+  assertMayBeCharged,
+  consentingAuthorityFor,
+  NoConsentingContextError,
+  routeLiability,
+  type ChargeContext,
+  type ConsentingAuthority,
+  type LiabilityDecision,
+  type LiabilityRoute,
+} from "./access/consent.js";
+
+export {
+  capUnobserved,
+  NO_UNOBSERVED_ALLOWANCE,
+  unobservedCaps,
+  UnobservedCapsNotConfiguredError,
+  wasObserved,
+  type CappedAward,
+  type CapReason,
+  type ObservationContext,
+  type UnobservedCaps,
+  type UnobservedTally,
+} from "./access/observation.js";
