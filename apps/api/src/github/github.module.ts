@@ -20,6 +20,10 @@ import { InstallationService } from "./installation.service.js";
   imports: [DatabaseModule, ContributionModule, EligibilityModule],
   controllers: [GitHubWebhookController],
   providers: [GitHubAppService, InstallationService, IngestionService],
-  exports: [GitHubAppService],
+  // `IngestionService` is exported because A04 added a second lawful channel:
+  // `AccessModule` feeds delegated-query evidence through the same service the
+  // webhook uses, which is what keeps the two channels from building two
+  // different idempotency keys for one merge.
+  exports: [GitHubAppService, IngestionService],
 })
 export class GitHubModule {}
