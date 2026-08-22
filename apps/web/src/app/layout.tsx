@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { site, links } from "@/lib/site";
+import { site, links, analytics } from "@/lib/site";
 import { plans } from "@/lib/pricing";
 import { faqs } from "@/lib/faq";
 import "./globals.css";
@@ -133,6 +133,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <head>
+        {/* The only third-party origin the page touches. */}
+        <link rel="preconnect" href={analytics.origin} />
+        {/*
+          A plain deferred tag rather than next/script: `afterInteractive`
+          waits for hydration, so anyone who leaves before React boots is
+          never counted. `defer` starts fetching during HTML parse, does not
+          block rendering, and runs before DOMContentLoaded.
+        */}
+        <script
+          defer
+          src={analytics.src}
+          data-website-id={analytics.websiteId}
+          data-domains={analytics.domains}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}

@@ -11,6 +11,20 @@ export const site = {
   authorUrl: "https://zitdevs.com",
 } as const;
 
+/**
+ * Self-hosted Umami. Cookieless, no personal data, so no consent banner.
+ *
+ * `domains` scopes collection to the production hostname: without it, every
+ * page load on the Railway preview URL and on localhost lands in the same
+ * dashboard and quietly inflates the numbers.
+ */
+export const analytics = {
+  src: "https://analytics.zitdevs.com/script.js",
+  origin: "https://analytics.zitdevs.com",
+  websiteId: "25cde335-408e-425b-be19-8b90ba66281c",
+  domains: "kreds.sh",
+} as const;
+
 export const links = {
   github: "https://github.com/zitdevs/kreds",
   discussions: "https://github.com/zitdevs/kreds/discussions",
