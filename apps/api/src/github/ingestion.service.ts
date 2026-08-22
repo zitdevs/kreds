@@ -85,12 +85,24 @@ export class IngestionService {
       });
       await this.events.markProcessed(recorded.id);
 
-      // Recognition happens only for a fact that is new, so a replay cannot
-      // award points twice. The ledger is idempotent as well, which makes this
-      // a second lock on the same door rather than the only one.
-      if (result.isNew) {
-        await this.contributions.recognise(event);
-      }
+      // Recognition runs for every delivery, not only for a fact that is new,
+      // and the difference matters more than it looks.
+      //
+      // The first version gated this on `result.isNew`, reasoning that a replay
+      // must not pay twice. It cannot: the contribution ledger is keyed on this
+      // same idempotency key and absorbs the repeat. So the gate protected
+      // nothing and cost something real, which showed up immediately.
+      //
+      // The first genuine merge in this repository landed while the recognition
+      // engine was still deploying. Its fact was recorded and never scored, and
+      // with the gate in place no redelivery could ever fix that: the fact was
+      // no longer new, so recognition would be skipped forever. Work that
+      // happened would have stayed permanently unrecognised because of when it
+      // happened.
+      //
+      // Running every time makes a redelivery a repair rather than a no-op, and
+      // leaves the idempotency where it belongs, on the ledger.
+      await this.contributions.recognise(event);
 
       if (!result.isNew) {
         // The same fact through a different delivery id, which is what pressing
