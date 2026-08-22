@@ -31,12 +31,15 @@
     "@eslint/js": "^10.0.1",
     "@nestjs/cli": "^10.4.9",
     "@nestjs/schematics": "^10.2.3",
+    "@nestjs/testing": "^10.4.22",
+    "@swc/core": "^1.16.1",
     "@types/cookie-parser": "^1.4.8",
     "@types/express": "^5.0.0",
     "@types/node": "^22.20.1",
     "eslint": "^9.39.5",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.67.0",
+    "unplugin-swc": "^1.5.11",
     "vitest": "^2.1.4"
   }
 }

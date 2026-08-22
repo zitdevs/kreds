@@ -5,6 +5,7 @@ import { Authorizations, TokenCipher, type RateBudget } from "@kreds/database";
 
 import { DATABASE } from "../database/database.module.js";
 import { GitHubModule } from "../github/github.module.js";
+import { RATE_BUDGET, TOKEN_CIPHER } from "./access.tokens.js";
 import { AuthorizationController } from "./authorization.controller.js";
 import { DelegatedQueryService } from "./delegated-query.service.js";
 
@@ -16,10 +17,11 @@ import { DelegatedQueryService } from "./delegated-query.service.js";
  * event, a claim, or a computed value from anywhere but GitHub, because
  * Law XXXV leaves nowhere for one to sit.
  */
-export const TOKEN_CIPHER = Symbol("TOKEN_CIPHER");
-export const RATE_BUDGET = Symbol("RATE_BUDGET");
-
 @Module({
+  // `GitHubModule` because the delegated-query path feeds the same
+  // `IngestionService` the webhook uses, which is what keeps the two channels
+  // from building two different idempotency keys for one merge. `DATABASE`
+  // needs no import here: `DatabaseModule` is `@Global`.
   imports: [GitHubModule],
   controllers: [AuthorizationController],
   providers: [
@@ -57,3 +59,5 @@ export const RATE_BUDGET = Symbol("RATE_BUDGET");
   exports: [Authorizations, DelegatedQueryService],
 })
 export class AccessModule {}
+
+export { RATE_BUDGET, TOKEN_CIPHER };

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { z } from "zod";
 
 import { factKey, provenance } from "@kreds/domain";
@@ -10,6 +10,7 @@ import {
 } from "@kreds/database";
 
 import { IngestionService } from "../github/ingestion.service.js";
+import { RATE_BUDGET } from "./access.tokens.js";
 
 /**
  * The second lawful way evidence reaches Kreds: Kreds asks GitHub.
@@ -74,7 +75,10 @@ export class DelegatedQueryService {
   constructor(
     private readonly authorizations: Authorizations,
     private readonly ingestion: IngestionService,
-    private readonly budget: RateBudget,
+    // An interface has no runtime token, so Nest cannot resolve it by type.
+    // Without this the container reports the parameter as `Object` and fails at
+    // boot, which is exactly what happened the first time this shipped.
+    @Inject(RATE_BUDGET) private readonly budget: RateBudget,
   ) {}
 
   /**
