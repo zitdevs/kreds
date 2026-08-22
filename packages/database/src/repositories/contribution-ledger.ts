@@ -1,4 +1,4 @@
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, gte, isNull, sql } from "drizzle-orm";
 import {
   gitHubUserId as toGitHubUserId,
   organizationId as toOrganizationId,
@@ -29,6 +29,14 @@ export interface AwardInput {
   readonly unobservedSignals?: readonly string[];
   readonly rulesVersion: string;
   readonly occurredAt: Date;
+  /**
+   * Whether an independent human observed this work (A04, 24).
+   *
+   * Optional, and omitted means not evaluated. A caller that has not made the
+   * judgement must not assert one either way: `false` here bounds somebody's
+   * points, and `true` lifts a bound the amendment put there on purpose.
+   */
+  readonly observed?: boolean;
 }
 
 export interface AwardResult {
@@ -84,6 +92,7 @@ export class ContributionLedger {
         unobservedSignals: input.unobservedSignals?.length
           ? input.unobservedSignals.join(",")
           : null,
+        observed: input.observed ?? null,
         rulesVersion: input.rulesVersion,
         occurredAt: input.occurredAt,
       })
@@ -256,5 +265,39 @@ export class ContributionLedger {
            else -${contributionEntries.points}
       end
     ), 0)`;
+  }
+
+  /**
+   * Points this user has already been awarded in unobserved contexts.
+   *
+   * 24 caps points "earned in a context with no independent human observer",
+   * which only means anything against a running total, so this is the query the
+   * cap is applied on.
+   *
+   * Counts `observed = false` and nothing else. Rows where the column is null
+   * predate the question, and counting them as unobserved would bound somebody
+   * today for work nobody evaluated at the time.
+   *
+   * Invalidations are netted, not ignored: a cancelled award should stop
+   * consuming an allowance, or a reverted PR would keep somebody capped for
+   * work the economy has already withdrawn.
+   */
+  async unobservedPointsSince(gitHubUserId: number, since: Date): Promise<number> {
+    const [row] = await this.db
+      .select({
+        total: sql<string>`coalesce(sum(case when ${contributionEntries.entryType} = 'AWARD'
+          then ${contributionEntries.points} else -${contributionEntries.points} end), 0)::text`,
+      })
+      .from(contributionEntries)
+      .where(
+        and(
+          eq(contributionEntries.gitHubUserId, gitHubUserId),
+          eq(contributionEntries.observed, false),
+          gte(contributionEntries.occurredAt, since),
+        ),
+      );
+
+    const total = Number(row?.total ?? "0");
+    return total > 0 ? total : 0;
   }
 }

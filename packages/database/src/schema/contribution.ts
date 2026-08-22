@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   bigint,
+  boolean,
   index,
   integer,
   pgEnum,
@@ -116,6 +117,15 @@ export const contributionEntries = pgTable(
     cancelsEntryId: uuid("cancels_entry_id"),
 
     /** Law XV: the version that decided travels with the decision. */
+    /**
+     * Whether an independent human observed the work (A04, 24).
+     *
+     * Nullable, and null means "not evaluated" rather than "nobody watched".
+     * Every row written before A04 predates the question, and Law XV does not
+     * permit history to be restated, so those rows stay outside the tally
+     * instead of being backfilled with a guess.
+     */
+    observed: boolean("observed"),
     rulesVersion: text("rules_version").notNull(),
     /** When the work happened on GitHub, not when Kreds heard about it. */
     occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),

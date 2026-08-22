@@ -1,18 +1,32 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 
-import { ContributionLedger, IdentityRepository, InstallationRepository } from "@kreds/database";
 import {
+  ContributionLedger,
+  EventStore,
+  IdentityRepository,
+  InstallationRepository,
+} from "@kreds/database";
+import {
+  capUnobserved,
   isHealthySize,
+  isStructurallyIndependentReviewer,
+  NOBODY_OBSERVED,
+  points,
   pointsFor,
   score,
   UNOBSERVED,
   type ContributionKind,
   type DomainEvent,
   type PullRequestMerged,
+  type ObservationContext,
   type ReviewSubmitted,
   type Signal,
+  type UnobservedCaps,
+  type UnobservedTally,
 } from "@kreds/domain";
 import { currentPolicy } from "@kreds/policy";
+
+import { UNOBSERVED_CAPS } from "./unobserved-caps.provider.js";
 
 /** Why a contribution was not recognised, when it was not. */
 export type SkipReason =
@@ -47,6 +61,8 @@ export class ContributionService {
     private readonly ledger: ContributionLedger,
     private readonly identities: IdentityRepository,
     private readonly installations: InstallationRepository,
+    private readonly events: EventStore,
+    @Inject(UNOBSERVED_CAPS) private readonly caps: UnobservedCaps,
   ) {}
 
   /**
@@ -93,10 +109,14 @@ export class ContributionService {
     };
 
     const quality = score(signals, policy.pullRequest.merge.qualityWeights);
-    return this.record(event, "PULL_REQUEST_MERGED", event.authorGitHubUserId, quality, [
-      policy.contributionPoints.ranges.mergedPr[0],
-      policy.contributionPoints.ranges.mergedPr[1],
-    ]);
+    return this.record(
+      event,
+      "PULL_REQUEST_MERGED",
+      event.authorGitHubUserId,
+      quality,
+      [policy.contributionPoints.ranges.mergedPr[0], policy.contributionPoints.ranges.mergedPr[1]],
+      await this.observationOf(event),
+    );
   }
 
   private async recogniseReview(event: ReviewSubmitted): Promise<RecognitionResult> {
@@ -133,10 +153,25 @@ export class ContributionService {
     };
 
     const quality = score(signals, policy.codeReview.qualityWeights);
-    return this.record(event, "CODE_REVIEW", event.reviewerGitHubUserId, quality, [
-      policy.contributionPoints.ranges.codeReview[0],
-      policy.contributionPoints.ranges.codeReview[1],
-    ]);
+    // A review is observation by construction: two distinct identities, and the
+    // self-review and actor-type checks above already ran. The reviewer is the
+    // independent human, so their own recognition is never in the dark.
+    return this.record(
+      event,
+      "CODE_REVIEW",
+      event.reviewerGitHubUserId,
+      quality,
+      [
+        policy.contributionPoints.ranges.codeReview[0],
+        policy.contributionPoints.ranges.codeReview[1],
+      ],
+      {
+        observerGitHubUserId: Number(event.authorGitHubUserId),
+        observerIsDistinct: true,
+        observerIsEligibleHuman: true,
+        observerIsNotControlledAlternate: true,
+      },
+    );
   }
 
   /**
@@ -152,8 +187,17 @@ export class ContributionService {
     gitHubUserId: PullRequestMerged["authorGitHubUserId"],
     quality: ReturnType<typeof score>,
     range: readonly [number, number],
+    observation: ObservationContext,
   ): Promise<RecognitionResult> {
-    const awarded = pointsFor(quality.score, range);
+    // `pointsFor` returns a plain number; branding it here is what makes the
+    // cap arithmetic type-check against the same unit the tally is in.
+    const earned = points(pointsFor(quality.score, range));
+    const award = capUnobserved(
+      earned,
+      observation,
+      await this.unobservedTally(Number(gitHubUserId), new Date(event.occurredAt)),
+      this.caps,
+    );
     const repository = await this.installations.findRepository(Number(event.repositoryId));
 
     const result = await this.ledger.award({
@@ -162,19 +206,90 @@ export class ContributionService {
       gitHubUserId,
       repositoryId: repository?.id ?? null,
       organizationId: repository?.organizationId ?? null,
-      points: awarded,
+      points: award.awarded,
       qualityScore: quality.score,
       unobservedSignals: quality.unobserved,
+      observed: award.observed,
       rulesVersion: currentPolicy().rulesVersion,
       occurredAt: new Date(event.occurredAt),
     });
 
     if (result.isNew) {
+      // The cap is reported when it bit, because a contributor whose points
+      // stopped growing deserves an explanation that is not silence. The
+      // numbers themselves are not logged: they are operational policy.
+      const bounded = award.reason === "NOT_CAPPED" ? "" : ` (bounded, ${award.reason})`;
       this.logger.log(
-        `Recognised ${kind} for ${gitHubUserId}: ${awarded} points at quality ${quality.score}, ${quality.unobserved.length} signals unobserved.`,
+        `Recognised ${kind} for ${gitHubUserId}: ${award.awarded} points at quality ${quality.score}, ${quality.unobserved.length} signals unobserved${bounded}.`,
       );
     }
-    return { recognised: result.isNew, points: awarded, qualityScore: quality.score };
+    return { recognised: result.isNew, points: award.awarded, qualityScore: quality.score };
+  }
+
+  /**
+   * What this user has already been awarded in the dark, in both windows.
+   *
+   * Measured from when the work happened rather than from now, so a backfill
+   * cannot spend an allowance that belongs to a different day. Delegated query
+   * makes backfill ordinary, which is why this matters at all.
+   */
+  private async unobservedTally(gitHubUserId: number, occurredAt: Date): Promise<UnobservedTally> {
+    const dayStart = new Date(occurredAt);
+    dayStart.setUTCHours(0, 0, 0, 0);
+    const monthStart = new Date(Date.UTC(occurredAt.getUTCFullYear(), occurredAt.getUTCMonth(), 1));
+
+    const [today, thisMonth] = await Promise.all([
+      this.ledger.unobservedPointsSince(gitHubUserId, dayStart),
+      this.ledger.unobservedPointsSince(gitHubUserId, monthStart),
+    ]);
+    return { today: points(today), thisMonth: points(thisMonth) };
+  }
+
+  /**
+   * Whether an independent human observed this merge.
+   *
+   * 24 fixes the standard at the validating reviewer's, so this reuses the same
+   * structural predicate eligibility uses rather than inventing a second one.
+   *
+   * The fourth clause, that the observer is not an account the contributor
+   * controls, is a Risk Engine judgement and Core holds no evidence for it. It
+   * is asserted here for the same reason eligibility asserts its structural
+   * half: the predicate is necessary and never sufficient, and Law XXVIII keeps
+   * the bar for recognition deliberately below the bar for issuance. The
+   * Network re-decides anything that touches money.
+   */
+  private async observationOf(event: PullRequestMerged): Promise<ObservationContext> {
+    const reviews = await this.events.findReviewsFor(
+      Number(event.repositoryId),
+      event.pullRequestNumber,
+    );
+
+    for (const candidate of reviews) {
+      if (candidate.type !== "REVIEW_SUBMITTED") continue;
+      const review = candidate as ReviewSubmitted;
+      const independent = isStructurallyIndependentReviewer(
+        {
+          reviewerGitHubUserId: review.reviewerGitHubUserId,
+          reviewerActorType: review.reviewerActorType,
+          afterMerge: review.afterMerge,
+          state: review.state,
+        },
+        {
+          authorGitHubUserId: event.authorGitHubUserId,
+          coAuthorGitHubUserIds: event.coAuthorGitHubUserIds,
+        },
+      );
+      if (independent) {
+        return {
+          observerGitHubUserId: Number(review.reviewerGitHubUserId),
+          observerIsDistinct: true,
+          observerIsEligibleHuman: true,
+          observerIsNotControlledAlternate: true,
+        };
+      }
+    }
+
+    return NOBODY_OBSERVED;
   }
 
   /**

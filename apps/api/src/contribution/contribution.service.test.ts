@@ -1,11 +1,24 @@
 import { CURRENT_RULES_VERSION } from "@kreds/policy";
 import { describe, expect, it, vi } from "vitest";
 
+import { NO_UNOBSERVED_ALLOWANCE, unobservedCaps, type UnobservedCaps } from "@kreds/domain";
+
 import { ContributionService } from "./contribution.service.js";
 
-function harness() {
+/**
+ * @param caps the unobserved allowance. Defaults to none, which is what an
+ * unconfigured instance has and therefore the shape most worth testing.
+ * @param reviews what the event store will report for the pull request. An
+ * empty list is a merge nobody independent looked at.
+ */
+function harness(
+  caps: UnobservedCaps = NO_UNOBSERVED_ALLOWANCE,
+  reviews: unknown[] = [],
+  alreadyUnobserved = 0,
+) {
   const ledger = {
     award: vi.fn(async () => ({ id: "entry-1", idempotencyKey: "k", isNew: true })),
+    unobservedPointsSince: vi.fn(async () => alreadyUnobserved),
   };
   const identities = {
     observe: vi.fn(async () => ({})),
@@ -14,13 +27,32 @@ function harness() {
   const installations = {
     findRepository: vi.fn(async () => ({ id: "repo-uuid", organizationId: "org-uuid" })),
   };
+  const events = { findReviewsFor: vi.fn(async () => reviews) };
   const service = new ContributionService(
     ledger as never,
     identities as never,
     installations as never,
+    events as never,
+    caps,
   );
-  return { service, ledger, identities, installations };
+  return { service, ledger, identities, installations, events };
 }
+
+/**
+ * A review by a distinct human, which is what makes a merge observed under 24's
+ * standard: "a distinct, eligible, human identity that is not a controlled
+ * alternate account."
+ */
+const independentReview = {
+  type: "REVIEW_SUBMITTED",
+  reviewerGitHubUserId: 9001,
+  reviewerActorType: "HUMAN",
+  afterMerge: false,
+  state: "APPROVED",
+};
+
+/** Enough allowance for the tests that exercise the bound rather than the wall. */
+const someAllowance = unobservedCaps({ perUserPerDay: 60, perUserPerMonth: 400 });
 
 const merge = (over: Record<string, unknown> = {}) =>
   ({
@@ -70,7 +102,9 @@ describe("recognition is not payment", () => {
   });
 
   it("records points and a quality score for a merge", async () => {
-    const { service, ledger } = harness();
+    // Observed, because an independent human reviewed it. The unobserved path
+    // is a different case and has its own tests below.
+    const { service, ledger } = harness(NO_UNOBSERVED_ALLOWANCE, [independentReview]);
     const result = await service.recognise(merge());
 
     expect(result.recognised).toBe(true);
@@ -186,7 +220,7 @@ describe("reviews", () => {
 
 describe("quality changes what is earned", () => {
   it("awards more for a pull request that did the work to be reviewable", async () => {
-    const { service, ledger } = harness();
+    const { service, ledger } = harness(NO_UNOBSERVED_ALLOWANCE, [independentReview]);
     await service.recognise(merge());
     await service.recognise(
       merge({
@@ -205,7 +239,7 @@ describe("quality changes what is earned", () => {
    * contribution.
    */
   it("still recognises a weak but merged pull request", async () => {
-    const { service, ledger } = harness();
+    const { service, ledger } = harness(NO_UNOBSERVED_ALLOWANCE, [independentReview]);
     await service.recognise(
       merge({ signals: { changedLines: 9000, hasDescription: false, linksIssue: false } }),
     );
@@ -220,5 +254,129 @@ describe("quality changes what is earned", () => {
 
     expect(result).toMatchObject({ recognised: false, reason: "NOT_A_CONTRIBUTION" });
     expect(ledger.award).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Amendment A04, chapter 24. This is the half that was built and not wired: the
+ * domain has had `capUnobserved` since A04 landed, and nothing on the path that
+ * awards points ever called it, so the running system awarded without a bound.
+ */
+describe("Contribution Points where nobody independent was watching", () => {
+  /**
+   * > "An observer, for this purpose, is held to the same standard as a
+   * > validating reviewer: a distinct, eligible, human identity that is not a
+   * > controlled alternate account."
+   */
+  it("treats a merge an independent human reviewed as observed", async () => {
+    const { service, ledger } = harness(someAllowance, [independentReview]);
+    await service.recognise(merge());
+
+    const [award] = ledger.award.mock.calls[0] as unknown as [{ observed: boolean }];
+    expect(award.observed).toBe(true);
+  });
+
+  it("treats a merge nobody reviewed as unobserved", async () => {
+    const { service, ledger } = harness(someAllowance, []);
+    await service.recognise(merge());
+
+    const [award] = ledger.award.mock.calls[0] as unknown as [{ observed: boolean }];
+    expect(award.observed).toBe(false);
+  });
+
+  /**
+   * > "Adding your own second account as a collaborator does not lift the cap;
+   * > if it did, the cap would cost one API call to bypass."
+   *
+   * The structural half of that: a review by the author is not observation, and
+   * neither is one by a co-author or a bot.
+   */
+  it("does not accept a self-review, a co-author or a bot as an observer", async () => {
+    const author = { ...independentReview, reviewerGitHubUserId: 4242 };
+    const bot = { ...independentReview, reviewerActorType: "BOT" };
+    const afterTheFact = { ...independentReview, afterMerge: true };
+    const dismissed = { ...independentReview, state: "DISMISSED" };
+
+    for (const review of [author, bot, afterTheFact, dismissed]) {
+      const { service, ledger } = harness(someAllowance, [review]);
+      await service.recognise(merge());
+      const [award] = ledger.award.mock.calls[0] as unknown as [{ observed: boolean }];
+      expect(award.observed, JSON.stringify(review)).toBe(false);
+    }
+  });
+
+  /** "Not refused: solo work in a private repository is real work." */
+  it("still awards unobserved work while the allowance holds", async () => {
+    const { service, ledger } = harness(someAllowance, []);
+    await service.recognise(merge());
+
+    const [award] = ledger.award.mock.calls[0] as unknown as [{ points: number }];
+    expect(award.points).toBeGreaterThan(0);
+  });
+
+  /** And stops once it is spent, which is the whole point of the cap. */
+  it("stops awarding once the day's allowance is gone", async () => {
+    const { service, ledger } = harness(someAllowance, [], 60);
+    await service.recognise(merge());
+
+    const [award] = ledger.award.mock.calls[0] as unknown as [{ points: number }];
+    expect(award.points).toBe(0);
+  });
+
+  /**
+   * The consequence of an unconfigured instance, stated as a test rather than
+   * left to be discovered: with no allowance, unobserved work is recorded and
+   * awarded nothing. Law XIX, applied to a missing setting.
+   */
+  it("awards nothing unobserved when no allowance is configured", async () => {
+    const { service, ledger } = harness(NO_UNOBSERVED_ALLOWANCE, []);
+    await service.recognise(merge());
+
+    const [award] = ledger.award.mock.calls[0] as unknown as [
+      { points: number; observed: boolean },
+    ];
+    expect(award.points).toBe(0);
+    expect(award.observed).toBe(false);
+  });
+
+  /**
+   * A review is observation by construction: two distinct identities, already
+   * checked. A reviewer's own recognition is never bounded by this cap.
+   */
+  it("never bounds a reviewer's own points", async () => {
+    const { service, ledger } = harness(NO_UNOBSERVED_ALLOWANCE, []);
+    await service.recognise({
+      type: "REVIEW_SUBMITTED",
+      idempotencyKey: "REVIEW_SUBMITTED:5150",
+      occurredAt: 1_787_392_800_000,
+      repositoryId: "77001",
+      pullRequestNumber: 412,
+      reviewerGitHubUserId: 9001,
+      reviewerLogin: "jose",
+      reviewerActorType: "HUMAN",
+      authorGitHubUserId: 4242,
+      afterMerge: false,
+      state: "APPROVED",
+      signals: { hasBody: true },
+    } as never);
+
+    const [award] = ledger.award.mock.calls[0] as unknown as [
+      { points: number; observed: boolean },
+    ];
+    expect(award.observed).toBe(true);
+    expect(award.points).toBeGreaterThan(0);
+  });
+
+  /**
+   * Measured from when the work happened rather than from now, so a backfill
+   * cannot spend an allowance belonging to a different day. Delegated query
+   * makes backfill ordinary, which is why this matters at all.
+   */
+  it("counts the allowance against the day the work happened", async () => {
+    const { service, ledger } = harness(someAllowance, []);
+    await service.recognise(merge({ occurredAt: Date.parse("2026-03-14T15:00:00Z") }));
+
+    const [, since] = ledger.unobservedPointsSince.mock.calls[0] as unknown as [number, Date];
+    expect(since.toISOString()).toBe("2026-03-14T00:00:00.000Z");
   });
 });

@@ -1,0 +1,1 @@
+ALTER TABLE "contribution_entries" ADD COLUMN "observed" boolean;
