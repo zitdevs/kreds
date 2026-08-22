@@ -148,6 +148,40 @@ export class IdentityRepository {
   }
 
   /**
+   * Record what an identity is.
+   *
+   * `observe` deliberately never sets this, because when it was written there
+   * was no evidence to set it from. There is now, for the part that needs no
+   * heuristic: GitHub states whether an account is a `Bot`, and Core reads that
+   * and nothing subtler. Everything beyond it stays with the Risk Engine.
+   *
+   * `UNKNOWN` is refused rather than written. 03 requires an unclassified actor
+   * to fail closed, and it already does that by default; overwriting a known
+   * classification back to unknown would undo a decision rather than record
+   * one, and is the shape a reclassification attack would take.
+   *
+   * @returns whether the stored classification changed. A change from `HUMAN`
+   * is what 24 lists as a trigger that removes points already awarded, so the
+   * caller needs to know it happened.
+   */
+  async classify(id: GitHubUserId, actorType: ActorType): Promise<boolean> {
+    if (actorType === "UNKNOWN") return false;
+
+    const [row] = await this.db
+      .select({ actorType: gitHubIdentities.actorType })
+      .from(gitHubIdentities)
+      .where(eq(gitHubIdentities.gitHubUserId, id))
+      .limit(1);
+    if (!row || row.actorType === actorType) return false;
+
+    await this.db
+      .update(gitHubIdentities)
+      .set({ actorType })
+      .where(eq(gitHubIdentities.gitHubUserId, id));
+    return true;
+  }
+
+  /**
    * Attach a Kreds account to a GitHub identity, creating the account if this
    * is the first sign-in.
    *

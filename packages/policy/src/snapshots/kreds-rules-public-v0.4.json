@@ -1,0 +1,473 @@
+{
+  "$schema": "./kreds-rules.schema.json",
+  "rulesVersion": "v0.4",
+  "status": "draft",
+  "effectiveFrom": null,
+  "note": "Proposed defaults. Not immutable constants. All amounts are expressed in kredbits (integer subunits) unless the key ends in Percent or Ratio.",
+  "currency": {
+    "code": "KRED",
+    "symbol": "K",
+    "subunit": "kredbit",
+    "subunitsPerUnit": 100,
+    "maxSupply": 500000000
+  },
+  "signup": {
+    "grant": 0
+  },
+  "pullRequest": {
+    "merge": {
+      "minReward": 500,
+      "maxReward": 3500,
+      "curve": [
+        {
+          "scoreMin": 0,
+          "scoreMax": 20,
+          "reward": 500
+        },
+        {
+          "scoreMin": 21,
+          "scoreMax": 40,
+          "reward": 1000
+        },
+        {
+          "scoreMin": 41,
+          "scoreMax": 60,
+          "reward": 1500
+        },
+        {
+          "scoreMin": 61,
+          "scoreMax": 75,
+          "reward": 2000
+        },
+        {
+          "scoreMin": 76,
+          "scoreMax": 90,
+          "reward": 2800
+        },
+        {
+          "scoreMin": 91,
+          "scoreMax": 100,
+          "reward": 3500
+        }
+      ],
+      "qualityWeights": {
+        "checksPassed": 30,
+        "meaningfulDescription": 20,
+        "requiredApprovals": 15,
+        "noUnresolvedThreads": 15,
+        "linkedIssue": 10,
+        "healthySize": 10
+      }
+    },
+    "size": {
+      "smallMaxLines": 50,
+      "idealMaxLines": 300,
+      "acceptableMaxLines": 600,
+      "reducedMaxLines": 1000,
+      "noBonusAboveLines": 1000,
+      "excludeGeneratedFiles": true
+    },
+    "coAuthors": {
+      "splitStrategy": "equal",
+      "weightByCommits": false,
+      "eligibleActorTypes": [
+        "HUMAN"
+      ]
+    }
+  },
+  "codeReview": {
+    "minValue": 500,
+    "maxValue": 4000,
+    "curve": [
+      {
+        "scoreMin": 0,
+        "scoreMax": 20,
+        "value": 500
+      },
+      {
+        "scoreMin": 21,
+        "scoreMax": 40,
+        "value": 1000
+      },
+      {
+        "scoreMin": 41,
+        "scoreMax": 60,
+        "value": 2000
+      },
+      {
+        "scoreMin": 61,
+        "scoreMax": 80,
+        "value": 3000
+      },
+      {
+        "scoreMin": 81,
+        "scoreMax": 100,
+        "value": 4000
+      }
+    ],
+    "qualityWeights": {
+      "depth": 30,
+      "timeliness": 20,
+      "relevantComments": 20,
+      "outcome": 15,
+      "wasRequested": 10,
+      "followUp": 5
+    },
+    "draftReviewMaxRatio": 0.5,
+    "reReviewMaxRatio": 0.5,
+    "afterMergeValue": 0,
+    "selfReviewValue": 0,
+    "botReviewValue": 0,
+    "aiAgentReviewValue": 0,
+    "maxReviewersChargingAuthor": 3,
+    "extraReviewerPlatformReward": {
+      "min": 200,
+      "max": 500
+    },
+    "simpleReapprovalPlatformReward": {
+      "min": 100,
+      "max": 200
+    },
+    "perReviewerPerPrCap": 6000,
+    "timingMultipliers": "NOT_PUBLISHED"
+  },
+  "reversals": {
+    "closedWithoutMerge": {
+      "reviewerKeepsRatio": 0.7,
+      "authorRefundRatio": 0.3,
+      "issueMergeReward": false
+    },
+    "revertedPr": {
+      "createAdjustment": true,
+      "deleteOriginal": false
+    }
+  },
+  "fees": {
+    "codeReviewPercent": 2.0,
+    "personalTransferPercent": 5.0,
+    "treasuryContributionPercent": 0.0,
+    "destination": "CENTRAL_BANK_RESERVE",
+    "burnFees": false
+  },
+  "personalTransfers": {
+    "enabled": false,
+    "limits": "NOT_PUBLISHED",
+    "toUnclaimedIdentities": false
+  },
+  "settlement": {
+    "normalWindowHours": 24,
+    "riskAdjustedWindows": "NOT_PUBLISHED",
+    "earningsRepayDebtFirst": true,
+    "negativeBalancesPermitted": false,
+    "withdrawableWhileNetPositionNegative": 0
+  },
+  "organization": {
+    "baseReserveEntitlementPerMember": 2500,
+    "entitlementIsRecurring": false,
+    "defaultMode": "STANDARD_NETWORK_TEAM",
+    "boundary": "GITHUB_ORGANIZATION"
+  },
+  "trust": {
+    "levels": [
+      "NEW",
+      "ESTABLISHED",
+      "TRUSTED",
+      "RESTRICTED"
+    ],
+    "publicNumericScore": false
+  },
+  "actorTypes": {
+    "eligible": [
+      "HUMAN"
+    ],
+    "ineligible": [
+      "BOT",
+      "AI_AGENT"
+    ],
+    "unknownFailsClosed": true
+  },
+  "monetaryPolicy": {
+    "automaticTightening": false,
+    "forwardOnly": true,
+    "requireAnnouncement": true
+  },
+  "leaderboard": {
+    "primaryRanking": "BALANCE",
+    "showMovement": true,
+    "seasonsResetWallets": false
+  },
+  "localCurrencyRedemption": {
+    "enabled": false
+  },
+  "$comment": "PUBLIC. Publishable economic policy. Operational thresholds are held internally and are NOT in this file.",
+  "credit": {
+    "limitsByTrustLevel": "NOT_PUBLISHED",
+    "unclaimedDebtFloor": "NOT_PUBLISHED",
+    "protectionFunding": [
+      "ORGANIZATION_REVIEW_FUND",
+      "ORGANIZATION_TREASURY",
+      "CENTRAL_BANK_PROTECTION_RESERVE"
+    ]
+  },
+  "supersedes": "v0.3",
+  "amendment": "A03 \u2014 Economic Hardening",
+  "accounting": {
+    "minimumBalance": 0,
+    "negativeBalancesPermitted": false,
+    "netPositionFormula": "balance - outstandingDebt",
+    "pendingReceivablesIncludedInNetPosition": false,
+    "positionFields": [
+      "balance",
+      "outstandingDebt",
+      "pendingReceivables",
+      "pendingSettlement",
+      "locked",
+      "withdrawable"
+    ],
+    "settlementOrdering": [
+      "debtRepayment",
+      "pendingSettlement",
+      "available",
+      "withdrawable"
+    ]
+  },
+  "reviewFunding": {
+    "waterfall": [
+      "AUTHOR_SETTLED_BALANCE",
+      "REVIEW_FUND",
+      "CREDIT_FACILITY",
+      "RECEIVABLE"
+    ],
+    "defaultLiabilityMode": "AUTHOR_PAYS_WITH_REVIEW_FUND_FALLBACK",
+    "liabilityModes": [
+      "AUTHOR_PAYS",
+      "TEAM_PAYS",
+      "HYBRID",
+      "PROJECT_SPONSORED"
+    ],
+    "treasuryIsAutomaticWaterfallStep": false,
+    "treasuryNote": "Treasury KRED must be explicitly allocated into a Review Fund before it can pay for review.",
+    "fundingSourcesClosed": true,
+    "treasuryFundsViaExplicitReviewFundAllocationOnly": true
+  },
+  "reviewFund": {
+    "contributionFeePercent": 0.0,
+    "contributionsFinal": true,
+    "contributionsRequireSettledKred": true,
+    "publiclyVisible": "ORGANIZATION_CHOICE"
+  },
+  "creditFacility": {
+    "increasesTotalSupply": false,
+    "increasesCirculatingSupply": true,
+    "fundedFrom": "CENTRAL_BANK_RESERVE",
+    "authorDebtBasis": "GROSS_REVIEW_VALUE",
+    "limitsByTrustLevel": "NOT_PUBLISHED",
+    "repaymentDestination": "LENDING_ACCOUNT",
+    "repaymentBurns": false,
+    "requiresRepositoryEligibility": true,
+    "requiresEligibleReviewer": true
+  },
+  "receivables": {
+    "countedInKredSupply": false,
+    "transferable": false,
+    "spendable": false,
+    "withdrawable": false,
+    "paymentOrdering": "OLDEST_ELIGIBLE_FIRST",
+    "paidBeforeAuthorEarnings": true,
+    "closedWithoutMergeRetentionRatio": 0.7,
+    "closedWithoutMergeRemainderCancelled": true,
+    "settlementAppliesProtocolFee": true
+  },
+  "debtTypes": [
+    "USER_REVIEW_DEBT",
+    "ORGANIZATION_REVIEW_DEBT",
+    "PROJECT_REVIEW_DEBT"
+  ],
+  "contributionPoints": {
+    "isCurrency": false,
+    "transferable": false,
+    "spendable": false,
+    "exchangeable": false,
+    "canCreateDebt": false,
+    "hasSupply": false,
+    "countedInKredSupply": false,
+    "conversionRateToKred": null,
+    "conversionEverPermitted": false,
+    "decreasesFromEconomicActivity": false,
+    "adjustableOnInvalidation": true,
+    "invalidationTriggers": [
+      "PR_REVERTED",
+      "CONFIRMED_FRAUD",
+      "CONFIRMED_FARMING",
+      "ACTOR_RECLASSIFIED_NON_HUMAN"
+    ],
+    "scopes": [
+      "GLOBAL",
+      "ORGANIZATION"
+    ],
+    "awardedWhenKredUnfunded": true,
+    "ranges": {
+      "mergedPr": [
+        10,
+        50
+      ],
+      "codeReview": [
+        10,
+        60
+      ],
+      "issueResolution": [
+        5,
+        20
+      ],
+      "meaningfulReviewFollowUp": "BONUS",
+      "externalProjectContribution": "POSSIBLE_MULTIPLIER"
+    },
+    "dailyCaps": "NOT_PUBLISHED",
+    "unclaimedIdentitiesEligible": true
+  },
+  "economicEligibility": {
+    "appliesBeforePricing": true,
+    "formula": "reward = rewardCurve(qualityScore) * economicMultiplier",
+    "outcomes": [
+      "ELIGIBLE",
+      "REDUCED",
+      "INELIGIBLE"
+    ],
+    "layers": [
+      "CONTRIBUTION",
+      "ECONOMIC_ELIGIBILITY",
+      "MONETARY_SETTLEMENT"
+    ],
+    "inputs": [
+      "REPOSITORY_VISIBILITY",
+      "REPOSITORY_OWNERSHIP",
+      "REPOSITORY_TRUST",
+      "ORGANIZATION_TRUST",
+      "HUMAN_REVIEW_VALIDATION",
+      "ACTOR_TRUST",
+      "RISK_SIGNALS"
+    ],
+    "multipliers": "NOT_PUBLISHED",
+    "appliesToPlatformFundedReviewRewards": true,
+    "appliesToAuthorFundedReviewTransfers": false,
+    "platformFundedNote": "Every path that moves reserve KRED into circulation is gated: reviewer #4+, simple re-approval, credit facility draws, and protection payments. Author-funded and Review-Fund-funded transfers move existing user money and are ungated.",
+    "appliesToCreditFacilityDraws": true,
+    "appliesToProtectionPayments": true
+  },
+  "repositoryTrust": {
+    "tiers": [
+      "UNTRUSTED",
+      "ESTABLISHED",
+      "RELEVANT",
+      "HIGH_TRUST"
+    ],
+    "tiersApplyTo": "PUBLIC_REPOSITORIES_ONLY",
+    "tierThresholds": "NOT_PUBLISHED",
+    "scoringFormula": "NOT_PUBLISHED",
+    "singleMetricMayBeDecisive": false,
+    "signals": [
+      "stars",
+      "forks",
+      "watchers",
+      "repositoryAge",
+      "distinctContributors",
+      "externalContributors",
+      "mergedPrHistory",
+      "issueActivity",
+      "releaseHistory",
+      "commitHistory",
+      "communityParticipation",
+      "organizationReputation",
+      "repositoryLongevity",
+      "historicalActivityConsistency"
+    ]
+  },
+  "mergeEligibility": {
+    "privateRepoRequiresEligibleReview": true,
+    "publicVisibilityAloneSufficient": false,
+    "matrix": [
+      {
+        "context": "PERSONAL_PRIVATE",
+        "review": false,
+        "trust": null,
+        "eligibility": "NONE"
+      },
+      {
+        "context": "PERSONAL_PRIVATE",
+        "review": true,
+        "trust": null,
+        "eligibility": "REDUCED"
+      },
+      {
+        "context": "PERSONAL_PUBLIC",
+        "review": false,
+        "trust": "LOW",
+        "eligibility": "NONE"
+      },
+      {
+        "context": "PERSONAL_PUBLIC",
+        "review": true,
+        "trust": "LOW",
+        "eligibility": "REDUCED"
+      },
+      {
+        "context": "PERSONAL_PUBLIC",
+        "review": false,
+        "trust": "MEDIUM",
+        "eligibility": "PARTIAL"
+      },
+      {
+        "context": "PERSONAL_PUBLIC",
+        "review": false,
+        "trust": "HIGH",
+        "eligibility": "FULL"
+      },
+      {
+        "context": "ORGANIZATION_PRIVATE",
+        "review": false,
+        "trust": null,
+        "eligibility": "NONE"
+      },
+      {
+        "context": "ORGANIZATION_PRIVATE",
+        "review": true,
+        "trust": null,
+        "eligibility": "FULL"
+      },
+      {
+        "context": "ORGANIZATION_PUBLIC",
+        "review": false,
+        "trust": "LOW",
+        "eligibility": "REDUCED_OR_NONE"
+      },
+      {
+        "context": "ORGANIZATION_PUBLIC",
+        "review": false,
+        "trust": "HIGH",
+        "eligibility": "FULL"
+      },
+      {
+        "context": "ORGANIZATION_PUBLIC",
+        "review": true,
+        "trust": "ELIGIBLE",
+        "eligibility": "FULL"
+      }
+    ],
+    "postMergeReviewEstablishesEligibility": false,
+    "draftReviewEstablishesEligibility": false
+  },
+  "reviewerEconomicValidation": {
+    "mustBeDistinctIdentity": true,
+    "mustBeHuman": true,
+    "mustMeetMinimumTrust": true,
+    "trustThreshold": "NOT_PUBLISHED",
+    "mustNotBeFlaggedForCollusion": true,
+    "mustBeMeaningfulReview": true,
+    "alternateAccountValidationPermitted": false
+  },
+  "leaderboards": {
+    "economy": "KRED_NET_POSITION",
+    "contribution": "CONTRIBUTION_POINTS",
+    "separate": true
+  }
+}

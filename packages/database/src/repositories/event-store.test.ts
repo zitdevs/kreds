@@ -39,9 +39,12 @@ function mergedEvent(prNumber = 412): PullRequestMerged {
     gitHubInstallationId: gitHubInstallationId(48_291_037),
     pullRequestNumber: prNumber,
     authorGitHubUserId: gitHubUserId(4242),
+    authorActorType: "HUMAN",
+    authorLogin: "isaac",
     coAuthorGitHubUserIds: [],
     mergedToPrimaryBranch: true,
     mergedByGitHubUserId: gitHubUserId(9001),
+    signals: { changedLines: 120, hasDescription: true, linksIssue: true },
   };
 }
 

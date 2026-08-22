@@ -3,6 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 
 import { AuthModule } from "./auth/auth.module.js";
 import { validateEnv } from "./config/env.js";
+import { ContributionModule } from "./contribution/contribution.module.js";
 import { DatabaseModule } from "./database/database.module.js";
 import { GitHubModule } from "./github/github.module.js";
 import { HealthController } from "./health/health.controller.js";
@@ -13,6 +14,7 @@ import { HealthController } from "./health/health.controller.js";
     DatabaseModule,
     AuthModule,
     GitHubModule,
+    ContributionModule,
   ],
   controllers: [HealthController],
 })

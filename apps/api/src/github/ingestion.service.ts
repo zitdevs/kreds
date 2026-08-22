@@ -3,6 +3,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { EventStore, InstallationRepository } from "@kreds/database";
 import { gitHubInstallationId, type DomainEvent } from "@kreds/domain";
 
+import { ContributionService } from "../contribution/contribution.service.js";
 import { InstallationService } from "./installation.service.js";
 import { normalize } from "./normalizer.js";
 
@@ -34,6 +35,7 @@ export class IngestionService {
     private readonly events: EventStore,
     private readonly installations: InstallationRepository,
     private readonly installationEvents: InstallationService,
+    private readonly contributions: ContributionService,
   ) {}
 
   async ingest(input: {
@@ -82,6 +84,13 @@ export class IngestionService {
         repositoryId: await this.resolveRepositoryId(event),
       });
       await this.events.markProcessed(recorded.id);
+
+      // Recognition happens only for a fact that is new, so a replay cannot
+      // award points twice. The ledger is idempotent as well, which makes this
+      // a second lock on the same door rather than the only one.
+      if (result.isNew) {
+        await this.contributions.recognise(event);
+      }
 
       if (!result.isNew) {
         // The same fact through a different delivery id, which is what pressing

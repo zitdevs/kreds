@@ -4,3 +4,7 @@ out
 dist
 pnpm-lock.yaml
 LICENSE
+
+# Copies of files in kreds-laws, kept byte for byte so their checksums hold.
+# Formatting them would silently break the guarantee that they are copies.
+packages/policy/src/snapshots/

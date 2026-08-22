@@ -25,5 +25,12 @@ export {
   type RecordedDelivery,
   type RecordedDomainEvent,
 } from "./repositories/event-store.js";
+export {
+  ContributionLedger,
+  type AwardInput,
+  type AwardResult,
+  type InvalidationTrigger,
+  type LeaderboardRow,
+} from "./repositories/contribution-ledger.js";
 export { runMigrations } from "./migrate.js";
 export * as schema from "./schema/index.js";

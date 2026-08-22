@@ -1,6 +1,7 @@
 import { Global, Module, type OnApplicationShutdown } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
+  ContributionLedger,
   createDatabase,
   EventStore,
   IdentityRepository,
@@ -41,8 +42,13 @@ export const DATABASE = Symbol("KREDS_DATABASE");
       inject: [DATABASE],
       useFactory: (db: Database) => new EventStore(db),
     },
+    {
+      provide: ContributionLedger,
+      inject: [DATABASE],
+      useFactory: (db: Database) => new ContributionLedger(db),
+    },
   ],
-  exports: [DATABASE, IdentityRepository, InstallationRepository, EventStore],
+  exports: [DATABASE, IdentityRepository, InstallationRepository, EventStore, ContributionLedger],
 })
 export class DatabaseModule implements OnApplicationShutdown {
   constructor() {}
