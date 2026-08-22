@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { links, site } from "@/lib/site";
 import { ArrowRight, Button, GitHub, Heart, Server } from "@kreds/ui";
+import { KredAmount } from "@/components/kred-amount";
 
 const ledger = [
   { value: "+18.00", text: "api#128 merged", meta: "minted", accent: false },
   { value: "-12.00", text: "paid @mariel for her review", meta: "", accent: false },
   { value: "+11.76", text: "reviewed web#131", meta: "less 2% fee", accent: true },
-  { value: "+34 pts", text: "contribution recorded", meta: "", accent: true },
+  { value: "+34 pts", text: "contribution recorded", meta: "", accent: true, points: true },
 ];
 
 export function Hero() {
@@ -81,8 +82,12 @@ export function Hero() {
                   key={row.text}
                   className="flex items-center gap-3 px-3 py-2.5 font-mono text-sm"
                 >
-                  <span className={row.accent ? "text-accent w-10" : "text-amber w-10"}>
-                    {row.value}
+                  <span className={row.accent ? "text-accent w-14" : "text-amber w-14"}>
+                    {row.points ? (
+                      row.value
+                    ) : (
+                      <KredAmount value={row.value} tone={row.accent ? "ink" : "amber"} />
+                    )}
                   </span>
                   <span className="text-ink-dim flex-1 truncate">{row.text}</span>
                   {row.meta ? <span className="text-ink-faint text-xs">{row.meta}</span> : null}

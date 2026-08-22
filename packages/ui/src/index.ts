@@ -15,6 +15,7 @@
  * scanned files, and the components in this package live outside the app.
  */
 
+export { KredSymbol, KredsMark, type KredSymbolProps, type KredsMarkProps } from "./brand";
 export { Button } from "./button";
 export { Eyebrow, Section } from "./section";
 export {

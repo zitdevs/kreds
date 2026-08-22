@@ -1,4 +1,5 @@
 import { Section } from "@kreds/ui";
+import { KredAmount } from "@/components/kred-amount";
 import { contribution, economy, feed } from "@/lib/leaderboard-data";
 import { minted, points, transferred, worthless } from "@/lib/site";
 
@@ -53,8 +54,10 @@ export function LeaderboardShowcase() {
                     row.net < 0 ? "text-danger" : row.rank === 1 ? "text-amber" : "text-ink"
                   }`}
                 >
-                  {row.net > 0 ? "+" : ""}
-                  {row.net.toLocaleString("en-US")} K
+                  <KredAmount
+                    value={`${row.net > 0 ? "+" : ""}${row.net.toLocaleString("en-US")}`}
+                    tone={row.rank === 1 && row.net >= 0 ? "amber" : "ink"}
+                  />
                 </span>
               </li>
             ))}
@@ -117,7 +120,9 @@ export function LeaderboardShowcase() {
             <div key={rule.action} className="mt-2.5 flex flex-col gap-1">
               <div className="flex items-baseline justify-between gap-4 text-sm">
                 <span>{rule.action}</span>
-                <span className="text-amber shrink-0 font-mono">{rule.value}</span>
+                <span className="text-amber shrink-0 font-mono">
+                  <KredAmount value={rule.value} tone="amber" />
+                </span>
               </div>
               <span className="text-ink-faint text-xs">{rule.note}</span>
             </div>
@@ -130,7 +135,9 @@ export function LeaderboardShowcase() {
             <div key={rule.action} className="mt-2.5 flex flex-col gap-1">
               <div className="flex items-baseline justify-between gap-4 text-sm">
                 <span>{rule.action}</span>
-                <span className="text-amber shrink-0 font-mono">{rule.value}</span>
+                <span className="text-amber shrink-0 font-mono">
+                  <KredAmount value={rule.value} tone="amber" />
+                </span>
               </div>
               <span className="text-ink-faint text-xs">{rule.note}</span>
             </div>
@@ -199,7 +206,11 @@ export function LeaderboardShowcase() {
                         : "text-accent"
                 }`}
               >
-                {item.value}
+                {item.points ? (
+                  item.value
+                ) : (
+                  <KredAmount value={item.value} tone={item.mint ? "amber" : "ink"} />
+                )}
               </span>
               <span className="text-ink-dim flex-1 truncate">
                 <span className="text-ink">{item.who}</span> {item.what}{" "}

@@ -34,7 +34,21 @@ export default function OpenGraphImage() {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <span style={{ color: "#5ee9a4", fontSize: 34, lineHeight: 1 }}>&#8227;</span>
+        <svg
+          viewBox="0 0 32 32"
+          width={34}
+          height={34}
+          fill="none"
+          stroke="#5ee9a4"
+          strokeWidth={2.4}
+          strokeLinecap="round"
+        >
+          <path d="M9 3.5V12" />
+          <path d="M9 20V28.5" />
+          <path d="M24.5 4.5 11.73 13.97" />
+          <path d="M11.73 18.03 24.5 27.5" />
+          <circle cx="9" cy="16" r="3.4" />
+        </svg>
         <span style={{ fontSize: 30, fontWeight: 600 }}>Kreds</span>
       </div>
 
