@@ -9,16 +9,20 @@ import {
   type MatrixRow,
 } from "./eligibility.js";
 
-/** The published matrix, v0.4. */
+/**
+ * The published matrix, v0.7. Since A05 a private repository creates no
+ * Official KRED with or without review (Law XXIX), so both private rows read
+ * NONE even when a review exists.
+ */
 const MATRIX: readonly MatrixRow[] = [
   { context: "PERSONAL_PRIVATE", review: false, trust: null, eligibility: "NONE" },
-  { context: "PERSONAL_PRIVATE", review: true, trust: null, eligibility: "REDUCED" },
+  { context: "PERSONAL_PRIVATE", review: true, trust: null, eligibility: "NONE" },
   { context: "PERSONAL_PUBLIC", review: false, trust: "LOW", eligibility: "NONE" },
   { context: "PERSONAL_PUBLIC", review: true, trust: "LOW", eligibility: "REDUCED" },
   { context: "PERSONAL_PUBLIC", review: false, trust: "MEDIUM", eligibility: "PARTIAL" },
   { context: "PERSONAL_PUBLIC", review: false, trust: "HIGH", eligibility: "FULL" },
   { context: "ORGANIZATION_PRIVATE", review: false, trust: null, eligibility: "NONE" },
-  { context: "ORGANIZATION_PRIVATE", review: true, trust: null, eligibility: "FULL" },
+  { context: "ORGANIZATION_PRIVATE", review: true, trust: null, eligibility: "NONE" },
   { context: "ORGANIZATION_PUBLIC", review: false, trust: "LOW", eligibility: "REDUCED_OR_NONE" },
   { context: "ORGANIZATION_PUBLIC", review: false, trust: "HIGH", eligibility: "FULL" },
   { context: "ORGANIZATION_PUBLIC", review: true, trust: "ELIGIBLE", eligibility: "FULL" },
@@ -57,16 +61,20 @@ describe("the farm this layer exists to close", () => {
     );
   });
 
-  /** Law XXXII: an independent human is evidence, and it earns a reduced multiplier. */
-  it("allows the same repository at reduced once a real review exists", () => {
+  /**
+   * Law XXIX as amended by A05: a review no longer buys a private repository
+   * eligibility. Review is endorsement, not verification, and Official KRED
+   * measures what anyone outside can check.
+   */
+  it("keeps the same repository at nothing even once a real review exists", () => {
     const result = evaluate({
       context: "PERSONAL_PRIVATE",
       isPrivate: true,
       hasEligibleReview: true,
     });
 
-    expect(result.status).toBe("REDUCED");
-    expect(result.outcome).toBe("REDUCED");
+    expect(result.status).toBe("INELIGIBLE");
+    expect(result.outcome).toBe("NONE");
   });
 
   /**
@@ -122,14 +130,15 @@ describe("what a repository's own history can establish", () => {
     expect(result.outcome).toBe("PARTIAL");
   });
 
-  it("makes a reviewed private organization merge fully eligible", () => {
+  /** Law XXIX: an organization's private repository is private work too. */
+  it("gives a reviewed private organization merge nothing", () => {
     const result = evaluate({
       context: "ORGANIZATION_PRIVATE",
       isPrivate: true,
       hasEligibleReview: true,
     });
 
-    expect(result.status).toBe("ELIGIBLE");
+    expect(result.status).toBe("INELIGIBLE");
   });
 
   /** 25: "Kreds cannot safely treat self-directed private repository activity as

@@ -31,6 +31,10 @@ const CHECKSUMS: Readonly<Record<string, string>> = {
     "5396d073e7c3b2be95ba816a8d149caf8b046cd592bcd0633359521cc3ac211c",
   "kreds-rules-public-v0.5.json":
     "061c3d87c2f1fa2902947d98f609b55e62623b2b6f0a8b21a63ce039602b5a05",
+  "kreds-rules-public-v0.6.json":
+    "2c2758c4cf9807237c204f6799c0a9c0b8f63ffebe1d02c551f91807e29983c8",
+  "kreds-rules-public-v0.7.json":
+    "54d3ea559f630fbcfde1ea67123bead590d6fdf91f40fac389d2b999335284c8",
 };
 
 describe("the snapshots are copies, not edits", () => {
@@ -57,8 +61,8 @@ describe("the snapshots are copies, not edits", () => {
 
 describe("what the policy publishes", () => {
   it("loads and reports its version", () => {
-    expect(CURRENT_RULES_VERSION).toBe("v0.5");
-    expect(currentPolicy().rulesVersion).toBe("v0.5");
+    expect(CURRENT_RULES_VERSION).toBe("v0.7");
+    expect(currentPolicy().rulesVersion).toBe("v0.7");
   });
 
   /**

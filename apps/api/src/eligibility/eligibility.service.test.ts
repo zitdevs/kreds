@@ -85,14 +85,21 @@ describe("placing a repository in its context", () => {
     expect(result.reasons).toContain("PERSONAL_PRIVATE_REPOSITORY");
   });
 
-  it("lets a reviewed private organization merge be fully eligible", async () => {
-    const { service } = harness(
-      { id: "r", isPrivate: true, isPersonallyOwned: false, trustTier: "UNTRUSTED" },
-      [review()],
-    );
-
-    const result = await service.forMerge(merge());
-    expect(result.status).toBe("ELIGIBLE");
+  /**
+   * Law XXIX, as amended by A05: "Activity in a private repository, personal or
+   * organizational, creates no Official KRED, with or without review." Review
+   * is endorsement, not verification.
+   */
+  it("gives a reviewed private merge nothing, personal or organization", async () => {
+    for (const isPersonallyOwned of [true, false]) {
+      const { service } = harness(
+        { id: "r", isPrivate: true, isPersonallyOwned, trustTier: "HIGH_TRUST" },
+        [review()],
+      );
+      expect((await service.forMerge(merge())).status, String(isPersonallyOwned)).toBe(
+        "INELIGIBLE",
+      );
+    }
   });
 
   /**
@@ -108,64 +115,68 @@ describe("placing a repository in its context", () => {
   });
 });
 
+/**
+ * Which reviews validate a merge (Law XXXII), tested where the review is the
+ * only variable: a public repository too new to stand on its own history. No
+ * review leaves it with nothing; one valid review gives it reduced eligibility.
+ *
+ * Previously tested in a private repository. Since A05 a private merge is
+ * ineligible with or without review, so every "rejects" case there would pass
+ * for the wrong reason, the repository's privacy rather than the review.
+ */
+const newPublicProject = {
+  id: "r",
+  isPrivate: false,
+  isPersonallyOwned: true,
+  trustTier: "UNTRUSTED",
+};
+
 describe("what counts as an eligible review", () => {
+  it("leaves a new public project with nothing when nobody reviewed", async () => {
+    const { service } = harness(newPublicProject, []);
+    expect((await service.forMerge(merge())).status).toBe("INELIGIBLE");
+  });
+
   it("accepts an independent human review that took a position", async () => {
-    const { service } = harness(
-      { id: "r", isPrivate: true, isPersonallyOwned: false, trustTier: "UNTRUSTED" },
-      [review()],
-    );
-    expect((await service.forMerge(merge())).status).toBe("ELIGIBLE");
+    const { service } = harness(newPublicProject, [review()]);
+    expect((await service.forMerge(merge())).status).toBe("REDUCED");
   });
 
   /** Law XXXIV: alternate accounts cannot legitimize self-directed work. */
   it("rejects the author reviewing their own pull request", async () => {
-    const { service } = harness(
-      { id: "r", isPrivate: true, isPersonallyOwned: false, trustTier: "UNTRUSTED" },
-      [review({ reviewerGitHubUserId: 4242 })],
-    );
+    const { service } = harness(newPublicProject, [review({ reviewerGitHubUserId: 4242 })]);
     expect((await service.forMerge(merge())).status).toBe("INELIGIBLE");
   });
 
   it("rejects a co-author reviewing the work they co-wrote", async () => {
-    const { service } = harness(
-      { id: "r", isPrivate: true, isPersonallyOwned: false, trustTier: "UNTRUSTED" },
-      [review({ reviewerGitHubUserId: 9001 })],
-    );
+    const { service } = harness(newPublicProject, [review({ reviewerGitHubUserId: 9001 })]);
     const result = await service.forMerge(merge({ coAuthorGitHubUserIds: [9001] }));
     expect(result.status).toBe("INELIGIBLE");
   });
 
   /** A03: "A post-merge review does not retroactively create eligibility." */
   it("rejects a review that landed after the merge", async () => {
-    const { service } = harness(
-      { id: "r", isPrivate: true, isPersonallyOwned: false, trustTier: "UNTRUSTED" },
-      [review({ afterMerge: true })],
-    );
+    const { service } = harness(newPublicProject, [review({ afterMerge: true })]);
     expect((await service.forMerge(merge())).status).toBe("INELIGIBLE");
   });
 
   it("rejects a bot's review as validation", async () => {
-    const { service } = harness(
-      { id: "r", isPrivate: true, isPersonallyOwned: false, trustTier: "UNTRUSTED" },
-      [review({ reviewerActorType: "BOT" })],
-    );
+    const { service } = harness(newPublicProject, [review({ reviewerActorType: "BOT" })]);
     expect((await service.forMerge(merge())).status).toBe("INELIGIBLE");
   });
 
   it("rejects a dismissed review, which took no position", async () => {
-    const { service } = harness(
-      { id: "r", isPrivate: true, isPersonallyOwned: false, trustTier: "UNTRUSTED" },
-      [review({ state: "DISMISSED" })],
-    );
+    const { service } = harness(newPublicProject, [review({ state: "DISMISSED" })]);
     expect((await service.forMerge(merge())).status).toBe("INELIGIBLE");
   });
 
   it("accepts one valid review among several invalid ones", async () => {
-    const { service } = harness(
-      { id: "r", isPrivate: true, isPersonallyOwned: false, trustTier: "UNTRUSTED" },
-      [review({ reviewerGitHubUserId: 4242 }), review({ afterMerge: true }), review()],
-    );
-    expect((await service.forMerge(merge())).status).toBe("ELIGIBLE");
+    const { service } = harness(newPublicProject, [
+      review({ reviewerGitHubUserId: 4242 }),
+      review({ afterMerge: true }),
+      review(),
+    ]);
+    expect((await service.forMerge(merge())).status).toBe("REDUCED");
   });
 });
 

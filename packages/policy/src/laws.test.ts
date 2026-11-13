@@ -159,8 +159,18 @@ describe("Amendment A04, pinned so it cannot be flipped for a demo", () => {
     ).toBe(false);
   });
 
-  it("names exactly the two ways evidence may arrive", () => {
+  /** A05 named the concrete sources, all server-side. No client among them. */
+  it("names exactly the sources evidence may arrive from", () => {
     expect(currentPolicy().access?.ingestionModes).toEqual([
+      "USER_ACTIVITY_POLL",
+      "GITHUB_APP_WEBHOOK",
+      "API_RECONCILIATION",
+    ]);
+  });
+
+  /** Law XV: the version A04 shipped still reads as it was written. */
+  it("still reads A04's two channels under the version that introduced them", () => {
+    expect(policyFor("v0.5").access?.ingestionModes).toEqual([
       "PROVIDER_WEBHOOK",
       "SERVER_SIDE_DELEGATED_QUERY",
     ]);
