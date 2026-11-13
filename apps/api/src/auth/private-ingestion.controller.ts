@@ -15,11 +15,11 @@ import { ConfigService } from "@nestjs/config";
 import type { Request, Response } from "express";
 
 import { Authorizations, IdentityRepository } from "@kreds/database";
-import { gitHubUserId } from "@kreds/domain";
 
 import { reachOf } from "../access/scopes.js";
 import type { Env } from "../config/env.js";
 import { GitHubOAuthService } from "./github-oauth.service.js";
+import { signedInUser } from "./signed-in.js";
 import {
   OAUTH_STATE_COOKIE,
   SESSION_COOKIE,
@@ -106,14 +106,9 @@ export class PrivateIngestionController {
     if (!code) throw new BadRequestException("GitHub did not return an authorization code.");
 
     const authorizations = this.requireStorage();
-    const session = this.requireSession(request);
-
     // Read through to the database, as the session check does: an account that
     // no longer matches its cookie is not signed in.
-    const account = await this.identities.findAccount(gitHubUserId(session.gitHubUserId));
-    if (!account || account.user.id !== session.userId) {
-      throw new UnauthorizedException("Sign in to Kreds before granting access to your work.");
-    }
+    const session = await signedInUser(request, this.sessions, this.identities);
 
     const reach = await this.oauth.withGrantedToken(code, async (grant) => {
       if (grant.gitHubUserId !== session.gitHubUserId) {
