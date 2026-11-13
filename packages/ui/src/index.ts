@@ -16,7 +16,8 @@
  */
 
 export { KredSymbol, KredsMark, type KredSymbolProps, type KredsMarkProps } from "./brand";
-export { Button } from "./button";
+export { Badge } from "./badge";
+export { ActionButton, Button, buttonClassName } from "./button";
 export { Eyebrow, Section } from "./section";
 export {
   ArrowRight,
@@ -26,11 +27,13 @@ export {
   Check,
   Chevron,
   Cross,
+  ExternalLink,
   Eye,
   Flame,
   GitHub,
   GitMerge,
   Heart,
+  Lock,
   Plug,
   Server,
   Shield,
