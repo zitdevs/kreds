@@ -53,6 +53,9 @@ export {
   receivables,
 } from "./claims.js";
 export {
+  activityConsentKind,
+  activityConsentRelations,
+  activityConsents,
   delegatedAuthorizationRelations,
   delegatedAuthorizations,
   organizationGrantRelations,

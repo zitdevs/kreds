@@ -94,13 +94,18 @@ describeWithDatabase("Authorizations", () => {
     db ??= createDatabase({ url: url as string, max: 4 });
     const here = dirname(new URL(import.meta.url).pathname);
     await runMigrations(url as string, join(here, "..", "..", "migrations"));
-    await db.execute(sql`truncate table delegated_authorizations, github_identities cascade`);
+    await db.execute(
+      sql`truncate table activity_consents, delegated_authorizations, github_identities, users cascade`,
+    );
     for (const [id, login] of [
       [ISAAC, "isaac"],
       [JOSE, "jose"],
     ] as const) {
+      const [user] = await db.execute<{ id: string }>(
+        sql`insert into users (display_name) values (${login}) returning id`,
+      );
       await db.execute(
-        sql`insert into github_identities (github_user_id, login) values (${id}, ${login})`,
+        sql`insert into github_identities (github_user_id, login, user_id) values (${id}, ${login}, ${user?.id})`,
       );
     }
     authorizations = new Authorizations(db, new TokenCipher(KEY));
@@ -238,6 +243,20 @@ describeWithDatabase("Authorizations", () => {
 
   const budget = (requestsPerWindow: number) => ({ requestsPerWindow, windowMs: 15 * MINUTE });
 
+  /** An active consent, written directly: what records it is `Consents`, tested on its own. */
+  const consentTo = async (
+    id: number,
+    kind: "PUBLIC_ACTIVITY" | "PRIVATE_ACTIVITY",
+    at: Date = NOW,
+  ) => {
+    const version = kind === "PUBLIC_ACTIVITY" ? "public-activity-v1" : "private-activity-v1";
+    await db.execute(
+      sql`insert into activity_consents (github_user_id, user_id, kind, version, granted_at)
+          select github_user_id, user_id, ${kind}, ${version}, ${at.toISOString()}::timestamptz
+          from github_identities where github_user_id = ${id}`,
+    );
+  };
+
   describe("one user cannot starve ingestion for everybody else", () => {
     /**
      * A04 moved this decision to Kreds. Under organization webhooks GitHub
@@ -331,25 +350,130 @@ describeWithDatabase("Authorizations", () => {
   describe("who gets polled next", () => {
     it("puts a never-polled authorization ahead of a recently polled one", async () => {
       await authorizations.grant(ISAAC, TOKEN, ["repo"]);
+      await consentTo(ISAAC, "PUBLIC_ACTIVITY");
       await authorizations.spendBudget(ISAAC, budget(5), NOW);
       await authorizations.grant(JOSE, TOKEN, ["repo"]);
+      await consentTo(JOSE, "PUBLIC_ACTIVITY");
 
       const due = await authorizations.dueForPolling(10);
       expect(due[0]?.gitHubUserId).toBe(JOSE);
     });
 
-    it("returns identities and scopes, and no tokens at all", async () => {
+    it("returns identities, scopes and active consents, and no tokens at all", async () => {
       await authorizations.grant(ISAAC, TOKEN, ["repo"]);
+      await consentTo(ISAAC, "PUBLIC_ACTIVITY");
       const due = await authorizations.dueForPolling(10);
 
       expect(JSON.stringify(due)).not.toContain(TOKEN);
-      expect(Object.keys(due[0] ?? {}).sort()).toEqual(["gitHubUserId", "scopes"]);
+      expect(Object.keys(due[0] ?? {}).sort()).toEqual(["consents", "gitHubUserId", "scopes"]);
     });
 
     it("skips revoked authorizations", async () => {
       await authorizations.grant(ISAAC, TOKEN, ["repo"]);
+      await consentTo(ISAAC, "PUBLIC_ACTIVITY");
       await authorizations.revoke(ISAAC, NOW);
       expect(await authorizations.dueForPolling(10)).toEqual([]);
+    });
+
+    /**
+     * A live grant is not enough. A person who never agreed to have their
+     * public activity read, such as somebody who signed in before Kreds asked,
+     * is not polled at all.
+     */
+    it("skips a live authorization nobody consented to", async () => {
+      await authorizations.grant(ISAAC, TOKEN, ["read:user", "read:org"]);
+      await authorizations.grant(JOSE, TOKEN, ["read:user", "read:org"]);
+      await consentTo(JOSE, "PUBLIC_ACTIVITY");
+
+      const due = await authorizations.dueForPolling(10);
+      expect(due.map((candidate) => candidate.gitHubUserId)).toEqual([JOSE]);
+    });
+
+    it("skips an authorization whose consent was revoked", async () => {
+      await authorizations.grant(ISAAC, TOKEN, ["read:user"]);
+      await consentTo(ISAAC, "PUBLIC_ACTIVITY", NOW);
+      expect(await authorizations.dueForPolling(10)).toHaveLength(1);
+
+      await db.execute(
+        sql`update activity_consents set revoked_at = ${NOW.toISOString()}::timestamptz where github_user_id = ${ISAAC}`,
+      );
+      expect(await authorizations.dueForPolling(10)).toEqual([]);
+    });
+
+    /** Private consent alone does not stand in for the public decision. */
+    it("needs the public consent even when private consent was given", async () => {
+      await authorizations.grant(ISAAC, TOKEN, ["read:user", "repo"]);
+      await consentTo(ISAAC, "PRIVATE_ACTIVITY");
+      expect(await authorizations.dueForPolling(10)).toEqual([]);
+    });
+
+    it("says which kinds of reading the person agreed to", async () => {
+      await authorizations.grant(ISAAC, TOKEN, ["read:user", "repo"]);
+      await consentTo(ISAAC, "PUBLIC_ACTIVITY");
+      await authorizations.grant(JOSE, TOKEN, ["read:user", "repo"]);
+      await consentTo(JOSE, "PUBLIC_ACTIVITY");
+      await consentTo(JOSE, "PRIVATE_ACTIVITY");
+
+      const due = await authorizations.dueForPolling(10);
+      const byUser = new Map(due.map((candidate) => [candidate.gitHubUserId, candidate]));
+      expect(byUser.get(ISAAC)?.consents).toEqual(["PUBLIC_ACTIVITY"]);
+      expect([...(byUser.get(JOSE)?.consents ?? [])].sort()).toEqual([
+        "PRIVATE_ACTIVITY",
+        "PUBLIC_ACTIVITY",
+      ]);
+    });
+  });
+
+  /**
+   * Signing in now stores the sign-in token. A person who already granted
+   * private access must not lose it to the narrower sign-in grant.
+   */
+  describe("a grant that must not narrow what is already live", () => {
+    const SIGN_IN = ["read:user", "read:org"];
+    const PRIVATE = ["read:user", "read:org", "repo"];
+
+    it("keeps a live broader grant and its token", async () => {
+      await authorizations.grant(ISAAC, TOKEN, PRIVATE);
+      await authorizations.grant(ISAAC, "gho_signin", SIGN_IN, { keepBroader: true });
+
+      expect((await authorizations.standingOf(ISAAC))?.scopes).toEqual(PRIVATE);
+      await authorizations.withToken(ISAAC, async (token) => expect(token).toBe(TOKEN));
+    });
+
+    it("replaces a grant that is no broader", async () => {
+      await authorizations.grant(ISAAC, TOKEN, SIGN_IN);
+      await authorizations.grant(ISAAC, "gho_signin", SIGN_IN, { keepBroader: true });
+      await authorizations.withToken(ISAAC, async (token) => expect(token).toBe("gho_signin"));
+
+      await authorizations.grant(ISAAC, "gho_wider", PRIVATE, { keepBroader: true });
+      expect((await authorizations.standingOf(ISAAC))?.scopes).toEqual(PRIVATE);
+    });
+
+    /** A revoked grant is not something to keep: signing in again starts a new one. */
+    it("replaces a revoked broader grant", async () => {
+      await authorizations.grant(ISAAC, TOKEN, PRIVATE);
+      await authorizations.revoke(ISAAC, NOW);
+      await authorizations.grant(ISAAC, "gho_signin", SIGN_IN, { keepBroader: true });
+
+      expect((await authorizations.standingOf(ISAAC))?.scopes).toEqual(SIGN_IN);
+    });
+
+    /** Without the option a grant is the person's explicit choice, narrowing included. */
+    it("still lets an explicit grant narrow", async () => {
+      await authorizations.grant(ISAAC, TOKEN, PRIVATE);
+      await authorizations.grant(ISAAC, "gho_narrow", SIGN_IN);
+      expect((await authorizations.standingOf(ISAAC))?.scopes).toEqual(SIGN_IN);
+    });
+
+    /** Signing in again is not a way to buy another window of provider traffic. */
+    it("does not refill the budget of a grant that was never revoked", async () => {
+      await authorizations.grant(ISAAC, TOKEN, SIGN_IN);
+      await authorizations.spendBudget(ISAAC, budget(1), NOW);
+      await authorizations.grant(ISAAC, "gho_again", SIGN_IN, { keepBroader: true });
+
+      await expect(authorizations.spendBudget(ISAAC, budget(1), NOW)).rejects.toThrow(
+        RateBudgetExhaustedError,
+      );
     });
   });
 });

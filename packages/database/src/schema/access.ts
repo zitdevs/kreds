@@ -1,7 +1,17 @@
 import { relations, sql } from "drizzle-orm";
-import { bigint, check, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  bigint,
+  check,
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 
-import { gitHubIdentities } from "./identity";
+import { gitHubIdentities, users } from "./identity";
 import { organizations } from "./github";
 
 /**
@@ -77,6 +87,58 @@ export const delegatedAuthorizations = pgTable(
   ],
 );
 
+/** Mirrors `ActivityConsentKind` in `@kreds/domain`. */
+export const activityConsentKind = pgEnum("activity_consent_kind", [
+  "PUBLIC_ACTIVITY",
+  "PRIVATE_ACTIVITY",
+]);
+
+/**
+ * That a person agreed to have their activity read, which words they agreed
+ * to, and when they took it back.
+ *
+ * Separate from `delegated_authorizations` on purpose. An authorization is a
+ * token GitHub issued; a consent is a decision the person made, with the text
+ * they were shown. 26 makes them different decisions for public and private
+ * work, and a token can outlive the decision it was granted under (signing in
+ * again keeps a broader private grant), so neither can stand in for the other.
+ *
+ * Append only. Agreeing again is a new row, and revoking sets `revoked_at` on
+ * the rows that were active. The migration adds a trigger that refuses a
+ * delete and any update other than that one: what somebody agreed to is
+ * history, and 26 keeps recorded history unaffected by revocation.
+ */
+export const activityConsents = pgTable(
+  "activity_consents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    gitHubUserId: bigint("github_user_id", { mode: "number" })
+      .notNull()
+      .references(() => gitHubIdentities.gitHubUserId, { onDelete: "restrict" }),
+    /** The Kreds account that was signed in when the person agreed. */
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    kind: activityConsentKind("kind").notNull(),
+    /**
+     * The published consent text the person was shown, by version. Decided by
+     * the server and carried through the OAuth round trip, never read from the
+     * browser.
+     */
+    version: text("version").notNull(),
+    grantedAt: timestamp("granted_at", { withTimezone: true }).notNull().defaultNow(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  },
+  (table) => [
+    // Who has an active consent of a kind: the sweep and the status read.
+    index("activity_consents_active_idx").on(table.gitHubUserId, table.kind, table.revokedAt),
+    check(
+      "activity_consents_revoked_after_granted",
+      sql`${table.revokedAt} is null or ${table.revokedAt} >= ${table.grantedAt}`,
+    ),
+  ],
+);
+
 /**
  * An organization's own grant of authority over its economy.
  *
@@ -133,5 +195,12 @@ export const organizationGrantRelations = relations(organizationGrants, ({ one }
   organization: one(organizations, {
     fields: [organizationGrants.organizationId],
     references: [organizations.id],
+  }),
+}));
+
+export const activityConsentRelations = relations(activityConsents, ({ one }) => ({
+  identity: one(gitHubIdentities, {
+    fields: [activityConsents.gitHubUserId],
+    references: [gitHubIdentities.gitHubUserId],
   }),
 }));

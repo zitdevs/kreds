@@ -71,6 +71,13 @@
       "when": 1794547683572,
       "tag": "0009_a05_ingestion_sources",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794551386738,
+      "tag": "0010_activity_consents",
+      "breakpoints": true
     }
   ]
 }

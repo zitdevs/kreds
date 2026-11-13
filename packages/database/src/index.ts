@@ -43,9 +43,17 @@ export {
   Authorizations,
   AuthorizationRevokedError,
   RateBudgetExhaustedError,
+  type GrantOptions,
   type PollCandidate,
   type RateBudget,
 } from "./repositories/authorizations.js";
+export {
+  Consents,
+  UnpublishedConsentError,
+  type ActiveConsent,
+  type ActiveConsents,
+  type ConsentRecordInput,
+} from "./repositories/consents.js";
 export {
   redacted,
   TokenCipher,
