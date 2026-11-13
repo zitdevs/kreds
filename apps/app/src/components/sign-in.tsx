@@ -17,9 +17,10 @@ export function SignIn({ sessionEnded = false }: { sessionEnded?: boolean }) {
       ) : null}
       <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Sign in to Kreds</h1>
       <p className="text-ink-dim mt-4 leading-relaxed">
-        Kreds reads what your team already does on GitHub. Signing in tells us who you are, and
-        nothing else: the grant asks for <code className="text-ink">read:user</code> and{" "}
-        <code className="text-ink">read:org</code>, and never touches your code.
+        Kreds reads the pull requests and reviews you already ship on GitHub. Signing in tells us
+        who you are, and nothing else: the grant asks for{" "}
+        <code className="text-ink">read:user</code> and <code className="text-ink">read:org</code>,
+        and never touches your code.
       </p>
 
       <Button href={api.signIn} size="lg" className="mt-8">
@@ -28,8 +29,8 @@ export function SignIn({ sessionEnded = false }: { sessionEnded?: boolean }) {
       </Button>
 
       <p className="text-ink-faint mt-6 text-sm leading-relaxed">
-        Repository activity comes from a separate GitHub App that an admin installs once. You are
-        not granting that here.
+        Letting Kreds read your activity is a separate choice you make from your dashboard, and
+        nobody has to install anything.
       </p>
     </div>
   );
