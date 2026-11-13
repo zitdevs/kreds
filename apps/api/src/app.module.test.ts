@@ -113,6 +113,8 @@ describe("the module graph", () => {
       "GET /access/ingestion",
       "GET /access/status/:gitHubUserId",
       "DELETE /access/authorization/:gitHubUserId",
+      "GET /contributions/me",
+      "GET /contributions/me/summary",
       "GET /auth/github/private-ingestion",
       "GET /auth/callback/github/private-ingestion",
     ]) {
