@@ -17,8 +17,9 @@ import { CLIENT_ROLES, INGESTION_MODES } from "@kreds/domain";
  *
  * The `DELETE` here is the only write in the module, and what it writes is a
  * revocation. There is deliberately no `POST`: granting happens through GitHub's
- * OAuth redirect, where the token comes back from GitHub rather than from the
- * browser, which is the same rule applied to the grant itself.
+ * OAuth redirect (`/auth/github/private-ingestion`), where the token comes back
+ * from GitHub rather than from the browser, which is the same rule applied to
+ * the grant itself.
  */
 @Controller("access")
 export class AuthorizationController {
