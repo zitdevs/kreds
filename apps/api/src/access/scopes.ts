@@ -1,3 +1,5 @@
+import type { ActivityConsentKind } from "@kreds/domain";
+
 /**
  * What Kreds asks GitHub for, and why it asks for so little.
  *
@@ -67,4 +69,35 @@ export function mayRead(
   if (visibility === "public") return true;
   if (visibility === "private") return reach === "INCLUDES_PRIVATE";
   return false;
+}
+
+/**
+ * What Kreds may read with a grant, given what the person agreed to.
+ *
+ * A token reaches what GitHub granted; consent is what bounds what Kreds does
+ * with it. 26 keeps public and private as "two different decisions with two
+ * different grants", and the consents follow the same line:
+ *
+ * - no public-activity consent: nothing is read at all (`null`);
+ * - public consent only: the grant is read as public, whatever it reaches. A
+ *   person who granted `repo` before Kreds asked, then agreed only to the
+ *   public text, has not agreed to private reading;
+ * - both: the grant as GitHub issued it.
+ */
+export function scopesWithinConsent(
+  granted: readonly string[],
+  consents: readonly ActivityConsentKind[],
+): readonly string[] | null {
+  if (!consents.includes("PUBLIC_ACTIVITY")) return null;
+  if (consents.includes("PRIVATE_ACTIVITY")) return granted;
+  return granted.filter((scope) => scope !== "repo");
+}
+
+/** What Kreds actually reads under this grant and these consents, or `null` for nothing. */
+export function consentedReach(
+  granted: readonly string[],
+  consents: readonly ActivityConsentKind[],
+): IngestionReach | null {
+  const readable = scopesWithinConsent(granted, consents);
+  return readable ? reachOf(readable) : null;
 }

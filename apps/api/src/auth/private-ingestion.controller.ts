@@ -14,7 +14,8 @@ import {
 import { ConfigService } from "@nestjs/config";
 import type { Request, Response } from "express";
 
-import { Authorizations, IdentityRepository } from "@kreds/database";
+import { Authorizations, Consents, IdentityRepository } from "@kreds/database";
+import { PRIVATE_ACTIVITY_CONSENT } from "@kreds/domain";
 
 import { reachOf } from "../access/scopes.js";
 import type { Env } from "../config/env.js";
@@ -34,10 +35,11 @@ type Cookies = Record<string, string | undefined> | undefined;
  * repositories included, through their delegated authorization.
  *
  * 26: signing in and having private work ingested are "two different decisions
- * with two different grants". Sign-in asks for a grant that cannot read code
- * and keeps no token. This asks for the broader one, only from somebody already
- * signed in who asked for it, and keeps the token sealed so Kreds can ask
- * GitHub on their behalf later.
+ * with two different grants". Sign-in asks for a grant that cannot read code,
+ * kept to read public activity under the public consent. This asks for the
+ * broader one, only from somebody already signed in who asked for it, keeps the
+ * token sealed so Kreds can ask GitHub on their behalf later, and records the
+ * private-activity consent shown before they left for GitHub.
  *
  * Both routes are `GET`, and that is the same rule Law XXXV applies to evidence:
  * the grant arrives as a code GitHub hands back through the browser and Kreds
@@ -56,6 +58,7 @@ export class PrivateIngestionController {
     // `null` when no `TOKEN_ENCRYPTION_KEY` is configured: that instance has no
     // delegated-query path, and so nothing to grant.
     @Optional() @Inject(Authorizations) private readonly authorizations: Authorizations | null,
+    private readonly consents: Consents,
   ) {
     this.appUrl = config.get("KREDS_APP_URL", { infer: true });
   }
@@ -67,7 +70,12 @@ export class PrivateIngestionController {
     this.requireStorage();
     this.requireSession(request);
 
-    const state = this.sessions.issueState(response, "PRIVATE_INGESTION");
+    // The dashboard shows this version's text above the button that led here.
+    const state = this.sessions.issueState(
+      response,
+      "PRIVATE_INGESTION",
+      PRIVATE_ACTIVITY_CONSENT.version,
+    );
     response.redirect(this.oauth.authorizeUrl(state, "PRIVATE_INGESTION"));
   }
 
@@ -93,14 +101,15 @@ export class PrivateIngestionController {
     }
 
     const cookies = request.cookies as Cookies;
-    if (
-      !this.sessions.consumeState(
-        response,
-        cookies?.[OAUTH_STATE_COOKIE],
-        state,
-        "PRIVATE_INGESTION",
-      )
-    ) {
+    const opened = this.sessions.consumeState(
+      response,
+      cookies?.[OAUTH_STATE_COOKIE],
+      state,
+      "PRIVATE_INGESTION",
+    );
+    // A round trip that showed no consent text is one nobody agreed to.
+    const consentVersion = opened?.consentVersion;
+    if (!consentVersion) {
       throw new BadRequestException("This authorization link is stale. Start again from Kreds.");
     }
     if (!code) throw new BadRequestException("GitHub did not return an authorization code.");
@@ -121,6 +130,15 @@ export class PrivateIngestionController {
       if (grant.scopes.length === 0) return null;
 
       await authorizations.grant(grant.gitHubUserId, grant.token, grant.scopes);
+      // Recorded after the grant is stored, never without it, and with the
+      // version sealed when the round trip began.
+      await this.consents.record({
+        gitHubUserId: grant.gitHubUserId,
+        userId: session.userId,
+        kind: "PRIVATE_ACTIVITY",
+        version: consentVersion,
+        at: new Date(),
+      });
       // From what GitHub granted, never from what was asked for.
       return reachOf(grant.scopes);
     });
