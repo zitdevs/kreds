@@ -55,9 +55,11 @@ export function Dashboard({ user, grant, returning, onSignOut, onSessionLost }: 
     try {
       const result = await access.revoke();
       setAccessMessage(
-        result.revoked
-          ? "Access revoked. Kreds has stopped reading new activity; your recorded contributions stay."
-          : "There was no active access to revoke.",
+        !result.revoked
+          ? "There was no active access to revoke."
+          : (result.consentsRevoked ?? 0) > 0
+            ? "Access and your agreement to it are revoked. Kreds has stopped reading new activity; your recorded contributions stay."
+            : "Access revoked. Kreds has stopped reading new activity; your recorded contributions stay.",
       );
     } catch (error) {
       throw new Error(describeFailure(error));
@@ -92,6 +94,7 @@ export function Dashboard({ user, grant, returning, onSignOut, onSessionLost }: 
           <div className="lg:sticky lg:top-24">
             <AccessCard
               view={toAccessView(access)}
+              allowHref={api.signIn}
               connectHref={api.connectPrivate}
               onRevoke={() => setRevoking(true)}
               notice={

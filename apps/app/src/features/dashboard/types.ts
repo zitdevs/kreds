@@ -46,18 +46,30 @@ export interface ContributionSummary {
 
 export type AccessReach = "PUBLIC_ONLY" | "INCLUDES_PRIVATE";
 
+/** An active consent: which published text the person agreed to, and when. */
+export interface ConsentStatus {
+  readonly version: string;
+  readonly grantedAt: string;
+}
+
 export interface AccessStatus {
   readonly gitHubUserId: number;
+  /** A grant is stored. Not, on its own, permission to read anything. */
   readonly authorized: boolean;
   /** `false` when this instance has no way to keep a grant, so nothing to connect. */
   readonly delegatedQueryConfigured: boolean;
+  /** What Kreds actually reads: the grant bounded by consent. `null`: nothing. */
   readonly reach: AccessReach | null;
   readonly lastPolledAt: string | null;
+  /** `null` until the person agrees, at sign-in, to have public activity read. */
+  readonly publicConsent: ConsentStatus | null;
+  readonly privateConsent: ConsentStatus | null;
 }
 
 export interface RevokeResult {
   readonly gitHubUserId: number;
   readonly revoked: boolean;
+  readonly consentsRevoked?: number;
   readonly historyRetained?: boolean;
 }
 

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { ActionButton, Button, Lock } from "@kreds/ui";
+import { PRIVATE_ACTIVITY_CONSENT, PUBLIC_ACTIVITY_CONSENT } from "@kreds/domain/activity-consent";
+import { ActionButton, Button, Eye, Lock } from "@kreds/ui";
 
 import { Notice } from "@/components/notice";
 import { formatAbsolute, formatRelative } from "@/lib/format";
@@ -13,6 +14,12 @@ export type AccessView =
 
 interface AccessCardProps {
   readonly view: AccessView;
+  /**
+   * Where "Allow Kreds to read your public activity" sends the browser: the
+   * sign-in round trip, which is where that consent is given and recorded. A
+   * full-page navigation.
+   */
+  readonly allowHref: string;
   /** Where "Connect private work" sends the browser. A full-page navigation. */
   readonly connectHref: string;
   readonly onRevoke: () => void;
@@ -23,11 +30,15 @@ interface AccessCardProps {
 /**
  * What Kreds can currently see of this person's work, and the controls over it.
  *
- * Reach comes from what GitHub actually granted, not from what Kreds asked
- * for, so "Public only" after a request for private access is a real answer
- * and is shown as one.
+ * Reach comes from what GitHub actually granted, bounded by what the person
+ * agreed to, so "Public only" after a request for private access is a real
+ * answer and is shown as one. Somebody who has not agreed to anything yet,
+ * such as a person who signed in before Kreds asked, is offered the choice.
+ *
+ * Each consent's text sits directly above the button that gives it, from the
+ * same `@kreds/domain` module the API records versions from.
  */
-export function AccessCard({ view, connectHref, onRevoke, notice }: AccessCardProps) {
+export function AccessCard({ view, allowHref, connectHref, onRevoke, notice }: AccessCardProps) {
   return (
     <section
       aria-labelledby="access-heading"
@@ -46,13 +57,18 @@ export function AccessCard({ view, connectHref, onRevoke, notice }: AccessCardPr
       </div>
 
       <div className="mt-4">
-        <AccessBody view={view} connectHref={connectHref} onRevoke={onRevoke} />
+        <AccessBody
+          view={view}
+          allowHref={allowHref}
+          connectHref={connectHref}
+          onRevoke={onRevoke}
+        />
       </div>
     </section>
   );
 }
 
-function AccessBody({ view, connectHref, onRevoke }: Omit<AccessCardProps, "notice">) {
+function AccessBody({ view, allowHref, connectHref, onRevoke }: Omit<AccessCardProps, "notice">) {
   if (view.status === "loading") {
     return (
       <div role="status" className="flex flex-col gap-2">
@@ -82,7 +98,12 @@ function AccessBody({ view, connectHref, onRevoke }: Omit<AccessCardProps, "noti
 
   const { access } = view;
   const reach = describeReach(access);
-  const canConnect = access.delegatedQueryConfigured && access.reach !== "INCLUDES_PRIVATE";
+  const reading = access.authorized && access.publicConsent !== null;
+  const canAllow = access.delegatedQueryConfigured && !reading;
+  const canConnect =
+    access.delegatedQueryConfigured && reading && access.reach !== "INCLUDES_PRIVATE";
+  const canRevoke =
+    access.authorized || access.publicConsent !== null || access.privateConsent !== null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -90,43 +111,63 @@ function AccessBody({ view, connectHref, onRevoke }: Omit<AccessCardProps, "noti
         <p className="flex items-center gap-2 text-base font-medium">
           <span
             aria-hidden="true"
-            className={`size-2 shrink-0 rounded-full ${reach.connected ? "bg-accent" : "bg-line-strong"}`}
+            className={`size-2 shrink-0 rounded-full ${reading ? "bg-accent" : "bg-line-strong"}`}
           />
           {reach.label}
         </p>
         <p className="text-ink-dim mt-1.5 text-sm leading-relaxed">{reach.detail}</p>
-        {access.authorized ? (
-          <p className="text-ink-dim mt-2 text-xs">
-            {access.lastPolledAt ? (
-              <>
-                Last checked{" "}
-                <time dateTime={access.lastPolledAt} title={formatAbsolute(access.lastPolledAt)}>
-                  {formatRelative(access.lastPolledAt)}
-                </time>
-              </>
-            ) : (
-              "Not checked yet. Kreds looks periodically."
-            )}
-          </p>
+        {reading ? (
+          <ul className="text-ink-dim mt-2 flex flex-col gap-1 text-xs">
+            {access.publicConsent ? (
+              <li>
+                <ConsentDate label="Public activity allowed" iso={access.publicConsent.grantedAt} />
+              </li>
+            ) : null}
+            {access.privateConsent && access.reach === "INCLUDES_PRIVATE" ? (
+              <li>
+                <ConsentDate label="Private work allowed" iso={access.privateConsent.grantedAt} />
+              </li>
+            ) : null}
+            <li>
+              {access.lastPolledAt ? (
+                <ConsentDate label="Last checked" iso={access.lastPolledAt} />
+              ) : (
+                "Not checked yet. Kreds looks periodically."
+              )}
+            </li>
+          </ul>
         ) : null}
       </div>
 
+      {canAllow ? (
+        <div className="border-line border-t pt-5">
+          <p id="allow-consent" className="text-ink text-xs leading-relaxed">
+            {PUBLIC_ACTIVITY_CONSENT.text}
+          </p>
+          <Button href={allowHref} className="mt-3 w-full" aria-describedby="allow-consent">
+            <Eye className="size-4" />
+            Allow Kreds to read your public activity
+          </Button>
+        </div>
+      ) : null}
+
       {canConnect ? (
         <div className="border-line border-t pt-5">
-          <Button href={connectHref} className="w-full">
+          <p id="private-consent" className="text-ink text-xs leading-relaxed">
+            {PRIVATE_ACTIVITY_CONSENT.text}
+          </p>
+          <Button href={connectHref} className="mt-3 w-full" aria-describedby="private-consent">
             <Lock className="size-4" />
             Connect private work
           </Button>
           <p className="text-ink-dim mt-3 text-xs leading-relaxed">
-            GitHub shows the permission Kreds asks for before anything is granted. Kreds only reads
-            metadata about your own pull requests and reviews, never code. Private work earns
-            points, never KRED.
+            GitHub shows the permission Kreds asks for before anything is granted.
           </p>
         </div>
       ) : null}
 
-      {access.authorized ? (
-        <div className={canConnect ? "" : "border-line border-t pt-5"}>
+      {canRevoke ? (
+        <div className={canAllow || canConnect ? "" : "border-line border-t pt-5"}>
           <ActionButton variant="danger" onClick={onRevoke}>
             Revoke access
           </ActionButton>
@@ -136,10 +177,20 @@ function AccessBody({ view, connectHref, onRevoke }: Omit<AccessCardProps, "noti
   );
 }
 
+function ConsentDate({ label, iso }: { readonly label: string; readonly iso: string }) {
+  return (
+    <>
+      {label}{" "}
+      <time dateTime={iso} title={formatAbsolute(iso)}>
+        {formatRelative(iso)}
+      </time>
+    </>
+  );
+}
+
 interface ReachCopy {
   readonly label: string;
   readonly detail: string;
-  readonly connected: boolean;
 }
 
 function describeReach(access: AccessStatus): ReachCopy {
@@ -147,14 +198,13 @@ function describeReach(access: AccessStatus): ReachCopy {
     return {
       label: "Not available here",
       detail: "This Kreds instance is not set up to read activity on your behalf.",
-      connected: false,
     };
   }
-  if (!access.authorized) {
+  if (!access.authorized || !access.publicConsent) {
     return {
-      label: "Not connected",
-      detail: "Kreds is not reading your activity on your behalf.",
-      connected: false,
+      label: "Not reading your activity",
+      detail:
+        "Kreds is not reading your activity on your behalf until you allow it. Once you do, your public pull requests and code reviews earn Contribution Points.",
     };
   }
   if (access.reach === "INCLUDES_PRIVATE") {
@@ -162,12 +212,10 @@ function describeReach(access: AccessStatus): ReachCopy {
       label: "Public and private",
       detail:
         "Kreds reads your pull requests and reviews in public and private repositories. Private work earns points, never KRED.",
-      connected: true,
     };
   }
   return {
     label: "Public only",
     detail: "Kreds reads your pull requests and reviews in public repositories.",
-    connected: true,
   };
 }

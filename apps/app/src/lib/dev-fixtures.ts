@@ -11,6 +11,8 @@
  * Every number here is made up for layout. None of it is policy.
  */
 
+import { PRIVATE_ACTIVITY_CONSENT, PUBLIC_ACTIVITY_CONSENT } from "@kreds/domain/activity-consent";
+
 import type {
   AccessStatus,
   ContributionEntry,
@@ -24,6 +26,7 @@ import type { SessionUser } from "./session";
 const SCENARIOS = [
   "content",
   "private",
+  "not-consented",
   "empty",
   "unconfigured",
   "error",
@@ -117,15 +120,33 @@ function summary(s: Scenario): ContributionSummary {
   };
 }
 
+/**
+ * `not-consented` is somebody who signed in before Kreds asked: a grant is
+ * stored, nobody agreed to it being used, so nothing is read.
+ */
 function access(s: Scenario): AccessStatus {
   const configured = s !== "unconfigured";
   const authorized = configured && !revoked && s !== "empty";
+  const consented = authorized && s !== "not-consented";
+  const privately = consented && s === "private";
   return {
     gitHubUserId: USER_ID,
     authorized,
     delegatedQueryConfigured: configured,
-    reach: authorized ? (s === "private" ? "INCLUDES_PRIVATE" : "PUBLIC_ONLY") : null,
-    lastPolledAt: authorized ? new Date(Date.now() - 2 * HOUR).toISOString() : null,
+    reach: consented ? (privately ? "INCLUDES_PRIVATE" : "PUBLIC_ONLY") : null,
+    lastPolledAt: consented ? new Date(Date.now() - 2 * HOUR).toISOString() : null,
+    publicConsent: consented
+      ? {
+          version: PUBLIC_ACTIVITY_CONSENT.version,
+          grantedAt: new Date(Date.now() - 40 * 24 * HOUR).toISOString(),
+        }
+      : null,
+    privateConsent: privately
+      ? {
+          version: PRIVATE_ACTIVITY_CONSENT.version,
+          grantedAt: new Date(Date.now() - 12 * 24 * HOUR).toISOString(),
+        }
+      : null,
   };
 }
 
@@ -173,9 +194,15 @@ export async function fixtureResponse(url: string, init: RequestInit): Promise<R
   }
   if (pathname.startsWith("/access/status/")) return json(access(s));
   if (pathname.startsWith("/access/authorization/") && method === "DELETE") {
-    const had = access(s).authorized;
+    const before = access(s);
+    const consentsRevoked = [before.publicConsent, before.privateConsent].filter(Boolean).length;
     revoked = true;
-    return json({ gitHubUserId: USER_ID, revoked: had, historyRetained: true });
+    return json({
+      gitHubUserId: USER_ID,
+      revoked: before.authorized || consentsRevoked > 0,
+      consentsRevoked,
+      historyRetained: true,
+    });
   }
   return json({ message: `No fixture for ${method} ${pathname}` }, 404);
 }

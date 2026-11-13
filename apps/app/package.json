@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@kreds/domain": "workspace:*",
     "@kreds/ui": "workspace:*",
     "geist": "^1.9.2",
     "next": "^16.3.2",
