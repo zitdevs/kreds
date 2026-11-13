@@ -20,6 +20,7 @@ function repository(over: Record<string, unknown> = {}) {
     id: 77_001,
     node_id: "R_kgDO",
     full_name: "zitdevs/kreds",
+    owner: { id: 9_001, login: "zitdevs", type: "Organization" },
     private: false,
     visibility: "public",
     default_branch: "main",
@@ -147,13 +148,26 @@ function harness(
       return { outcome: event ? ("PROCESSED" as const) : ("IGNORED" as const) };
     }),
   };
+  const order: string[] = [];
+  const installations = {
+    observeRepository: vi.fn(async (input: { gitHubRepositoryId: number }) => {
+      order.push(`register:${input.gitHubRepositoryId}`);
+      return { id: "repo-uuid", ...input };
+    }),
+  };
+  ingestion.ingest.mockImplementation(async (input: { eventType: string; payload: unknown }) => {
+    order.push(`ingest:${input.eventType}`);
+    const event = normalize(input.eventType, input.payload);
+    return { outcome: event ? ("PROCESSED" as const) : ("IGNORED" as const) };
+  });
   const service = new DelegatedQueryService(
     authorizations as never,
     identities as never,
+    installations as never,
     ingestion as never,
     { requestsPerWindow: 60, windowMs: 900_000 },
   );
-  return { service, authorizations, identities, ingestion };
+  return { service, authorizations, identities, ingestion, installations, order };
 }
 
 const ingested = (ingestion: ReturnType<typeof harness>["ingestion"]) =>
@@ -425,5 +439,109 @@ describe("a provider error stays out of the logs", () => {
     for (const [message] of warn.mock.calls) {
       expect(String(message)).not.toMatch(/tok-fake-secret|Validation Failed/);
     }
+  });
+});
+
+/**
+ * A repository GitHub showed through the poll, recorded from GitHub's own
+ * repository object so eligibility can be asked rather than failing for lack
+ * of a record. Never an installation, never an organization (Law XXXVI), never
+ * a tier: those are the persistence layer's refusals, tested there.
+ */
+describe("a repository Kreds first sees through the poll", () => {
+  it("is recorded from the canonical repository before its evidence is ingested", async () => {
+    stubGitHub({ authored: [searchHit(7)], pulls: { 7: pullRequest(7) } });
+    const { service, installations, order } = harness();
+
+    await service.poll({ gitHubUserId: ISAAC, scopes: PUBLIC_GRANT }, NOW);
+
+    expect(installations.observeRepository).toHaveBeenCalledWith({
+      gitHubRepositoryId: 77_001,
+      nameWithOwner: "zitdevs/kreds",
+      isPrivate: false,
+      isPersonallyOwned: false,
+      primaryBranch: "main",
+    });
+    expect(order).toEqual(["register:77001", "ingest:pull_request"]);
+  });
+
+  it("is recorded as personal when GitHub says a user owns it", async () => {
+    const personal = repository({
+      full_name: "isaac/side",
+      owner: { id: ISAAC, login: "isaac", type: "User" },
+    });
+    stubGitHub({
+      authored: [searchHit(7)],
+      pulls: { 7: pullRequest(7, { base: { ref: "main", repo: personal } }) },
+    });
+    const { service, installations } = harness();
+
+    await service.poll({ gitHubUserId: ISAAC, scopes: PUBLIC_GRANT }, NOW);
+
+    expect(installations.observeRepository).toHaveBeenCalledWith(
+      expect.objectContaining({ isPersonallyOwned: true }),
+    );
+  });
+
+  /** Law XXIX keeps it at 0 Official KRED; the record must say private for that to hold. */
+  it("is recorded as private when it is, under a grant that reaches it", async () => {
+    stubGitHub({
+      authored: [searchHit(7)],
+      pulls: {
+        7: pullRequest(7, {
+          base: { ref: "main", repo: repository({ private: true, visibility: "private" }) },
+        }),
+      },
+    });
+    const { service, installations } = harness();
+
+    await service.poll({ gitHubUserId: ISAAC, scopes: PRIVATE_GRANT }, NOW);
+
+    expect(installations.observeRepository).toHaveBeenCalledWith(
+      expect.objectContaining({ isPrivate: true }),
+    );
+  });
+
+  /** Ownership GitHub did not state is not guessed. The fact still flows, unrecorded, as before. */
+  it("is not recorded when GitHub does not say who owns it", async () => {
+    stubGitHub({
+      authored: [searchHit(7)],
+      pulls: {
+        7: pullRequest(7, {
+          base: { ref: "main", repo: repository({ owner: { id: 1, login: "x" } }) },
+        }),
+      },
+    });
+    const { service, installations, ingestion } = harness();
+
+    await service.poll({ gitHubUserId: ISAAC, scopes: PUBLIC_GRANT }, NOW);
+
+    expect(installations.observeRepository).not.toHaveBeenCalled();
+    expect(ingestion.ingest).toHaveBeenCalledOnce();
+  });
+
+  it("is not recorded for work that turned out not to be the user's", async () => {
+    stubGitHub({
+      authored: [searchHit(7)],
+      pulls: { 7: pullRequest(7, { user: { id: JOSE, login: "isaac", type: "User" } }) },
+    });
+    const { service, installations } = harness();
+
+    await service.poll({ gitHubUserId: ISAAC, scopes: PUBLIC_GRANT }, NOW);
+
+    expect(installations.observeRepository).not.toHaveBeenCalled();
+  });
+
+  it("is recorded for a review too", async () => {
+    stubGitHub({
+      reviewed: [searchHit(8)],
+      pulls: { 8: pullRequest(8, { user: { id: JOSE, login: "jose", type: "User" } }) },
+      reviews: { 8: [review(9_001)] },
+    });
+    const { service, order } = harness();
+
+    await service.poll({ gitHubUserId: ISAAC, scopes: PUBLIC_GRANT }, NOW);
+
+    expect(order).toEqual(["register:77001", "ingest:pull_request_review"]);
   });
 });

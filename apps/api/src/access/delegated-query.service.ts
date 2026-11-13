@@ -6,6 +6,7 @@ import {
   AuthorizationRevokedError,
   Authorizations,
   IdentityRepository,
+  InstallationRepository,
   RateBudgetExhaustedError,
   type PollCandidate,
   type RateBudget,
@@ -84,8 +85,11 @@ const pullRequest = z.object({
   base: z.object({
     repo: z.object({
       id: z.number().int().positive(),
+      full_name: z.string().min(1).optional(),
+      default_branch: z.string().min(1).optional(),
       private: z.boolean().optional(),
       visibility: z.string().optional(),
+      owner: z.object({ type: z.string().optional() }).optional(),
     }),
   }),
 });
@@ -123,6 +127,7 @@ export class DelegatedQueryService {
   constructor(
     private readonly authorizations: Authorizations,
     private readonly identities: IdentityRepository,
+    private readonly installations: InstallationRepository,
     private readonly ingestion: IngestionService,
     // An interface has no runtime token, so Nest cannot resolve it by type.
     // Without this the container reports the parameter as `Object` and fails at
@@ -217,6 +222,8 @@ export class DelegatedQueryService {
     // record is the only thing that says whose merge this is.
     if (pr.user.id !== gitHubUserId || !pr.merged || !pr.merged_at) return 0;
 
+    await this.register(pr);
+
     const where = provenance({
       mode: "USER_ACTIVITY_POLL",
       // Unique per fact, and derived from what GitHub says rather than from who
@@ -265,6 +272,7 @@ export class DelegatedQueryService {
     if (!reviews.success) return 0;
 
     let ingested = 0;
+    let registered = false;
     for (const rawReview of reviews.data) {
       const parsed = review.safeParse(rawReview);
       if (!parsed.success) continue;
@@ -276,6 +284,11 @@ export class DelegatedQueryService {
       // A pending review has not happened yet. The webhook reports a review
       // when it is submitted, and so does this.
       if (data.state.toUpperCase() === "PENDING" || !data.submitted_at) continue;
+
+      if (!registered) {
+        await this.register(pr);
+        registered = true;
+      }
 
       const where = provenance({
         mode: "USER_ACTIVITY_POLL",
@@ -336,6 +349,36 @@ export class DelegatedQueryService {
     if (!mayRead(reach, visibilityOf(pr.data.base.repo))) return 0;
 
     return { raw: record.body as Raw, pr: pr.data, nameWithOwner };
+  }
+
+  /**
+   * Give eligibility a record to read for a repository Kreds first met here.
+   *
+   * Without one, eligibility and the observation check fail closed for lack of
+   * a repository, and A04 made the App optional, so "no record" is the ordinary
+   * case for this channel. The record is built only from GitHub's canonical
+   * repository object (Law XXXV), and the persistence layer refuses everything
+   * a poll must not do: no installation, no organization binding (Law XXXVI),
+   * no trust tier. A new repository starts at the lowest tier, as all do.
+   *
+   * Ownership GitHub did not state is not guessed: personal and organization
+   * repositories are different contexts under 25, so the repository stays
+   * unrecorded and fails closed exactly as it did before.
+   */
+  private async register(pr: z.infer<typeof pullRequest>): Promise<void> {
+    const repo = pr.base.repo;
+    const ownerType = repo.owner?.type;
+    const visibility = visibilityOf(repo);
+    if (!repo.full_name || visibility === "unknown") return;
+    if (ownerType !== "User" && ownerType !== "Organization") return;
+
+    await this.installations.observeRepository({
+      gitHubRepositoryId: repo.id,
+      nameWithOwner: repo.full_name,
+      isPrivate: visibility === "private",
+      isPersonallyOwned: ownerType === "User",
+      primaryBranch: repo.default_branch ?? null,
+    });
   }
 
   private async hand(
