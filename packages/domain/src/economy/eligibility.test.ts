@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   evaluateEligibility,
+  qualifiesWithoutReview,
+  repositoryContextOf,
   trustBandFor,
   type EligibilityInput,
   type MatrixRow,
@@ -221,5 +223,85 @@ describe("failing closed", () => {
         expect(reason).not.toMatch(/\d/);
       }
     }
+  });
+});
+
+/**
+ * kreds-laws v0.7, chapter 24: a merge the repository's own history qualifies
+ * for KRED without a review counts as observed for Contribution Points. It must
+ * be the same determination as issuance, so it is asked of the same matrix.
+ */
+describe("qualifying for issuance without a review", () => {
+  const without = (over: Partial<Omit<EligibilityInput, "hasEligibleReview">> = {}) => {
+    const { hasEligibleReview: _ignored, ...rest } = input(over);
+    return qualifiesWithoutReview(rest, MATRIX);
+  };
+
+  it("holds for a high-trust public repository", () => {
+    expect(without({ context: "ORGANIZATION_PUBLIC", trustTier: "HIGH_TRUST" })).toBe(true);
+  });
+
+  it("does not hold for an untrusted public repository", () => {
+    expect(without({ context: "ORGANIZATION_PUBLIC", trustTier: "UNTRUSTED" })).toBe(false);
+  });
+
+  /** Law XXIX: a private repository never qualifies, whatever its tier says. */
+  it("never holds for a private repository", () => {
+    expect(without({ context: "PERSONAL_PRIVATE", isPrivate: true, trustTier: "HIGH_TRUST" })).toBe(
+      false,
+    );
+    expect(
+      without({ context: "ORGANIZATION_PRIVATE", isPrivate: true, trustTier: "HIGH_TRUST" }),
+    ).toBe(false);
+  });
+
+  /** Law XVI comes first here exactly as it does for issuance. */
+  it("never holds for an actor that cannot earn", () => {
+    expect(without({ trustTier: "HIGH_TRUST", actorCanEarn: false })).toBe(false);
+  });
+
+  /**
+   * The open row. Issuance reports it as reduced so it is not resolved against
+   * a contributor; for the cap it must not count, or any untrusted public
+   * organization repository would lift it (Law XXX).
+   */
+  it("does not treat an open REDUCED_OR_NONE row as qualifying", () => {
+    expect(without({ context: "ORGANIZATION_PUBLIC", trustTier: "UNTRUSTED" })).toBe(false);
+  });
+
+  /**
+   * The point of reusing the matrix: wherever issuance is established without
+   * a review, the cap lifts, for every row, with no second threshold.
+   */
+  it("agrees with established issuance for every row the matrix has", () => {
+    for (const row of MATRIX.filter((r) => !r.review)) {
+      for (const trustTier of ["UNTRUSTED", "ESTABLISHED", "RELEVANT", "HIGH_TRUST"] as const) {
+        const isPrivate = row.context.endsWith("PRIVATE");
+        const issuance = evaluateEligibility(
+          input({ context: row.context, isPrivate, trustTier, hasEligibleReview: false }),
+          MATRIX,
+        );
+        expect(without({ context: row.context, isPrivate, trustTier })).toBe(
+          ["REDUCED", "PARTIAL", "FULL"].includes(issuance.outcome),
+        );
+      }
+    }
+  });
+});
+
+describe("the repository context", () => {
+  it("follows ownership and visibility", () => {
+    expect(repositoryContextOf({ isPersonallyOwned: true, isPrivate: true })).toBe(
+      "PERSONAL_PRIVATE",
+    );
+    expect(repositoryContextOf({ isPersonallyOwned: true, isPrivate: false })).toBe(
+      "PERSONAL_PUBLIC",
+    );
+    expect(repositoryContextOf({ isPersonallyOwned: false, isPrivate: true })).toBe(
+      "ORGANIZATION_PRIVATE",
+    );
+    expect(repositoryContextOf({ isPersonallyOwned: false, isPrivate: false })).toBe(
+      "ORGANIZATION_PUBLIC",
+    );
   });
 });

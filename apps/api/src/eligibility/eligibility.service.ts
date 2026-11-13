@@ -4,6 +4,7 @@ import { EventStore, InstallationRepository } from "@kreds/database";
 import {
   evaluateEligibility,
   isStructurallyIndependentReviewer,
+  repositoryContextOf,
   type EligibilityResult,
   type PullRequestMerged,
   type RepositoryContext,
@@ -71,13 +72,7 @@ export class EligibilityService {
       };
     }
 
-    const context: RepositoryContext = repository.isPersonallyOwned
-      ? repository.isPrivate
-        ? "PERSONAL_PRIVATE"
-        : "PERSONAL_PUBLIC"
-      : repository.isPrivate
-        ? "ORGANIZATION_PRIVATE"
-        : "ORGANIZATION_PUBLIC";
+    const context: RepositoryContext = repositoryContextOf(repository);
 
     const result = evaluateEligibility(
       {

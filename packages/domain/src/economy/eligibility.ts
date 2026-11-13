@@ -198,3 +198,47 @@ function statusFor(outcome: MatrixOutcome): EconomicEligibility {
       return "REDUCED";
   }
 }
+
+/**
+ * Where a repository sits in the matrix, from ownership and visibility alone.
+ *
+ * Shared so that issuance and the points cap cannot place the same repository
+ * in two different contexts.
+ */
+export function repositoryContextOf(repository: {
+  readonly isPersonallyOwned: boolean;
+  readonly isPrivate: boolean;
+}): RepositoryContext {
+  if (repository.isPersonallyOwned) {
+    return repository.isPrivate ? "PERSONAL_PRIVATE" : "PERSONAL_PUBLIC";
+  }
+  return repository.isPrivate ? "ORGANIZATION_PRIVATE" : "ORGANIZATION_PUBLIC";
+}
+
+/**
+ * Whether the repository's own history qualifies a merge for KRED with no
+ * review at all (Law XXXIII).
+ *
+ * Deliberately not a second rule. It asks `evaluateEligibility` the exact
+ * question issuance asks, with the review removed, so the evidence needed to
+ * lift the Contribution Point cap can never exceed the evidence needed to issue
+ * KRED (Law XXVIII, kreds-laws v0.7). Retuning the matrix moves both together.
+ *
+ * Decided on the matrix outcome rather than the collapsed status, and that
+ * difference is load-bearing. `REDUCED_OR_NONE` reports as `REDUCED` for
+ * issuance so the open row is not resolved against a contributor. Read the
+ * same way here, it would lift the cap for every untrusted public organization
+ * repository, reopening the scripted-merge farm the cap exists to close and
+ * contradicting Law XXX. Qualifying needs issuance to be established, and an
+ * outcome that may be none is not.
+ */
+export function qualifiesWithoutReview(
+  input: Omit<EligibilityInput, "hasEligibleReview">,
+  matrix: readonly MatrixRow[],
+): boolean {
+  const { outcome } = evaluateEligibility({ ...input, hasEligibleReview: false }, matrix);
+  return ESTABLISHED_ISSUANCE.has(outcome);
+}
+
+/** Outcomes under which issuance is certain rather than merely possible. */
+const ESTABLISHED_ISSUANCE: ReadonlySet<MatrixOutcome> = new Set(["REDUCED", "PARTIAL", "FULL"]);

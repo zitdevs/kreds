@@ -11,8 +11,11 @@ import {
   isHealthySize,
   isStructurallyIndependentReviewer,
   NOBODY_OBSERVED,
+  OBSERVED_BY_REPOSITORY_HISTORY,
   points,
   pointsFor,
+  qualifiesWithoutReview,
+  repositoryContextOf,
   score,
   UNOBSERVED,
   type ContributionKind,
@@ -293,7 +296,35 @@ export class ContributionService {
       }
     }
 
-    return NOBODY_OBSERVED;
+    return (await this.qualifiesWithoutReview(event))
+      ? OBSERVED_BY_REPOSITORY_HISTORY
+      : NOBODY_OBSERVED;
+  }
+
+  /**
+   * Whether the repository's public history observed the merge (kreds-laws
+   * v0.7, 24).
+   *
+   * A merge that repository economic eligibility would qualify for KRED without
+   * a review counts as observed: Law XXVIII forbids recognition from needing
+   * more evidence than issuance. The answer comes from `qualifiesWithoutReview`,
+   * the same matrix issuance reads, never from a threshold of its own, so the
+   * two cannot drift apart. A repository Kreds has no record of fails closed.
+   */
+  private async qualifiesWithoutReview(event: PullRequestMerged): Promise<boolean> {
+    const repository = await this.installations.findRepository(Number(event.repositoryId));
+    if (!repository) return false;
+
+    const policy = currentPolicy();
+    return qualifiesWithoutReview(
+      {
+        context: repositoryContextOf(repository),
+        trustTier: repository.trustTier,
+        actorCanEarn: this.canEarn(event.authorActorType),
+        isPrivate: repository.isPrivate,
+      },
+      policy.mergeEligibility.matrix,
+    );
   }
 
   /**

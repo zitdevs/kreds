@@ -10,11 +10,14 @@ import { ContributionService } from "./contribution.service.js";
  * unconfigured instance has and therefore the shape most worth testing.
  * @param reviews what the event store will report for the pull request. An
  * empty list is a merge nobody independent looked at.
+ * @param repository the repository the merge landed in. Defaults to a personal
+ * private repository with no trust, the context the cap was written for.
  */
 function harness(
   caps: UnobservedCaps = NO_UNOBSERVED_ALLOWANCE,
   reviews: unknown[] = [],
   alreadyUnobserved = 0,
+  repository: Record<string, unknown> = farmRepository,
 ) {
   const ledger = {
     award: vi.fn(async () => ({ id: "entry-1", idempotencyKey: "k", isNew: true })),
@@ -25,7 +28,11 @@ function harness(
     classify: vi.fn(async () => true),
   };
   const installations = {
-    findRepository: vi.fn(async () => ({ id: "repo-uuid", organizationId: "org-uuid" })),
+    findRepository: vi.fn(async () => ({
+      id: "repo-uuid",
+      organizationId: "org-uuid",
+      ...repository,
+    })),
   };
   const events = { findReviewsFor: vi.fn(async () => reviews) };
   const service = new ContributionService(
@@ -37,6 +44,16 @@ function harness(
   );
   return { service, ledger, identities, installations, events };
 }
+
+/** Scripted self-merges in a repository nobody else can see. */
+const farmRepository = { isPersonallyOwned: true, isPrivate: true, trustTier: "UNTRUSTED" };
+
+/** A widely used project whose solo maintainer has nobody to approve their PRs. */
+const establishedPublicProject = {
+  isPersonallyOwned: true,
+  isPrivate: false,
+  trustTier: "HIGH_TRUST",
+};
 
 /**
  * A review by a distinct human, which is what makes a merge observed under 24's
@@ -383,5 +400,49 @@ describe("Contribution Points where nobody independent was watching", () => {
     ];
     expect(since.toISOString()).toBe("2026-03-14T00:00:00.000Z");
     expect(until.toISOString()).toBe("2026-03-15T00:00:00.000Z");
+  });
+});
+
+/**
+ * kreds-laws v0.7, chapter 24: "A merge that repository economic eligibility
+ * would qualify for KRED without a review counts as observed. The repository's
+ * public history is the independent observer." Law XXVIII forbids recognition
+ * from needing more evidence than issuance.
+ */
+describe("a repository's public history as the observer", () => {
+  it("lifts the cap for a public project that earns KRED without review", async () => {
+    const { service, ledger } = harness(NO_UNOBSERVED_ALLOWANCE, [], 0, establishedPublicProject);
+    await service.recognise(merge());
+
+    const [award] = ledger.award.mock.calls[0] as unknown as [
+      { points: number; observed: boolean },
+    ];
+    expect(award.observed).toBe(true);
+    expect(award.points).toBeGreaterThan(0);
+  });
+
+  /** Law XXIX: private work never qualifies, whatever trust the row records. */
+  it("does not lift it for a private repository, at any trust", async () => {
+    const { service, ledger } = harness(NO_UNOBSERVED_ALLOWANCE, [], 0, {
+      ...establishedPublicProject,
+      isPrivate: true,
+    });
+    await service.recognise(merge());
+
+    const [award] = ledger.award.mock.calls[0] as unknown as [{ observed: boolean }];
+    expect(award.observed).toBe(false);
+  });
+
+  /** Law XXX: being public is not enough. */
+  it("does not lift it for an untrusted public organization repository", async () => {
+    const { service, ledger } = harness(NO_UNOBSERVED_ALLOWANCE, [], 0, {
+      isPersonallyOwned: false,
+      isPrivate: false,
+      trustTier: "UNTRUSTED",
+    });
+    await service.recognise(merge());
+
+    const [award] = ledger.award.mock.calls[0] as unknown as [{ observed: boolean }];
+    expect(award.observed).toBe(false);
   });
 });

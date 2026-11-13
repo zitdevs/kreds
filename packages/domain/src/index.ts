@@ -219,6 +219,8 @@ export {
 
 export {
   evaluateEligibility,
+  qualifiesWithoutReview,
+  repositoryContextOf,
   trustBandFor,
   type EligibilityInput,
   type EligibilityReason,
@@ -329,6 +331,7 @@ export {
 export {
   capUnobserved,
   NOBODY_OBSERVED,
+  OBSERVED_BY_REPOSITORY_HISTORY,
   NO_UNOBSERVED_ALLOWANCE,
   unobservedCaps,
   UnobservedCapsNotConfiguredError,
