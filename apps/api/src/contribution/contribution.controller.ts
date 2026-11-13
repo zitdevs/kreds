@@ -5,6 +5,7 @@ import {
   ContributionLedger,
   IdentityRepository,
   type EntryCursor,
+  type LeaderboardCursor,
   type OwnEntry,
 } from "@kreds/database";
 import { gitHubUserId, type ContributionKind } from "@kreds/domain";
@@ -58,11 +59,18 @@ interface ScoreResponse {
   readonly scope: "GLOBAL" | "ORGANIZATION";
 }
 
-interface LeaderboardEntry {
+export interface LeaderboardEntry {
   readonly rank: number;
   readonly gitHubUserId: number;
   readonly login: string | null;
   readonly points: number;
+}
+
+export interface LeaderboardResponse {
+  readonly scope: "GLOBAL" | "ORGANIZATION";
+  readonly entries: readonly LeaderboardEntry[];
+  /** Pass back as `cursor` for the next page. `null` on the last page. */
+  readonly nextCursor: string | null;
 }
 
 /**
@@ -196,38 +204,68 @@ export class ContributionController {
   }
 
   /**
-   * The leaderboard, global or scoped to one organization.
+   * The leaderboard, global or scoped to one organization, a page at a time.
    *
-   * Ranks are dense and start at one. Two people on the same score share a
-   * rank, because splitting them would need a tiebreak that no rule provides
-   * and every available tiebreak is a proxy for volume.
+   * Ranks are dense, start at one and are computed over the whole board, so a
+   * later page carries on from the first rather than restarting. Two people on
+   * the same score share a rank, because splitting them would need a tiebreak
+   * that no rule provides and every available tiebreak is a proxy for volume.
+   * The order between them is by id, for paging only.
+   *
+   * Public. Totals only: nothing names a repository, private or not.
    */
   @Get("leaderboard")
   async leaderboard(
     @Query("organizationId") organizationId?: string,
     @Query("limit") rawLimit?: string,
-  ): Promise<{ scope: string; entries: readonly LeaderboardEntry[] }> {
+    @Query("cursor") cursor?: string,
+  ): Promise<LeaderboardResponse> {
     const limit = Math.min(Math.max(Number(rawLimit ?? 25) || 25, 1), 100);
-    const rows = await this.ledger.leaderboard(organizationId ?? null, limit);
-
-    const logins = await Promise.all(
-      rows.map((row) => this.identities.findByGitHubUserId(row.gitHubUserId)),
-    );
-
-    let rank = 0;
-    let previousPoints: number | null = null;
-    const entries = rows.map((row, index) => {
-      if (previousPoints === null || row.points !== previousPoints) rank = rank + 1;
-      previousPoints = row.points;
-      return {
-        rank,
-        gitHubUserId: row.gitHubUserId,
-        login: logins[index]?.login ?? null,
-        points: row.points,
-      };
+    const after = cursor === undefined ? undefined : this.openBoardCursor(cursor);
+    const page = await this.ledger.leaderboard(organizationId ?? null, {
+      limit,
+      ...(after ? { after } : {}),
     });
 
-    return { scope: organizationId ? "ORGANIZATION" : "GLOBAL", entries };
+    const identities = await Promise.all(
+      page.entries.map((row) => this.identities.findByGitHubUserId(row.gitHubUserId)),
+    );
+
+    return {
+      scope: organizationId ? "ORGANIZATION" : "GLOBAL",
+      // Named one by one, so a column added to the row cannot reach a public page.
+      entries: page.entries.map((row, index) => ({
+        rank: row.rank,
+        gitHubUserId: row.gitHubUserId,
+        login: identities[index]?.login ?? null,
+        points: row.points,
+      })),
+      nextCursor: page.next ? sealBoardCursor(page.next) : null,
+    };
+  }
+
+  /** A leaderboard cursor this API issued, or 400. */
+  private openBoardCursor(raw: string): LeaderboardCursor {
+    try {
+      const parsed = JSON.parse(Buffer.from(raw, "base64url").toString("utf8")) as {
+        p?: unknown;
+        u?: unknown;
+      };
+      if (
+        typeof parsed.p === "number" &&
+        Number.isSafeInteger(parsed.p) &&
+        typeof parsed.u === "number" &&
+        Number.isSafeInteger(parsed.u) &&
+        parsed.u > 0
+      ) {
+        return { points: parsed.p, gitHubUserId: parsed.u };
+      }
+    } catch {
+      // Falls through to the same refusal as a well-formed but foreign cursor.
+    }
+    throw new BadRequestException(
+      "That cursor is not one this API issued. Start from the first page.",
+    );
   }
 
   private parse(raw: string): ReturnType<typeof gitHubUserId> {
@@ -237,6 +275,12 @@ export class ContributionController {
     }
     return gitHubUserId(parsed);
   }
+}
+
+function sealBoardCursor(cursor: LeaderboardCursor): string {
+  return Buffer.from(JSON.stringify({ p: cursor.points, u: cursor.gitHubUserId }), "utf8").toString(
+    "base64url",
+  );
 }
 
 function sealCursor(cursor: EntryCursor): string {

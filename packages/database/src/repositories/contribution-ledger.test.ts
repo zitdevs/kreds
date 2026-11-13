@@ -173,9 +173,10 @@ describeWithDatabase("ContributionLedger", () => {
         award({ idempotencyKey: "PULL_REQUEST_MERGED:77001:413", gitHubUserId: JOSE, points: 70 }),
       );
 
-      const board = await ledger.leaderboard();
+      const { entries: board } = await ledger.leaderboard(null, { limit: 25 });
       expect(board.map((row) => row.gitHubUserId)).toEqual([JOSE, ISAAC]);
       expect(board[0]?.points).toBe(70);
+      expect(board.map((row) => row.rank)).toEqual([1, 2]);
     });
 
     /** A cancelled award must not still be ranking somebody. */
@@ -186,12 +187,75 @@ describeWithDatabase("ContributionLedger", () => {
       );
       await ledger.invalidate(award().idempotencyKey, "CONFIRMED_FARMING");
 
-      const board = await ledger.leaderboard();
+      const { entries: board } = await ledger.leaderboard(null, { limit: 25 });
       expect(board.map((row) => row.gitHubUserId)).toEqual([JOSE]);
     });
 
     it("is empty when nobody has contributed", async () => {
-      expect(await ledger.leaderboard()).toEqual([]);
+      expect(await ledger.leaderboard(null, { limit: 25 })).toEqual({ entries: [], next: null });
+    });
+
+    /**
+     * A page further down still ranks against everybody. Ranks are computed
+     * over the whole board, not restarted at one on every page.
+     */
+    it("pages through the board with ranks that hold across pages", async () => {
+      const people = [
+        { id: 101, points: 90 },
+        { id: 102, points: 70 },
+        { id: 103, points: 70 },
+        { id: 104, points: 50 },
+        { id: 105, points: 10 },
+      ];
+      for (const person of people) {
+        await ledger.award(
+          award({
+            idempotencyKey: `PULL_REQUEST_MERGED:${person.id}:1`,
+            gitHubUserId: gitHubUserId(person.id),
+            points: person.points,
+          }),
+        );
+      }
+
+      const first = await ledger.leaderboard(null, { limit: 2 });
+      expect(first.entries.map((row) => [row.gitHubUserId, row.rank])).toEqual([
+        [101, 1],
+        [102, 2],
+      ]);
+      expect(first.next).not.toBeNull();
+
+      const second = await ledger.leaderboard(null, { limit: 2, after: first.next! });
+      expect(second.entries.map((row) => [row.gitHubUserId, row.rank])).toEqual([
+        [103, 2],
+        [104, 3],
+      ]);
+
+      const third = await ledger.leaderboard(null, { limit: 2, after: second.next! });
+      expect(third.entries.map((row) => [row.gitHubUserId, row.rank])).toEqual([[105, 4]]);
+      expect(third.next).toBeNull();
+    });
+
+    /** Somebody whose awards were all cancelled is not listed, and does not hold a rank. */
+    it("leaves out anyone at zero, without spending a rank on them", async () => {
+      await ledger.award(award({ gitHubUserId: ISAAC, points: 30 }));
+      await ledger.invalidate(award().idempotencyKey, "PR_REVERTED");
+      await ledger.award(
+        award({ idempotencyKey: "PULL_REQUEST_MERGED:77001:413", gitHubUserId: JOSE, points: 5 }),
+      );
+
+      const { entries } = await ledger.leaderboard(null, { limit: 25 });
+      expect(entries).toEqual([{ rank: 1, gitHubUserId: JOSE, points: 5 }]);
+    });
+
+    it("agrees with the rank the dashboard summary reports", async () => {
+      await ledger.award(award({ gitHubUserId: ISAAC, points: 30 }));
+      await ledger.award(
+        award({ idempotencyKey: "PULL_REQUEST_MERGED:77001:413", gitHubUserId: JOSE, points: 70 }),
+      );
+
+      const { entries } = await ledger.leaderboard(null, { limit: 25 });
+      const isaac = entries.find((row) => row.gitHubUserId === ISAAC);
+      expect(isaac?.rank).toBe((await ledger.summaryFor(ISAAC)).rank);
     });
   });
 
@@ -320,7 +384,7 @@ describeWithDatabase("ContributionLedger", () => {
       );
 
       const summary = await ledger.summaryFor(ISAAC);
-      const board = await ledger.leaderboard();
+      const { entries: board } = await ledger.leaderboard(null, { limit: 25 });
 
       expect(summary.points).toBe((await ledger.scoreFor(ISAAC)).points);
       expect(summary.points).toBe(40);

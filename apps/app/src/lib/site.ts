@@ -25,6 +25,8 @@ export const api = {
    * here with `?grant=`.
    */
   connectPrivate: `${apiUrl}/auth/github/private-ingestion`,
+  /** The global contribution leaderboard. Public: no session needed. */
+  leaderboard: `${apiUrl}/contributions/leaderboard`,
   myContributions: `${apiUrl}/contributions/me`,
   mySummary: `${apiUrl}/contributions/me/summary`,
   accessStatus: (gitHubUserId: number) => `${apiUrl}/access/status/${gitHubUserId}`,

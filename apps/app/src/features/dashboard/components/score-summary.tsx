@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { ActionButton } from "@kreds/ui";
 
 import { Notice } from "@/components/notice";
@@ -28,7 +29,10 @@ export function ScoreSummary({ view }: { view: ScoreSummaryView }) {
       <ScoreBody view={view} />
       <p className="text-ink-dim mt-3 text-sm leading-relaxed text-pretty">
         Contribution Points recognise verified work. They are not currency: they cannot be spent,
-        transferred or exchanged, and they never convert to KRED.
+        transferred or exchanged, and they never convert to KRED.{" "}
+        <Link href="/leaderboard" className="text-accent underline-offset-4 hover:underline">
+          See the leaderboard
+        </Link>
       </p>
     </section>
   );
