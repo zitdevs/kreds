@@ -18,7 +18,7 @@ function harness(
 ) {
   const ledger = {
     award: vi.fn(async () => ({ id: "entry-1", idempotencyKey: "k", isNew: true })),
-    unobservedPointsSince: vi.fn(async () => alreadyUnobserved),
+    unobservedPointsBetween: vi.fn(async () => alreadyUnobserved),
   };
   const identities = {
     observe: vi.fn(async () => ({})),
@@ -372,11 +372,16 @@ describe("Contribution Points where nobody independent was watching", () => {
    * cannot spend an allowance belonging to a different day. Delegated query
    * makes backfill ordinary, which is why this matters at all.
    */
-  it("counts the allowance against the day the work happened", async () => {
+  it("counts the allowance against the day the work happened, and only that day", async () => {
     const { service, ledger } = harness(someAllowance, []);
     await service.recognise(merge({ occurredAt: Date.parse("2026-03-14T15:00:00Z") }));
 
-    const [, since] = ledger.unobservedPointsSince.mock.calls[0] as unknown as [number, Date];
+    const [, since, until] = ledger.unobservedPointsBetween.mock.calls[0] as unknown as [
+      number,
+      Date,
+      Date,
+    ];
     expect(since.toISOString()).toBe("2026-03-14T00:00:00.000Z");
+    expect(until.toISOString()).toBe("2026-03-15T00:00:00.000Z");
   });
 });

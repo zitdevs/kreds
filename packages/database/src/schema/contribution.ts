@@ -116,7 +116,6 @@ export const contributionEntries = pgTable(
     /** The award this entry cancels. Set only on an invalidation. */
     cancelsEntryId: uuid("cancels_entry_id"),
 
-    /** Law XV: the version that decided travels with the decision. */
     /**
      * Whether an independent human observed the work (A04, 24).
      *
@@ -126,6 +125,7 @@ export const contributionEntries = pgTable(
      * instead of being backfilled with a guess.
      */
     observed: boolean("observed"),
+    /** Law XV: the version that decided travels with the decision. */
     rulesVersion: text("rules_version").notNull(),
     /** When the work happened on GitHub, not when Kreds heard about it. */
     occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),

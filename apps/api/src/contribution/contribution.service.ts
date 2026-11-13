@@ -234,13 +234,17 @@ export class ContributionService {
    * makes backfill ordinary, which is why this matters at all.
    */
   private async unobservedTally(gitHubUserId: number, occurredAt: Date): Promise<UnobservedTally> {
-    const dayStart = new Date(occurredAt);
-    dayStart.setUTCHours(0, 0, 0, 0);
-    const monthStart = new Date(Date.UTC(occurredAt.getUTCFullYear(), occurredAt.getUTCMonth(), 1));
+    const year = occurredAt.getUTCFullYear();
+    const month = occurredAt.getUTCMonth();
+    const date = occurredAt.getUTCDate();
+    const dayStart = new Date(Date.UTC(year, month, date));
+    const dayEnd = new Date(Date.UTC(year, month, date + 1));
+    const monthStart = new Date(Date.UTC(year, month, 1));
+    const monthEnd = new Date(Date.UTC(year, month + 1, 1));
 
     const [today, thisMonth] = await Promise.all([
-      this.ledger.unobservedPointsSince(gitHubUserId, dayStart),
-      this.ledger.unobservedPointsSince(gitHubUserId, monthStart),
+      this.ledger.unobservedPointsBetween(gitHubUserId, dayStart, dayEnd),
+      this.ledger.unobservedPointsBetween(gitHubUserId, monthStart, monthEnd),
     ]);
     return { today: points(today), thisMonth: points(thisMonth) };
   }
@@ -266,7 +270,7 @@ export class ContributionService {
 
     for (const candidate of reviews) {
       if (candidate.type !== "REVIEW_SUBMITTED") continue;
-      const review = candidate as ReviewSubmitted;
+      const review = candidate;
       const independent = isStructurallyIndependentReviewer(
         {
           reviewerGitHubUserId: review.reviewerGitHubUserId,
