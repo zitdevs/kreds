@@ -305,6 +305,29 @@ describeWithDatabase("Authorizations", () => {
     });
   });
 
+  /** What the owner's dashboard shows about their own grant. Never the token. */
+  describe("a user's own standing grant", () => {
+    it("reports the granted scopes and when Kreds last asked GitHub", async () => {
+      await authorizations.grant(ISAAC, TOKEN, ["read:user", "repo"]);
+      expect(await authorizations.standingOf(ISAAC)).toEqual({
+        scopes: ["read:user", "repo"],
+        lastPolledAt: null,
+      });
+
+      await authorizations.spendBudget(ISAAC, { requestsPerWindow: 5, windowMs: MINUTE }, NOW);
+      const standing = await authorizations.standingOf(ISAAC);
+      expect(standing?.lastPolledAt?.toISOString()).toBe(NOW.toISOString());
+      expect(JSON.stringify(standing)).not.toContain(TOKEN);
+    });
+
+    it("has none once revoked, or before any grant", async () => {
+      expect(await authorizations.standingOf(JOSE)).toBeNull();
+      await authorizations.grant(ISAAC, TOKEN, ["read:user"]);
+      await authorizations.revoke(ISAAC, NOW);
+      expect(await authorizations.standingOf(ISAAC)).toBeNull();
+    });
+  });
+
   describe("who gets polled next", () => {
     it("puts a never-polled authorization ahead of a recently polled one", async () => {
       await authorizations.grant(ISAAC, TOKEN, ["repo"]);

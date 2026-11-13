@@ -16,6 +16,17 @@ import { CLIENT_ROLES, INGESTION_MODES } from "@kreds/domain";
 
 import { SessionService } from "../auth/session.service.js";
 import { signedInUser } from "../auth/signed-in.js";
+import { reachOf, type IngestionReach } from "./scopes.js";
+
+/** What the owner's dashboard reads about their own grant. */
+export interface AuthorizationStatus {
+  readonly gitHubUserId: number;
+  readonly authorized: boolean;
+  readonly delegatedQueryConfigured: boolean;
+  readonly reach: IngestionReach | null;
+  /** ISO 8601, or `null` before Kreds has used the grant. */
+  readonly lastPolledAt: string | null;
+}
 
 /**
  * A user's control over their own authorization.
@@ -72,16 +83,28 @@ export class AuthorizationController {
     };
   }
 
+  /**
+   * Whether Kreds may currently look, how far, and when it last did.
+   *
+   * `reach` is read from the scopes GitHub granted, never from what Kreds asked
+   * for, and is `null` when there is no live grant. `lastPolledAt` is the last
+   * request Kreds made with the grant. Neither carries anything sealed.
+   */
   @Get("status/:gitHubUserId")
-  async status(@Req() request: Request, @Param("gitHubUserId", ParseIntPipe) gitHubUserId: number) {
+  async status(
+    @Req() request: Request,
+    @Param("gitHubUserId", ParseIntPipe) gitHubUserId: number,
+  ): Promise<AuthorizationStatus> {
     await this.own(request, gitHubUserId);
-    if (!this.authorizations) {
-      return { gitHubUserId, authorized: false, delegatedQueryConfigured: false };
-    }
+    const standing = this.authorizations
+      ? await this.authorizations.standingOf(gitHubUserId)
+      : null;
     return {
       gitHubUserId,
-      authorized: await this.authorizations.isAuthorized(gitHubUserId),
-      delegatedQueryConfigured: true,
+      authorized: standing !== null,
+      delegatedQueryConfigured: this.authorizations !== null,
+      reach: standing ? reachOf(standing.scopes) : null,
+      lastPolledAt: standing?.lastPolledAt?.toISOString() ?? null,
     };
   }
 

@@ -229,6 +229,35 @@ export class Authorizations {
   }
 
   /**
+   * What a live authorization grants, and when Kreds last used it.
+   *
+   * For the owner's own view of their grant. Scopes and a timestamp, nothing
+   * sealed: no token, nonce or tag leaves through here. `null` when there is
+   * no live authorization, revoked or never granted alike.
+   *
+   * `lastPolledAt` is the last request Kreds made with it, which is the honest
+   * meaning of "last looked": a poll is many requests.
+   */
+  async standingOf(
+    gitHubUserId: number,
+  ): Promise<{ scopes: readonly string[]; lastPolledAt: Date | null } | null> {
+    const [row] = await this.db
+      .select({
+        scopes: delegatedAuthorizations.scopes,
+        lastPolledAt: delegatedAuthorizations.lastPolledAt,
+      })
+      .from(delegatedAuthorizations)
+      .where(
+        and(
+          eq(delegatedAuthorizations.gitHubUserId, gitHubUserId),
+          isNull(delegatedAuthorizations.revokedAt),
+        ),
+      )
+      .limit(1);
+    return row ? { scopes: row.scopes, lastPolledAt: row.lastPolledAt } : null;
+  }
+
+  /**
    * Who to poll next, least recently polled first.
    *
    * Fair rather than fast: a user Kreds has never polled sorts ahead of one it

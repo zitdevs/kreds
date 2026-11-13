@@ -15,6 +15,12 @@ function harness(options: { cipherConfigured?: boolean } = {}) {
   const sessions = new SessionService(config);
   const authorizations = {
     isAuthorized: vi.fn(async () => true),
+    standingOf: vi.fn(
+      async (): Promise<{ scopes: string[]; lastPolledAt: Date | null } | null> => ({
+        scopes: ["read:user", "read:org", "repo"],
+        lastPolledAt: new Date("2026-09-01T12:00:00Z"),
+      }),
+    ),
     revoke: vi.fn(async () => true),
   };
   const identities = {
@@ -62,12 +68,48 @@ describe("reading whether Kreds may look", () => {
     expect(authorizations.isAuthorized).not.toHaveBeenCalled();
   });
 
-  it("answers for the signed-in user's own", async () => {
+  /** Reach from what GitHub granted, and when Kreds last asked, for the dashboard. */
+  it("answers for the signed-in user's own, with reach and last poll", async () => {
     const { controller, as } = harness();
     await expect(controller.status(as(isaac), ISAAC)).resolves.toEqual({
       gitHubUserId: ISAAC,
       authorized: true,
       delegatedQueryConfigured: true,
+      reach: "INCLUDES_PRIVATE",
+      lastPolledAt: "2026-09-01T12:00:00.000Z",
+    });
+  });
+
+  it("reports public-only reach for a grant without private scope", async () => {
+    const { controller, authorizations, as } = harness();
+    authorizations.standingOf.mockResolvedValueOnce({ scopes: ["read:user"], lastPolledAt: null });
+    await expect(controller.status(as(isaac), ISAAC)).resolves.toMatchObject({
+      authorized: true,
+      reach: "PUBLIC_ONLY",
+      lastPolledAt: null,
+    });
+  });
+
+  it("reports no reach when there is no live grant", async () => {
+    const { controller, authorizations, as } = harness();
+    authorizations.standingOf.mockResolvedValueOnce(null);
+    await expect(controller.status(as(isaac), ISAAC)).resolves.toEqual({
+      gitHubUserId: ISAAC,
+      authorized: false,
+      delegatedQueryConfigured: true,
+      reach: null,
+      lastPolledAt: null,
+    });
+  });
+
+  it("reports no reach on an instance with no delegated query", async () => {
+    const { controller, as } = harness({ cipherConfigured: false });
+    await expect(controller.status(as(isaac), ISAAC)).resolves.toEqual({
+      gitHubUserId: ISAAC,
+      authorized: false,
+      delegatedQueryConfigured: false,
+      reach: null,
+      lastPolledAt: null,
     });
   });
 
