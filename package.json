@@ -25,7 +25,14 @@
   },
   "devDependencies": {
     "husky": "^9.1.7",
-    "prettier": "^3.3.3",
+    "prettier": "^3.9.10",
     "prettier-plugin-tailwindcss": "^0.8.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "brace-expansion@<1.1.21": "^1.1.21",
+      "js-yaml@>=4.0.0 <4.3.2": "^4.3.2",
+      "source-map-js@>=1.0.0 <1.2.2": "^1.2.2"
+    }
   }
 }

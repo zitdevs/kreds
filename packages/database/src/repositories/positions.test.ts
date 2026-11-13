@@ -15,6 +15,21 @@ import { createDatabase, type Database } from "../client.js";
 import { runMigrations } from "../migrate.js";
 import { Positions } from "./positions.js";
 
+/**
+ * Whether a rejection is the database refusing on a named constraint.
+ *
+ * Matched on Postgres's own `constraint_name` rather than on the message: from
+ * drizzle-orm 0.44 the driver error arrives wrapped, as the `cause` of a
+ * `DrizzleQueryError` whose message is the failed query. Checking both places
+ * keeps the assertion about the database, not about the ORM's error format.
+ */
+const violates =
+  (constraint: string) =>
+  (error: unknown): boolean => {
+    const pg = (error as { cause?: unknown }).cause ?? error;
+    return (pg as { constraint_name?: string }).constraint_name === constraint;
+  };
+
 const url = process.env["DATABASE_URL"];
 const describeWithDatabase = url ? describe : describe.skip;
 
@@ -199,7 +214,7 @@ describeWithDatabase("Positions", () => {
           sql`insert into receivables (claimant_account_id, obligor_account_id, gross_value, settled_value, rules_version)
               values (${ISAAC}, ${JOSE}, 100, 500, 'v0.4')`,
         ),
-      ).rejects.toThrow(/receivables_settled_within_gross/);
+      ).rejects.toSatisfy(violates("receivables_settled_within_gross"));
     });
 
     /** Law XXXIV forbids the two-account version of this. This is the no-account version. */
@@ -209,7 +224,7 @@ describeWithDatabase("Positions", () => {
           sql`insert into receivables (claimant_account_id, obligor_account_id, gross_value, settled_value, rules_version)
               values (${ISAAC}, ${ISAAC}, 100, 0, 'v0.4')`,
         ),
-      ).rejects.toThrow(/receivables_claimant_is_not_obligor/);
+      ).rejects.toSatisfy(violates("receivables_claimant_is_not_obligor"));
     });
 
     it("refuses a debt that owes more than was ever financed", async () => {
@@ -218,7 +233,7 @@ describeWithDatabase("Positions", () => {
           sql`insert into debts (scope, obligor_account_id, lending_account_id, principal, outstanding, rules_version)
               values ('USER', ${ISAAC}, ${FACILITY}, 100, 500, 'v0.4')`,
         ),
-      ).rejects.toThrow(/debts_outstanding_within_principal/);
+      ).rejects.toSatisfy(violates("debts_outstanding_within_principal"));
     });
   });
 
