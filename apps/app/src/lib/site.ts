@@ -19,4 +19,14 @@ export const api = {
   signIn: `${apiUrl}/auth/github`,
   session: `${apiUrl}/auth/session`,
   signOut: `${apiUrl}/auth/signout`,
+  /**
+   * The opt-in for private work. A full-page navigation, never a fetch: the API
+   * sends the browser on to GitHub's consent screen and GitHub sends it back
+   * here with `?grant=`.
+   */
+  connectPrivate: `${apiUrl}/auth/github/private-ingestion`,
+  myContributions: `${apiUrl}/contributions/me`,
+  mySummary: `${apiUrl}/contributions/me/summary`,
+  accessStatus: (gitHubUserId: number) => `${apiUrl}/access/status/${gitHubUserId}`,
+  authorization: (gitHubUserId: number) => `${apiUrl}/access/authorization/${gitHubUserId}`,
 } as const;
