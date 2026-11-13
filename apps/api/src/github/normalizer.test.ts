@@ -175,3 +175,43 @@ describe("everything else", () => {
     expect(normalize("pull_request_review", { action: "submitted" })).toBeNull();
   });
 });
+
+/**
+ * A04 made organization adoption optional, and delegated query reads GitHub's
+ * REST records directly. Those carry no `installation`, because no App was
+ * involved, and the fact is the same fact either way. Refusing it would make
+ * the second lawful channel record evidence and understand none of it.
+ */
+describe("a fact read without an App installation", () => {
+  const withoutInstallation = (payload: Record<string, unknown>) =>
+    Object.fromEntries(Object.entries(payload).filter(([key]) => key !== "installation"));
+
+  it("still understands a merge, under the same key the webhook builds", () => {
+    const event = normalize("pull_request", withoutInstallation(mergedPullRequest()));
+
+    expect(event?.type).toBe("PULL_REQUEST_MERGED");
+    expect(event?.gitHubInstallationId).toBeNull();
+    expect(event?.idempotencyKey).toBe(
+      normalize("pull_request", mergedPullRequest())?.idempotencyKey,
+    );
+  });
+
+  it("still understands a review, under the same key the webhook builds", () => {
+    const payload = {
+      action: "submitted",
+      repository,
+      review: {
+        id: 55_001,
+        state: "APPROVED",
+        submitted_at: "2026-08-22T09:00:00Z",
+        user: { id: 9001, login: "reviewer" },
+      },
+      pull_request: { number: 412, merged_at: null, user: { id: 4242, login: "isaac" } },
+    };
+    const event = normalize("pull_request_review", payload);
+
+    expect(event?.type).toBe("REVIEW_SUBMITTED");
+    expect(event?.gitHubInstallationId).toBeNull();
+    expect(event?.idempotencyKey).toBe("REVIEW_SUBMITTED:55001");
+  });
+});
