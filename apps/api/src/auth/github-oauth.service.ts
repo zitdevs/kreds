@@ -35,10 +35,11 @@ const SCOPES: Record<OAuthPurpose, string> = {
 /**
  * Where each decision returns to.
  *
- * The grant's callback sits below the sign-in one on purpose: GitHub accepts a
- * `redirect_uri` whose path is beneath the OAuth App's registered callback, so
- * an instance configured against the published docs offers the grant without
- * editing its App.
+ * Each must be registered on the OAuth App as its own redirect URI. GitHub
+ * matches a `redirect_uri` exactly unless wildcard matching is enabled for that
+ * URI, and wildcard matching is off by default for apps created since
+ * 2026-08-03. Kreds does not rely on it: it would widen where GitHub sends a
+ * token. The self-hosting guide lists both paths.
  */
 const CALLBACK_PATHS: Record<OAuthPurpose, string> = {
   SIGN_IN: "/auth/callback/github",
