@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { CLIENT_ROLES, INGESTION_MODES } from "@kreds/domain";
+import { currentPolicy, knownRulesVersions, policyFor } from "@kreds/policy";
 
 import { mayRead, PRIVATE_INGESTION_SCOPES, reachOf, SIGN_IN_SCOPES } from "./scopes.js";
 
@@ -99,15 +100,39 @@ describe("Law XXXV, no economic claim originates from a client", () => {
   });
 
   /**
-   * The channels are a closed set, and this is where a third one would show up
+   * The sources are a closed set, and this is where a new one would show up
    * first: something constructing evidence with a mode the domain does not have.
+   * A05 named three, all server-side; A04's two remain readable (Law XV).
    */
-  it("names exactly two ingestion channels, with no client among them", () => {
-    expect([...INGESTION_MODES]).toEqual(["PROVIDER_WEBHOOK", "SERVER_SIDE_DELEGATED_QUERY"]);
+  it("names only server-side ingestion sources, with no client among them", () => {
+    expect([...INGESTION_MODES]).toEqual([
+      "PROVIDER_WEBHOOK",
+      "SERVER_SIDE_DELEGATED_QUERY",
+      "USER_ACTIVITY_POLL",
+      "GITHUB_APP_WEBHOOK",
+      "API_RECONCILIATION",
+    ]);
     expect([...CLIENT_ROLES]).toEqual(["DISPLAY_ONLY"]);
 
     for (const mode of INGESTION_MODES) {
       expect(mode).not.toMatch(/client|extension|agent|plugin|cli|local/i);
+    }
+  });
+
+  /**
+   * The domain and the published policy must agree, in both directions that
+   * matter: every source any published version names is one the domain will
+   * accept as provenance, and every source this API records new evidence under
+   * is one the current version names.
+   */
+  it("agrees with every published policy version about which sources exist", () => {
+    for (const version of knownRulesVersions()) {
+      for (const mode of policyFor(version).access?.ingestionModes ?? []) {
+        expect(INGESTION_MODES, `${mode} in ${version}`).toContain(mode);
+      }
+    }
+    for (const mode of ["GITHUB_APP_WEBHOOK", "USER_ACTIVITY_POLL"]) {
+      expect(currentPolicy().access?.ingestionModes).toContain(mode);
     }
   });
 

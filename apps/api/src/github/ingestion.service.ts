@@ -45,11 +45,11 @@ export class IngestionService {
     eventType: string;
     payload: unknown;
     /**
-     * Which of the two lawful channels this came through (Law XXXV).
+     * Which lawful source this came through (Law XXXV, A05).
      *
-     * Optional, defaulting to the webhook, because every caller before A04 was
-     * a webhook and Law XV does not permit history to be restated. There is no
-     * third value to pass: the type has two members.
+     * Optional, defaulting to the App's webhook, because every caller before
+     * delegated query was one. A05 named the sources "USER_ACTIVITY_POLL,
+     * GITHUB_APP_WEBHOOK, API_RECONCILIATION", and none of them is a client.
      */
     ingestionMode?: IngestionMode;
   }): Promise<IngestionResult> {
@@ -64,7 +64,7 @@ export class IngestionService {
       action,
       gitHubInstallationId: rawInstallationId ? gitHubInstallationId(rawInstallationId) : null,
       payload: input.payload,
-      ingestionMode: input.ingestionMode ?? "PROVIDER_WEBHOOK",
+      ingestionMode: input.ingestionMode ?? "GITHUB_APP_WEBHOOK",
     });
 
     // A redelivery of something already finished is nothing to do. A redelivery

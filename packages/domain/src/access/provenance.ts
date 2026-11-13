@@ -21,8 +21,22 @@
  * not also change a test that quotes the law.
  */
 
-/** The only two channels evidence may travel through. */
-export const INGESTION_MODES = ["PROVIDER_WEBHOOK", "SERVER_SIDE_DELEGATED_QUERY"] as const;
+/**
+ * The sources evidence may travel through, every one of them server-side.
+ *
+ * A04 named two channels, "the provider pushes it" and "Kreds asks the
+ * provider". A05 named the concrete sources behind them: "USER_ACTIVITY_POLL,
+ * GITHUB_APP_WEBHOOK, API_RECONCILIATION". New evidence is recorded under A05's
+ * names. A04's two stay valid rather than being rewritten, because rows already
+ * recorded under them are history and Law XV has rules change forward-only.
+ */
+export const INGESTION_MODES = [
+  "PROVIDER_WEBHOOK",
+  "SERVER_SIDE_DELEGATED_QUERY",
+  "USER_ACTIVITY_POLL",
+  "GITHUB_APP_WEBHOOK",
+  "API_RECONCILIATION",
+] as const;
 
 export type IngestionMode = (typeof INGESTION_MODES)[number];
 

@@ -12,11 +12,13 @@ export interface RawDelivery {
   readonly gitHubInstallationId?: GitHubInstallationId | null;
   readonly payload: unknown;
   /**
-   * Which of the two lawful channels this came through.
+   * Which lawful source this came through (Law XXXV, A04, A05).
    *
-   * Law XXXV, A04. Defaulted to the webhook rather than made required, because
-   * every row written before A04 arrived that way and Law XV does not permit
-   * history to be restated. New callers pass it.
+   * Defaulted to the App's webhook rather than made required, because every
+   * caller before delegated query was one. The default is applied here and
+   * written explicitly, never left to the column's own default, which still
+   * names A04's channel (see `github_events.ingestion_mode`). New callers pass
+   * it.
    */
   readonly ingestionMode?: IngestionMode | null;
 }
@@ -85,7 +87,7 @@ export class EventStore {
         action: delivery.action ?? null,
         gitHubInstallationId: delivery.gitHubInstallationId ?? null,
         payload: delivery.payload,
-        ingestionMode: delivery.ingestionMode ?? "PROVIDER_WEBHOOK",
+        ingestionMode: delivery.ingestionMode ?? "GITHUB_APP_WEBHOOK",
       })
       .onConflictDoNothing({ target: gitHubEvents.gitHubDeliveryId })
       .returning();
