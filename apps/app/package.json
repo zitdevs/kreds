@@ -14,7 +14,7 @@
   "dependencies": {
     "@kreds/ui": "workspace:*",
     "geist": "^1.9.2",
-    "next": "^16.3.1",
+    "next": "^16.3.2",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
