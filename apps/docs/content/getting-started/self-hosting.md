@@ -41,7 +41,8 @@ cp .env.example .env
 
 ## 2. Create a GitHub OAuth App
 
-This one only identifies people signing in. It never touches code.
+This one signs people in and, with their consent, reads their own pull requests
+and reviews. Kreds never reads code.
 
 1. Go to **Settings → Developer settings → OAuth Apps → New OAuth App**
    ([direct link](https://github.com/settings/developers)).
@@ -49,11 +50,19 @@ This one only identifies people signing in. It never touches code.
    - **Application name**: `Kreds` (or `Kreds acme-labs`)
    - **Homepage URL**: your `KREDS_URL`
    - **Authorization callback URL**: `<KREDS_API_URL>/auth/callback/github`
-3. Generate a client secret.
-4. Put the client ID and secret into `AUTH_GITHUB_ID` and `AUTH_GITHUB_SECRET`.
+3. Under **Redirect URIs**, add a second one:
+   `<KREDS_API_URL>/auth/callback/github/private-ingestion`. Leave
+   **Allow wildcard matching** off on both.
+4. Generate a client secret.
+5. Put the client ID and secret into `AUTH_GITHUB_ID` and `AUTH_GITHUB_SECRET`.
 
 Kreds requests `read:user` and `read:org` at sign-in, enough to know who someone
-is and which organizations they belong to. Nothing more.
+is, which organizations they belong to, and their public activity, which it reads
+only after the person accepts the consent text shown above the sign-in button.
+Private work is a separate, later choice that asks for `repo` and returns to the
+second redirect URI. GitHub matches a redirect URI exactly unless wildcard
+matching is enabled for it, so both must be registered; wildcard matching is not
+needed and widens where GitHub will send a token.
 
 ## 3. Create a GitHub App
 
@@ -226,11 +235,14 @@ Deliveries**. You will see one of three things:
 GitHub keeps failed deliveries for redelivery. Fix the cause, hit **Redeliver**,
 and nothing is lost. Awards are idempotent, so a redelivery cannot double-credit.
 
-### `redirect_uri_mismatch` on sign-in
+### `redirect_uri_mismatch`, or "The redirect_uri is not associated with this application"
 
-The OAuth App's callback URL must be exactly
-`<KREDS_API_URL>/auth/callback/github`: same scheme, same host, no trailing
-slash, no port mismatch. Note that it is the **API** origin, not the web one.
+The OAuth App needs both redirect URIs, each registered exactly:
+`<KREDS_API_URL>/auth/callback/github` for sign-in and
+`<KREDS_API_URL>/auth/callback/github/private-ingestion` for connecting private
+work. Same scheme, same host, no trailing slash, no port mismatch. Note that they
+use the **API** origin, not the web one. If sign-in works but connecting private
+work fails, the second one is missing.
 
 ### `error: unable to parse private key`
 
