@@ -132,7 +132,7 @@ describe("OAuth state ties the redirect to the callback", () => {
     const cookie = issuing.cookies.get(OAUTH_STATE_COOKIE)?.value;
 
     const consuming = fakeResponse();
-    expect(service.consumeState(consuming.response, cookie, nonce)).toBe(true);
+    expect(service.consumeState(consuming.response, cookie, nonce)).not.toBeNull();
   });
 
   it("rejects a nonce that does not match the cookie", () => {
@@ -142,7 +142,7 @@ describe("OAuth state ties the redirect to the callback", () => {
     const cookie = issuing.cookies.get(OAUTH_STATE_COOKIE)?.value;
 
     const consuming = fakeResponse();
-    expect(service.consumeState(consuming.response, cookie, "attacker-nonce")).toBe(false);
+    expect(service.consumeState(consuming.response, cookie, "attacker-nonce")).toBeNull();
   });
 
   it("rejects a callback with no state at all", () => {
@@ -152,13 +152,13 @@ describe("OAuth state ties the redirect to the callback", () => {
     const cookie = issuing.cookies.get(OAUTH_STATE_COOKIE)?.value;
 
     const consuming = fakeResponse();
-    expect(service.consumeState(consuming.response, cookie, undefined)).toBe(false);
+    expect(service.consumeState(consuming.response, cookie, undefined)).toBeNull();
   });
 
   it("rejects a state cookie that was never issued", () => {
     const service = serviceFor();
     const { response } = fakeResponse();
-    expect(service.consumeState(response, "forged.token", "anything")).toBe(false);
+    expect(service.consumeState(response, "forged.token", "anything")).toBeNull();
   });
 
   /** One-time. Clearing it on every attempt is what makes replay impossible. */
@@ -195,20 +195,65 @@ describe("OAuth state is bound to the decision it was issued for", () => {
 
   it("completes the decision it was issued for", () => {
     const { service, nonce, cookie } = issued("PRIVATE_INGESTION");
-    expect(service.consumeState(fakeResponse().response, cookie, nonce, "PRIVATE_INGESTION")).toBe(
-      true,
-    );
+    expect(
+      service.consumeState(fakeResponse().response, cookie, nonce, "PRIVATE_INGESTION"),
+    ).not.toBeNull();
   });
 
   it("refuses to complete a private-ingestion grant with a sign-in state", () => {
     const { service, nonce, cookie } = issued();
-    expect(service.consumeState(fakeResponse().response, cookie, nonce, "PRIVATE_INGESTION")).toBe(
-      false,
-    );
+    expect(
+      service.consumeState(fakeResponse().response, cookie, nonce, "PRIVATE_INGESTION"),
+    ).toBeNull();
   });
 
   it("refuses to complete a sign-in with a private-ingestion state", () => {
     const { service, nonce, cookie } = issued("PRIVATE_INGESTION");
-    expect(service.consumeState(fakeResponse().response, cookie, nonce)).toBe(false);
+    expect(service.consumeState(fakeResponse().response, cookie, nonce)).toBeNull();
+  });
+});
+
+/**
+ * Which consent text the person was shown is decided by the server when it
+ * starts the round trip, and comes back sealed. The callback reads it from
+ * here, so nothing the browser sends can change what is recorded.
+ */
+describe("OAuth state carries the consent version the server chose", () => {
+  it("returns the version sealed into it", () => {
+    const service = serviceFor();
+    const issuing = fakeResponse();
+    const nonce = service.issueState(issuing.response, "SIGN_IN", "public-activity-v1");
+    const cookie = issuing.cookies.get(OAUTH_STATE_COOKIE)?.value;
+
+    expect(service.consumeState(fakeResponse().response, cookie, nonce)).toEqual({
+      purpose: "SIGN_IN",
+      consentVersion: "public-activity-v1",
+    });
+  });
+
+  it("carries none when none was chosen", () => {
+    const service = serviceFor();
+    const issuing = fakeResponse();
+    const nonce = service.issueState(issuing.response);
+    const cookie = issuing.cookies.get(OAUTH_STATE_COOKIE)?.value;
+
+    expect(service.consumeState(fakeResponse().response, cookie, nonce)?.consentVersion).toBeNull();
+  });
+
+  /** The version travels inside the signed cookie, so editing it breaks the seal. */
+  it("refuses a state whose version was edited", () => {
+    const service = serviceFor();
+    const issuing = fakeResponse();
+    const nonce = service.issueState(issuing.response, "SIGN_IN", "public-activity-v1");
+    const cookie = issuing.cookies.get(OAUTH_STATE_COOKIE)?.value ?? "";
+    const [body, signature] = cookie.split(".");
+    const edited = JSON.parse(Buffer.from(body ?? "", "base64url").toString()) as Record<
+      string,
+      unknown
+    >;
+    edited["consentVersion"] = "public-activity-v0";
+    const forged = `${Buffer.from(JSON.stringify(edited)).toString("base64url")}.${signature}`;
+
+    expect(service.consumeState(fakeResponse().response, forged, nonce)).toBeNull();
   });
 });

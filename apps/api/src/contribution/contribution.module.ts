@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
+import { SessionModule } from "../auth/session.module.js";
 import { ContributionController } from "./contribution.controller.js";
 import { readUnobservedCaps, UNOBSERVED_CAPS } from "./unobserved-caps.provider.js";
 import { ContributionService } from "./contribution.service.js";
@@ -14,6 +15,8 @@ import { ContributionService } from "./contribution.service.js";
  * and monetising it.
  */
 @Module({
+  // `SessionModule` for the signed-in user's own history.
+  imports: [SessionModule],
   controllers: [ContributionController],
   providers: [
     ContributionService,

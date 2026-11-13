@@ -1,7 +1,9 @@
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, exists, isNull, sql } from "drizzle-orm";
+
+import type { ActivityConsentKind } from "@kreds/domain";
 
 import type { Database } from "../client.js";
-import { delegatedAuthorizations } from "../schema/index.js";
+import { activityConsents, delegatedAuthorizations } from "../schema/index.js";
 import { TokenCipher, type SealedToken } from "../crypto/token-cipher.js";
 
 /**
@@ -45,6 +47,24 @@ export interface RateBudget {
 export interface PollCandidate {
   readonly gitHubUserId: number;
   readonly scopes: readonly string[];
+  /**
+   * The kinds of reading this person has an active consent for. Always
+   * includes `PUBLIC_ACTIVITY`: nobody without it is a candidate at all.
+   * Whether the grant's private reach is covered is the caller's to decide,
+   * from these.
+   */
+  readonly consents: readonly ActivityConsentKind[];
+}
+
+export interface GrantOptions {
+  /**
+   * Leave a live grant alone when the new scopes do not cover it.
+   *
+   * For the sign-in grant: somebody who already granted private access and
+   * signs in again must keep it, rather than having the narrower sign-in token
+   * replace it. A revoked grant is always replaced.
+   */
+  readonly keepBroader?: boolean;
 }
 
 export class Authorizations {
@@ -62,7 +82,12 @@ export class Authorizations {
    * @param scopes what the user actually granted. Recorded so an operator can
    * see what Kreds may reach without decrypting anything.
    */
-  async grant(gitHubUserId: number, token: string, scopes: readonly string[]): Promise<void> {
+  async grant(
+    gitHubUserId: number,
+    token: string,
+    scopes: readonly string[],
+    options: GrantOptions = {},
+  ): Promise<void> {
     if (scopes.length === 0) {
       throw new RangeError("an authorization with no scopes grants nothing and should not exist.");
     }
@@ -83,12 +108,24 @@ export class Authorizations {
           tokenNonce: sealed.nonce,
           tokenTag: sealed.tag,
           scopes: [...scopes],
-          // Re-granting after a revocation is a new grant, so the budget starts
-          // fresh and the row stops being revoked.
           revokedAt: null,
-          pollBudgetSpent: 0,
-          pollWindowStartedAt: null,
+          // Re-granting after a revocation is a new grant, so the budget starts
+          // fresh. Re-granting a live one is not: signing in again must not be
+          // a way to buy another window of provider traffic.
+          pollBudgetSpent: sql`case when ${delegatedAuthorizations.revokedAt} is null
+            then ${delegatedAuthorizations.pollBudgetSpent} else 0 end`,
+          pollWindowStartedAt: sql`case when ${delegatedAuthorizations.revokedAt} is null
+            then ${delegatedAuthorizations.pollWindowStartedAt} else null end`,
         },
+        // Decided in the statement rather than read first, so a private grant
+        // landing between a read and a write cannot be overwritten by the
+        // narrower sign-in token.
+        ...(options.keepBroader
+          ? {
+              setWhere: sql`${delegatedAuthorizations.revokedAt} is not null
+                or excluded.scopes @> ${delegatedAuthorizations.scopes}`,
+            }
+          : {}),
       });
   }
 
@@ -229,7 +266,41 @@ export class Authorizations {
   }
 
   /**
+   * What a live authorization grants, and when Kreds last used it.
+   *
+   * For the owner's own view of their grant. Scopes and a timestamp, nothing
+   * sealed: no token, nonce or tag leaves through here. `null` when there is
+   * no live authorization, revoked or never granted alike.
+   *
+   * `lastPolledAt` is the last request Kreds made with it, which is the honest
+   * meaning of "last looked": a poll is many requests.
+   */
+  async standingOf(
+    gitHubUserId: number,
+  ): Promise<{ scopes: readonly string[]; lastPolledAt: Date | null } | null> {
+    const [row] = await this.db
+      .select({
+        scopes: delegatedAuthorizations.scopes,
+        lastPolledAt: delegatedAuthorizations.lastPolledAt,
+      })
+      .from(delegatedAuthorizations)
+      .where(
+        and(
+          eq(delegatedAuthorizations.gitHubUserId, gitHubUserId),
+          isNull(delegatedAuthorizations.revokedAt),
+        ),
+      )
+      .limit(1);
+    return row ? { scopes: row.scopes, lastPolledAt: row.lastPolledAt } : null;
+  }
+
+  /**
    * Who to poll next, least recently polled first.
+   *
+   * Only people with a live grant **and** an active consent to have their
+   * public activity read. A token on its own is not consent: somebody who
+   * signed in before Kreds asked has neither agreed nor been asked, and is not
+   * polled until they do.
    *
    * Fair rather than fast: a user Kreds has never polled sorts ahead of one it
    * polled a minute ago, so a new authorization is not stuck behind a busy one.
@@ -238,18 +309,37 @@ export class Authorizations {
    * `withToken`, which re-checks revocation at the moment of use.
    */
   async dueForPolling(limit: number): Promise<PollCandidate[]> {
+    const activeConsent = (kind: ActivityConsentKind) =>
+      this.db
+        .select({ id: activityConsents.id })
+        .from(activityConsents)
+        .where(
+          and(
+            eq(activityConsents.gitHubUserId, delegatedAuthorizations.gitHubUserId),
+            eq(activityConsents.kind, kind),
+            isNull(activityConsents.revokedAt),
+          ),
+        );
+
     const rows = await this.db
       .select({
         gitHubUserId: delegatedAuthorizations.gitHubUserId,
         scopes: delegatedAuthorizations.scopes,
+        privateConsent: exists(activeConsent("PRIVATE_ACTIVITY")).mapWith(Boolean),
       })
       .from(delegatedAuthorizations)
-      .where(isNull(delegatedAuthorizations.revokedAt))
+      .where(
+        and(isNull(delegatedAuthorizations.revokedAt), exists(activeConsent("PUBLIC_ACTIVITY"))),
+      )
       // `asc` defaults to NULLS LAST in Postgres, which would sort a
       // never-polled authorization behind every polled one and leave a new
       // grant waiting on a busy account.
       .orderBy(sql`${delegatedAuthorizations.lastPolledAt} asc nulls first`)
       .limit(limit);
-    return rows.map((row) => ({ gitHubUserId: row.gitHubUserId, scopes: row.scopes }));
+    return rows.map((row) => ({
+      gitHubUserId: row.gitHubUserId,
+      scopes: row.scopes,
+      consents: row.privateConsent ? ["PUBLIC_ACTIVITY", "PRIVATE_ACTIVITY"] : ["PUBLIC_ACTIVITY"],
+    }));
   }
 }

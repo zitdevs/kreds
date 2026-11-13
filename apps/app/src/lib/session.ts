@@ -1,3 +1,4 @@
+import { requestJson } from "./http";
 import { api } from "./site";
 
 export interface SessionUser {
@@ -13,18 +14,13 @@ export interface SessionUser {
 /**
  * Ask the API who the caller is.
  *
- * `credentials: "include"` is the whole point: the session cookie is set on the
- * API's origin, and a cross-origin fetch drops cookies unless it is asked not
- * to. Without it this always returns null and the cause is invisible.
+ * `requestJson` sends the cookie: the session is set on the API's origin, and a
+ * cross-origin fetch drops cookies unless it is asked not to. Without that this
+ * always returns null and the cause is invisible.
  */
 export async function fetchSession(): Promise<SessionUser | null> {
   try {
-    const response = await fetch(api.session, {
-      credentials: "include",
-      headers: { Accept: "application/json" },
-    });
-    if (!response.ok) return null;
-    const body = (await response.json()) as { user: SessionUser | null };
+    const body = await requestJson<{ user: SessionUser | null }>(api.session);
     return body.user;
   } catch {
     // The API being unreachable is not the same as being signed out, but from

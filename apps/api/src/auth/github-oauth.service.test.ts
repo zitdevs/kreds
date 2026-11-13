@@ -51,7 +51,9 @@ describe("a refused token exchange says why", () => {
     tokenEndpointReturns(JSON.stringify({ error: "incorrect_client_credentials" }));
     const warn = captureWarnings();
 
-    await expect(service().exchange("code-1")).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(service().withSignInGrant("code-1", async () => undefined)).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("incorrect_client_credentials"));
   });
 
@@ -61,7 +63,9 @@ describe("a refused token exchange says why", () => {
     );
     const warn = captureWarnings();
 
-    await expect(service().exchange("code-2")).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(service().withSignInGrant("code-2", async () => undefined)).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("The code expired."));
   });
 
@@ -69,7 +73,9 @@ describe("a refused token exchange says why", () => {
     tokenEndpointReturns("<html>502 Bad Gateway</html>", 502);
     const warn = captureWarnings();
 
-    await expect(service().exchange("code-3")).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(service().withSignInGrant("code-3", async () => undefined)).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("502"));
   });
 
@@ -87,7 +93,9 @@ describe("a refused token exchange says why", () => {
     tokenEndpointReturns(JSON.stringify({ access_token: token }));
     const warn = captureWarnings();
 
-    await expect(service().exchange("code-4")).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(service().withSignInGrant("code-4", async () => undefined)).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
 
     expect(warn).toHaveBeenCalled();
     for (const call of warn.mock.calls) {
@@ -173,5 +181,53 @@ describe("the private-ingestion grant", () => {
     );
     const seen = await service().withGrantedToken("code-11", async (g) => g.token === "gho_fake");
     expect(seen).toBe(true);
+  });
+});
+
+/**
+ * Signing in now keeps its token, so Kreds can read the person's public
+ * activity they just agreed to. The token still never leaves through a return
+ * value: it goes to the callback that seals it.
+ */
+describe("the sign-in grant", () => {
+  function gitHubAnswers(token: Record<string, unknown>, user: Record<string, unknown>) {
+    const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => {
+      if (String(url).includes("/login/oauth/access_token")) {
+        return new Response(JSON.stringify(token), { status: 200 });
+      }
+      if (String(url) === "https://api.github.com/user") {
+        return new Response(JSON.stringify(user), { status: 200 });
+      }
+      throw new Error(`unexpected request to ${String(url)}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
+  }
+
+  it("hands over who signed in and what GitHub granted, on the sign-in callback", async () => {
+    const fetchMock = gitHubAnswers(
+      { access_token: "gho_fake", token_type: "bearer", scope: "read:org,read:user" },
+      { id: 4242, login: "isaac", name: "Isaac" },
+    );
+
+    const seen = await service().withSignInGrant("code-12", async (user, grant) => ({
+      login: user.login,
+      displayName: user.displayName,
+      gitHubUserId: grant.gitHubUserId,
+      scopes: grant.scopes,
+      hasToken: grant.token === "gho_fake",
+    }));
+
+    expect(seen).toEqual({
+      login: "isaac",
+      displayName: "Isaac",
+      gitHubUserId: 4242,
+      scopes: ["read:org", "read:user"],
+      hasToken: true,
+    });
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toMatchObject({
+      redirect_uri: "https://api.kreds.sh/auth/callback/github",
+    });
   });
 });

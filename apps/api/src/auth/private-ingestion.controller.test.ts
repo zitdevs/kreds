@@ -7,6 +7,8 @@ import {
 import type { Request, Response } from "express";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { PRIVATE_ACTIVITY_CONSENT } from "@kreds/domain";
+
 import { GitHubOAuthService } from "./github-oauth.service.js";
 import { PrivateIngestionController } from "./private-ingestion.controller.js";
 import { OAUTH_STATE_COOKIE, SESSION_COOKIE, SessionService } from "./session.service.js";
@@ -38,6 +40,7 @@ function harness(options: { cipherConfigured?: boolean } = {}) {
   const sessions = new SessionService(config);
   const oauth = new GitHubOAuthService(config);
   const authorizations = { grant: vi.fn(async () => undefined) };
+  const consents = { record: vi.fn(async () => undefined) };
   const identities = {
     findAccount: vi.fn(async (id: number) =>
       id === ISAAC ? { user: { id: "user-isaac" }, identity: { login: "isaac" } } : null,
@@ -49,6 +52,7 @@ function harness(options: { cipherConfigured?: boolean } = {}) {
     identities as never,
     config,
     options.cipherConfigured === false ? null : (authorizations as never),
+    consents as never,
   );
 
   /** A session cookie for Isaac, issued by the real service. */
@@ -58,7 +62,7 @@ function harness(options: { cipherConfigured?: boolean } = {}) {
     return cookies.get(SESSION_COOKIE) as string;
   };
 
-  return { controller, sessions, authorizations, identities, signedIn };
+  return { controller, sessions, authorizations, consents, identities, signedIn };
 }
 
 /** GitHub's token endpoint and `/user`, answering for whoever authorized. */
@@ -169,6 +173,71 @@ describe("completing the private-ingestion grant", () => {
   });
 
   /**
+   * 26: public and private are "two different decisions with two different
+   * grants", so the private one is recorded as its own consent, with the
+   * version of the text shown before the person went to GitHub.
+   */
+  it("records the private-activity consent with the version sealed at the start", async () => {
+    gitHub({ scope: "read:org,read:user,repo" });
+    const h = harness();
+    const { request, state } = roundTrip(h);
+
+    await h.controller.callback(request, fakeResponse().response, "code-1b", state);
+
+    expect(h.consents.record).toHaveBeenCalledWith({
+      gitHubUserId: ISAAC,
+      userId: "user-isaac",
+      kind: "PRIVATE_ACTIVITY",
+      version: PRIVATE_ACTIVITY_CONSENT.version,
+      at: expect.any(Date),
+    });
+  });
+
+  it("records the version in the state, not whatever is current on return", async () => {
+    gitHub({ scope: "read:org,read:user,repo" });
+    const h = harness();
+    const issuing = fakeResponse();
+    const state = h.sessions.issueState(
+      issuing.response,
+      "PRIVATE_INGESTION",
+      "private-activity-v1-as-shown",
+    );
+    const request = {
+      cookies: {
+        [SESSION_COOKIE]: h.signedIn(),
+        [OAUTH_STATE_COOKIE]: issuing.cookies.get(OAUTH_STATE_COOKIE),
+      },
+    } as unknown as Request;
+
+    await h.controller.callback(request, fakeResponse().response, "code-1c", state);
+
+    expect(h.consents.record).toHaveBeenCalledWith(
+      expect.objectContaining({ version: "private-activity-v1-as-shown" }),
+    );
+  });
+
+  /** Nobody was shown the private text, so there is nothing to have agreed to. */
+  it("refuses a round trip that carried no consent, storing nothing", async () => {
+    gitHub({ scope: "read:org,read:user,repo" });
+    const h = harness();
+    const issuing = fakeResponse();
+    const state = h.sessions.issueState(issuing.response, "PRIVATE_INGESTION");
+    const request = {
+      cookies: {
+        [SESSION_COOKIE]: h.signedIn(),
+        [OAUTH_STATE_COOKIE]: issuing.cookies.get(OAUTH_STATE_COOKIE),
+      },
+    } as unknown as Request;
+
+    await expect(
+      h.controller.callback(request, fakeResponse().response, "code-1d", state),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(h.authorizations.grant).not.toHaveBeenCalled();
+    expect(h.consents.record).not.toHaveBeenCalled();
+  });
+
+  /**
    * Reach is read from what GitHub granted. A user who declined `repo` on
    * GitHub's screen has authorized public reading, and is told so.
    */
@@ -196,6 +265,7 @@ describe("completing the private-ingestion grant", () => {
     await h.controller.callback(request, response, "code-3", state);
 
     expect(h.authorizations.grant).not.toHaveBeenCalled();
+    expect(h.consents.record).not.toHaveBeenCalled();
     expect(redirect).toHaveBeenCalledWith("https://app.kreds.sh/?grant=none");
   });
 
@@ -213,6 +283,7 @@ describe("completing the private-ingestion grant", () => {
       h.controller.callback(request, fakeResponse().response, "code-4", state),
     ).rejects.toThrow(ForbiddenException);
     expect(h.authorizations.grant).not.toHaveBeenCalled();
+    expect(h.consents.record).not.toHaveBeenCalled();
   });
 
   it("refuses a callback with no session", async () => {

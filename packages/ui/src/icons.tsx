@@ -157,3 +157,16 @@ export const Sparkle = (p: IconProps) => (
     <path d="m12 3 1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4L12 3Z" />
   </Base>
 );
+
+export const ExternalLink = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+  </Base>
+);
+
+export const Lock = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="5" y="10.5" width="14" height="10" rx="2" />
+    <path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3" />
+  </Base>
+);

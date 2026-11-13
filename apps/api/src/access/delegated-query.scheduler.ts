@@ -12,6 +12,7 @@ import { Authorizations } from "@kreds/database";
 
 import type { Env } from "../config/env.js";
 import { DelegatedQueryService } from "./delegated-query.service.js";
+import { scopesWithinConsent } from "./scopes.js";
 
 /**
  * How many authorizations one sweep reads, least recently polled first.
@@ -25,7 +26,7 @@ const SWEEP_SIZE = 100;
 
 /**
  * What makes the delegated-query channel run: Kreds asking GitHub, on a
- * schedule, for the activity of users who opted in.
+ * schedule, for the activity of users who agreed to it.
  *
  * 26: "Kreds asks the provider (server-side query with delegated
  * authorization)". The service knows how to ask; this decides when.
@@ -100,8 +101,14 @@ export class DelegatedQueryScheduler implements OnApplicationBootstrap, OnApplic
       const due = await this.authorizations.dueForPolling(SWEEP_SIZE);
       for (const candidate of due) {
         if (this.stopped) return;
+        // The token reaches what GitHub granted; Kreds reads what the person
+        // agreed to. `dueForPolling` already leaves out anybody without the
+        // public consent, and this holds the line again where the reading
+        // happens, narrowing a private grant the private consent does not cover.
+        const scopes = scopesWithinConsent(candidate.scopes, candidate.consents);
+        if (!scopes) continue;
         try {
-          await this.query.poll(candidate, new Date());
+          await this.query.poll({ ...candidate, scopes }, new Date());
         } catch {
           // Never the error itself: it may carry a request, and the request
           // was made with somebody's token.

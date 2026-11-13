@@ -2,11 +2,11 @@ export const site = {
   name: "Kreds",
   domain: "kreds.sh",
   url: "https://kreds.sh",
-  tagline: "The leaderboard for your engineering team.",
-  // Kept under ~155 characters so search results show the whole thing,
+  tagline: "The currency of open-source contribution.",
+  // Kept to about 160 characters so search results show the whole thing,
   // differentiating clause included.
   description:
-    "Merged pull requests, code reviews and closed issues become a live leaderboard for your engineering team, weighted so helping others ship wins.",
+    "Merged PRs and resolved issues in public open-source repos create KRED; reviews circulate it. All verified work earns points, but private work never earns KRED.",
   author: "ZitDevs",
   authorUrl: "https://zitdevs.com",
 } as const;

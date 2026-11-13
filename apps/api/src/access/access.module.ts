@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
-import { Authorizations, TokenCipher, type RateBudget } from "@kreds/database";
+import { Authorizations, Consents, TokenCipher, type RateBudget } from "@kreds/database";
 
 import { SessionModule } from "../auth/session.module.js";
 import { DATABASE } from "../database/database.module.js";
@@ -58,10 +58,18 @@ import { DelegatedQueryService } from "./delegated-query.service.js";
       useFactory: (db: never, cipher: TokenCipher | null) =>
         cipher ? new Authorizations(db, cipher) : null,
     },
+    {
+      // Always present, unlike `Authorizations`: recording and revoking a
+      // decision needs no key. Without one, nothing is ever recorded, because
+      // a consent is only recorded alongside a stored grant.
+      provide: Consents,
+      inject: [DATABASE],
+      useFactory: (db: never) => new Consents(db),
+    },
     DelegatedQueryService,
     DelegatedQueryScheduler,
   ],
-  exports: [Authorizations, DelegatedQueryService],
+  exports: [Authorizations, Consents, DelegatedQueryService],
 })
 export class AccessModule {}
 

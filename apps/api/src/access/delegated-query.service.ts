@@ -139,7 +139,8 @@ export class DelegatedQueryService {
    * Read one user's merged pull requests and submitted reviews, verify each
    * against its canonical record, and hand the verified ones to ingestion.
    *
-   * @param candidate who to read, and the scopes GitHub actually granted them.
+   * @param candidate who to read, and the scopes GitHub actually granted them,
+   * already bounded by what the person consented to (the scheduler does that).
    * Reach is computed from those, never from what Kreds asked for: a user can
    * narrow a grant on GitHub's own screen.
    *
@@ -148,7 +149,10 @@ export class DelegatedQueryService {
    * stops between two requests instead of finishing the batch with a token the
    * user has taken back.
    */
-  async poll(candidate: PollCandidate, now: Date): Promise<DelegatedQueryResult> {
+  async poll(
+    candidate: Pick<PollCandidate, "gitHubUserId" | "scopes">,
+    now: Date,
+  ): Promise<DelegatedQueryResult> {
     const { gitHubUserId } = candidate;
     const reach = reachOf(candidate.scopes);
 

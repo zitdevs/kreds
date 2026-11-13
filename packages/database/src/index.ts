@@ -29,7 +29,10 @@ export {
   ContributionLedger,
   type AwardInput,
   type AwardResult,
+  type EntryCursor,
   type InvalidationTrigger,
+  type OwnEntry,
+  type OwnSummary,
   type LeaderboardRow,
 } from "./repositories/contribution-ledger.js";
 export { InsufficientBalanceError, Ledger, type PostedTransaction } from "./repositories/ledger.js";
@@ -40,9 +43,17 @@ export {
   Authorizations,
   AuthorizationRevokedError,
   RateBudgetExhaustedError,
+  type GrantOptions,
   type PollCandidate,
   type RateBudget,
 } from "./repositories/authorizations.js";
+export {
+  Consents,
+  UnpublishedConsentError,
+  type ActiveConsent,
+  type ActiveConsents,
+  type ConsentRecordInput,
+} from "./repositories/consents.js";
 export {
   redacted,
   TokenCipher,

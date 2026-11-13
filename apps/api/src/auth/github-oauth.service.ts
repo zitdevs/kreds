@@ -163,15 +163,22 @@ export class GitHubOAuthService {
   }
 
   /**
-   * Trade the one-time code for a token, then ask GitHub who it belongs to.
+   * Trade a sign-in code for a token, ask GitHub who it belongs to, and hand
+   * both to `use`.
    *
-   * The token is used once and never stored. Kreds does not act on anyone's
-   * behalf with this grant: it exists to answer "who are you", and a token kept
-   * around is a credential that can leak without ever being used.
+   * The sign-in grant answers "who are you", and, for a person who agreed to
+   * the public-activity consent shown above the button, is also what Kreds
+   * reads their public activity with. So `use` may store it. It never leaves
+   * through this method's return value, and the scopes are what GitHub
+   * granted.
    */
-  async exchange(code: string): Promise<GitHubUser> {
-    const { token } = await this.requestToken(code, "SIGN_IN");
-    return this.fetchUser(token);
+  async withSignInGrant<T>(
+    code: string,
+    use: (user: GitHubUser, grant: GrantedToken) => Promise<T>,
+  ): Promise<T> {
+    const { token, scopes } = await this.requestToken(code, "SIGN_IN");
+    const user = await this.fetchUser(token);
+    return use(user, { gitHubUserId: user.gitHubUserId, token, scopes });
   }
 
   /**

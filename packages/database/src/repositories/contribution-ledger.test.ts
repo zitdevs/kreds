@@ -196,6 +196,173 @@ describeWithDatabase("ContributionLedger", () => {
   });
 
   /**
+   * A signed-in user's own history, for their dashboard. Only ever their own
+   * rows: the caller is session-bound, and this query is the second guarantee.
+   */
+  describe("one user's own entries", () => {
+    let repositoryId: string;
+
+    beforeEach(async () => {
+      await db.execute(sql`truncate table domain_events, repositories cascade`);
+      const rows = await db.execute<{ id: string }>(sql`
+        insert into repositories (github_repository_id, name_with_owner, is_private, is_personally_owned)
+        values (77001, 'isaac/secret-side-project', true, true) returning id`);
+      repositoryId = [...rows][0]?.id as string;
+      await db.execute(sql`
+        insert into domain_events (idempotency_key, type, data, occurred_at) values
+        ('PULL_REQUEST_MERGED:77001:412', 'PULL_REQUEST_MERGED', '{"pullRequestNumber":412}', now()),
+        ('REVIEW_SUBMITTED:55001', 'REVIEW_SUBMITTED', '{"pullRequestNumber":9}', now())`);
+    });
+
+    const at = (iso: string) => new Date(iso);
+
+    it("lists only this user's awards, newest first, with the repository and source", async () => {
+      await ledger.award(
+        award({ repositoryId, observed: false, occurredAt: at("2026-08-20T10:00:00Z") }),
+      );
+      await ledger.award(
+        award({
+          idempotencyKey: "REVIEW_SUBMITTED:55001",
+          kind: "CODE_REVIEW",
+          repositoryId,
+          observed: true,
+          points: 12,
+          occurredAt: at("2026-08-21T10:00:00Z"),
+        }),
+      );
+      await ledger.award(
+        award({ idempotencyKey: "PULL_REQUEST_MERGED:77001:500", gitHubUserId: JOSE }),
+      );
+
+      const page = await ledger.entriesFor(ISAAC, { limit: 10 });
+
+      expect(page.next).toBeNull();
+      expect(page.entries).toEqual([
+        expect.objectContaining({
+          kind: "CODE_REVIEW",
+          points: 12,
+          observed: true,
+          invalidated: false,
+          repository: { nameWithOwner: "isaac/secret-side-project", isPrivate: true },
+          source: { pullRequestNumber: 9, reviewId: 55001 },
+        }),
+        expect.objectContaining({
+          kind: "PULL_REQUEST_MERGED",
+          points: 40,
+          observed: false,
+          rulesVersion: "v0.4",
+          source: { pullRequestNumber: 412, reviewId: null },
+        }),
+      ]);
+    });
+
+    /** 05: a correction is a second row. The award stays visible, marked, never hidden. */
+    it("shows an invalidated award as invalidated rather than hiding it", async () => {
+      await ledger.award(award());
+      await ledger.invalidate(award().idempotencyKey, "PR_REVERTED");
+
+      const page = await ledger.entriesFor(ISAAC, { limit: 10 });
+
+      expect(page.entries).toHaveLength(1);
+      expect(page.entries[0]).toMatchObject({ points: 40, invalidated: true });
+    });
+
+    it("reads an unknown repository and source as unknown", async () => {
+      await ledger.award(award({ idempotencyKey: "PULL_REQUEST_MERGED:1:1" }));
+
+      const [entry] = (await ledger.entriesFor(ISAAC, { limit: 10 })).entries;
+
+      expect(entry).toMatchObject({
+        repository: null,
+        source: { pullRequestNumber: null, reviewId: null },
+      });
+    });
+
+    it("pages with a cursor, without repeating or skipping an entry", async () => {
+      for (let day = 1; day <= 5; day += 1) {
+        await ledger.award(
+          award({
+            idempotencyKey: `PULL_REQUEST_MERGED:1:${day}`,
+            // Three on the same instant, so a page boundary falls inside the
+            // tie and the id tiebreak is what keeps the cursor exact.
+            occurredAt: at(`2026-08-0${Math.min(day, 3)}T10:00:00Z`),
+          }),
+        );
+      }
+
+      const seen: string[] = [];
+      let cursor: { occurredAt: Date; id: string } | null = null;
+      do {
+        const page = await ledger.entriesFor(ISAAC, {
+          limit: 2,
+          ...(cursor ? { before: cursor } : {}),
+        });
+        expect(page.entries.length).toBeLessThanOrEqual(2);
+        seen.push(...page.entries.map((entry) => entry.id));
+        cursor = page.next;
+      } while (cursor);
+
+      expect(seen).toHaveLength(5);
+      expect(new Set(seen).size).toBe(5);
+    });
+  });
+
+  describe("one user's summary", () => {
+    it("totals as the score does, ranks as the leaderboard does, and counts standing work by kind", async () => {
+      await ledger.award(award({ points: 30 }));
+      await ledger.award(
+        award({ idempotencyKey: "REVIEW_SUBMITTED:1", kind: "CODE_REVIEW", points: 10 }),
+      );
+      await ledger.award(award({ idempotencyKey: "PULL_REQUEST_MERGED:1:2", points: 5 }));
+      await ledger.invalidate("PULL_REQUEST_MERGED:1:2", "PR_REVERTED");
+      await ledger.award(
+        award({ idempotencyKey: "PULL_REQUEST_MERGED:9:1", gitHubUserId: JOSE, points: 70 }),
+      );
+
+      const summary = await ledger.summaryFor(ISAAC);
+      const board = await ledger.leaderboard();
+
+      expect(summary.points).toBe((await ledger.scoreFor(ISAAC)).points);
+      expect(summary.points).toBe(40);
+      expect(summary.rank).toBe(2);
+      expect(board.findIndex((row) => row.gitHubUserId === ISAAC) + 1).toBe(summary.rank);
+      expect(summary.byKind).toEqual({
+        PULL_REQUEST_MERGED: 1,
+        CODE_REVIEW: 1,
+        ISSUE_RESOLVED: 0,
+        REVIEW_FOLLOW_UP: 0,
+      });
+    });
+
+    it("shares a rank on equal points, as the leaderboard does", async () => {
+      await ledger.award(award({ points: 70 }));
+      await ledger.award(
+        award({ idempotencyKey: "PULL_REQUEST_MERGED:9:1", gitHubUserId: JOSE, points: 70 }),
+      );
+
+      expect((await ledger.summaryFor(ISAAC)).rank).toBe(1);
+    });
+
+    /** Dense: two people tied above share one rank, so the next is one below them. */
+    it("counts distinct higher totals, not people", async () => {
+      await ledger.award(award({ points: 10 }));
+      for (const [key, who] of [
+        ["PULL_REQUEST_MERGED:9:1", JOSE],
+        ["PULL_REQUEST_MERGED:9:2", gitHubUserId(7777)],
+      ] as const) {
+        await ledger.award(award({ idempotencyKey: key, gitHubUserId: who, points: 70 }));
+      }
+
+      expect((await ledger.summaryFor(ISAAC)).rank).toBe(2);
+    });
+
+    /** The leaderboard lists nobody at zero, so there is no rank to report. */
+    it("has no rank with no standing points", async () => {
+      expect(await ledger.summaryFor(ISAAC)).toMatchObject({ points: 0, rank: null });
+    });
+  });
+
+  /**
    * The tally the chapter 24 cap is applied on. It only means something if it
    * counts exactly the unobserved points that are still standing, inside the
    * window being asked about.

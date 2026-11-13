@@ -35,7 +35,7 @@ export function Footer() {
   return (
     <SiteFooter
       groups={groups}
-      tagline={`${site.tagline} Open source, self-hostable, and free for open-source teams.`}
+      tagline={`${site.tagline} Itself open source, self-hostable, and free for open-source teams.`}
       githubUrl={links.github}
       githubLabel="zitdevs/kreds"
       author={site.author}

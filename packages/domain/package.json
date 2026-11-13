@@ -10,6 +10,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./activity-consent": {
+      "types": "./dist/access/activity-consent.d.ts",
+      "default": "./dist/access/activity-consent.js"
     }
   },
   "scripts": {

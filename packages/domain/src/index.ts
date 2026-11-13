@@ -329,6 +329,16 @@ export {
 } from "./access/consent.js";
 
 export {
+  ACTIVITY_CONSENT_KINDS,
+  CURRENT_ACTIVITY_CONSENT,
+  PRIVATE_ACTIVITY_CONSENT,
+  PUBLIC_ACTIVITY_CONSENT,
+  publishedActivityConsent,
+  type ActivityConsentKind,
+  type ActivityConsentTerms,
+} from "./access/activity-consent.js";
+
+export {
   capUnobserved,
   NOBODY_OBSERVED,
   OBSERVED_BY_REPOSITORY_HISTORY,

@@ -20,6 +20,17 @@ export interface SessionPayload {
  */
 export type OAuthPurpose = "SIGN_IN" | "PRIVATE_INGESTION";
 
+/** What a valid OAuth state opens to, once its nonce matched. */
+export interface OAuthState {
+  readonly purpose: OAuthPurpose;
+  /**
+   * The version of the consent text the person was shown before being sent to
+   * GitHub, chosen by the server when it started the round trip. `null` for a
+   * round trip that showed none. Sealed, so the browser cannot change it.
+   */
+  readonly consentVersion: string | null;
+}
+
 export const SESSION_COOKIE = "kreds_session";
 export const OAUTH_STATE_COOKIE = "kreds_oauth_state";
 
@@ -114,9 +125,16 @@ export class SessionService {
    * Without it, anyone can send a victim to our callback carrying an attacker's
    * authorization code and silently sign them into the attacker's account.
    */
-  issueState(response: Response, purpose: OAuthPurpose = "SIGN_IN"): string {
+  issueState(
+    response: Response,
+    purpose: OAuthPurpose = "SIGN_IN",
+    consentVersion?: string,
+  ): string {
     const nonce = randomBytes(16).toString("base64url");
-    const token = this.seal({ nonce, purpose }, STATE_TTL_SECONDS);
+    const token = this.seal(
+      { nonce, purpose, ...(consentVersion === undefined ? {} : { consentVersion }) },
+      STATE_TTL_SECONDS,
+    );
     response.cookie(OAUTH_STATE_COOKIE, token, {
       httpOnly: true,
       secure: this.secureCookies,
@@ -131,20 +149,28 @@ export class SessionService {
    * @param purpose the decision this callback completes. A state sealed for a
    * different one is refused exactly like a forged one. A state with no purpose
    * predates the field and can only have been issued for sign-in.
+   *
+   * @returns the opened state, or `null` for anything that does not match.
    */
   consumeState(
     response: Response,
     cookie: string | undefined,
     returned: string | undefined,
     purpose: OAuthPurpose = "SIGN_IN",
-  ): boolean {
+  ): OAuthState | null {
     response.clearCookie(OAUTH_STATE_COOKIE, { path: "/" });
-    const opened = this.open<{ nonce: string; purpose?: OAuthPurpose }>(cookie);
-    if (!opened || !returned) return false;
-    if ((opened.purpose ?? "SIGN_IN") !== purpose) return false;
+    const opened = this.open<{ nonce: string; purpose?: OAuthPurpose; consentVersion?: string }>(
+      cookie,
+    );
+    if (!opened || !returned) return null;
+    if ((opened.purpose ?? "SIGN_IN") !== purpose) return null;
 
     const expected = Buffer.from(opened.nonce);
     const actual = Buffer.from(returned);
-    return expected.length === actual.length && timingSafeEqual(expected, actual);
+    if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) return null;
+    return {
+      purpose,
+      consentVersion: typeof opened.consentVersion === "string" ? opened.consentVersion : null,
+    };
   }
 }

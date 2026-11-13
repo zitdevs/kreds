@@ -11,11 +11,42 @@ import {
 } from "@nestjs/common";
 import type { Request } from "express";
 
-import { Authorizations, IdentityRepository } from "@kreds/database";
-import { CLIENT_ROLES, INGESTION_MODES } from "@kreds/domain";
+import { Authorizations, Consents, IdentityRepository, type ActiveConsent } from "@kreds/database";
+import { ACTIVITY_CONSENT_KINDS, CLIENT_ROLES, INGESTION_MODES } from "@kreds/domain";
 
 import { SessionService } from "../auth/session.service.js";
 import { signedInUser } from "../auth/signed-in.js";
+import { consentedReach, type IngestionReach } from "./scopes.js";
+
+/** An active consent as the dashboard reads it. */
+export interface ConsentStatus {
+  /** The version of the text the person agreed to. */
+  readonly version: string;
+  /** ISO 8601. */
+  readonly grantedAt: string;
+}
+
+/** What the owner's dashboard reads about their own grant. */
+export interface AuthorizationStatus {
+  readonly gitHubUserId: number;
+  /** A live grant is stored. On its own, not permission to read anything. */
+  readonly authorized: boolean;
+  readonly delegatedQueryConfigured: boolean;
+  /**
+   * What Kreds actually reads: the grant's reach, bounded by consent. `null`
+   * with no live grant or no public-activity consent, which is the state of
+   * somebody who signed in before Kreds asked.
+   */
+  readonly reach: IngestionReach | null;
+  /** ISO 8601, or `null` before Kreds has used the grant. */
+  readonly lastPolledAt: string | null;
+  readonly publicConsent: ConsentStatus | null;
+  readonly privateConsent: ConsentStatus | null;
+}
+
+function consentStatus(consent: ActiveConsent | null): ConsentStatus | null {
+  return consent ? { version: consent.version, grantedAt: consent.grantedAt.toISOString() } : null;
+}
 
 /**
  * A user's control over their own authorization.
@@ -31,7 +62,8 @@ import { signedInUser } from "../auth/signed-in.js";
  *
  * The `DELETE` here is the only write in the module, and what it writes is a
  * revocation. There is deliberately no `POST`: granting happens through GitHub's
- * OAuth redirect (`/auth/github/private-ingestion`), where the token comes back
+ * OAuth redirects (`/auth/github` for public activity at sign-in,
+ * `/auth/github/private-ingestion` for private work), where the token comes back
  * from GitHub rather than from the browser, which is the same rule applied to
  * the grant itself.
  */
@@ -41,6 +73,7 @@ export class AuthorizationController {
     private readonly sessions: SessionService,
     private readonly identities: IdentityRepository,
     @Optional() @Inject(Authorizations) private readonly authorizations: Authorizations | null,
+    private readonly consents: Consents,
   ) {}
 
   /**
@@ -72,16 +105,34 @@ export class AuthorizationController {
     };
   }
 
+  /**
+   * Whether Kreds may currently look, how far, what the person agreed to, and
+   * when it last looked.
+   *
+   * `reach` is read from the scopes GitHub granted, never from what Kreds asked
+   * for, and bounded by the person's active consents: it is what the sweep
+   * reads. `lastPolledAt` is the last request Kreds made with the grant. None
+   * of it carries anything sealed.
+   */
   @Get("status/:gitHubUserId")
-  async status(@Req() request: Request, @Param("gitHubUserId", ParseIntPipe) gitHubUserId: number) {
+  async status(
+    @Req() request: Request,
+    @Param("gitHubUserId", ParseIntPipe) gitHubUserId: number,
+  ): Promise<AuthorizationStatus> {
     await this.own(request, gitHubUserId);
-    if (!this.authorizations) {
-      return { gitHubUserId, authorized: false, delegatedQueryConfigured: false };
-    }
+    const standing = this.authorizations
+      ? await this.authorizations.standingOf(gitHubUserId)
+      : null;
+    const active = await this.consents.activeOf(gitHubUserId);
+    const kinds = ACTIVITY_CONSENT_KINDS.filter((kind) => active[kind] !== null);
     return {
       gitHubUserId,
-      authorized: await this.authorizations.isAuthorized(gitHubUserId),
-      delegatedQueryConfigured: true,
+      authorized: standing !== null,
+      delegatedQueryConfigured: this.authorizations !== null,
+      reach: standing ? consentedReach(standing.scopes, kinds) : null,
+      lastPolledAt: standing?.lastPolledAt?.toISOString() ?? null,
+      publicConsent: consentStatus(active.PUBLIC_ACTIVITY),
+      privateConsent: consentStatus(active.PRIVATE_ACTIVITY),
     };
   }
 
@@ -92,14 +143,23 @@ export class AuthorizationController {
    * observed." What it does not do is undo anything. "Recorded history is
    * unaffected. The ledger is immutable", and "Outstanding debt survives
    * revocation, exactly as it survives leaving an organization."
+   *
+   * The grant and every active consent go together: taking access back is
+   * also withdrawing the agreement, and both are marked rather than deleted,
+   * so the record of what was agreed and when survives.
    */
   @Delete("authorization/:gitHubUserId")
   async revoke(@Req() request: Request, @Param("gitHubUserId", ParseIntPipe) gitHubUserId: number) {
     await this.own(request, gitHubUserId);
-    if (!this.authorizations) return { gitHubUserId, revoked: false };
+    const at = new Date();
+    const grantRevoked = this.authorizations
+      ? await this.authorizations.revoke(gitHubUserId, at)
+      : false;
+    const consentsRevoked = await this.consents.revokeAll(gitHubUserId, at);
     return {
       gitHubUserId,
-      revoked: await this.authorizations.revoke(gitHubUserId, new Date()),
+      revoked: grantRevoked || consentsRevoked > 0,
+      consentsRevoked,
       historyRetained: true,
     };
   }

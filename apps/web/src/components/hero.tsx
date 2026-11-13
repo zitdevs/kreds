@@ -30,13 +30,13 @@ export function Hero() {
           </Link>
 
           <h1 className="text-gradient mt-7 text-4xl font-semibold tracking-tight text-balance sm:text-6xl sm:leading-[1.05]">
-            The leaderboard for your engineering team.
+            The currency of open-source contribution.
           </h1>
 
           <p className="text-ink-dim mx-auto mt-6 max-w-xl text-base leading-relaxed text-pretty sm:text-lg">
-            Merging a pull request <span className="text-ink">creates</span> KRED. Getting it
-            reviewed <span className="text-ink">costs</span> you some, paid to whoever reviewed it.
-            An economy where helping someone ship is the way to get ahead.
+            Merging a pull request in public open source <span className="text-ink">creates</span>{" "}
+            KRED. Getting it reviewed <span className="text-ink">costs</span> you some, paid to
+            whoever reviewed it. An economy where helping someone ship is the way to get ahead.
           </p>
 
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">

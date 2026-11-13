@@ -6,8 +6,16 @@ import type { PollCandidate } from "@kreds/database";
 import { DelegatedQueryScheduler } from "./delegated-query.scheduler.js";
 
 const MINUTE = 60_000;
-const ISAAC: PollCandidate = { gitHubUserId: 4242, scopes: ["read:user", "read:org", "repo"] };
-const JOSE: PollCandidate = { gitHubUserId: 5555, scopes: ["read:user", "read:org"] };
+const ISAAC: PollCandidate = {
+  gitHubUserId: 4242,
+  scopes: ["read:user", "read:org", "repo"],
+  consents: ["PUBLIC_ACTIVITY", "PRIVATE_ACTIVITY"],
+};
+const JOSE: PollCandidate = {
+  gitHubUserId: 5555,
+  scopes: ["read:user", "read:org"],
+  consents: ["PUBLIC_ACTIVITY"],
+};
 
 function config(interval?: number) {
   return {
@@ -163,5 +171,55 @@ describe("a sweep", () => {
     await vi.advanceTimersByTimeAsync(10 * MINUTE);
 
     expect(authorizations.dueForPolling).toHaveBeenCalledOnce();
+  });
+});
+
+/**
+ * A token reaches what GitHub granted; Kreds reads only what the person agreed
+ * to. 26 keeps public and private as two decisions, so a private grant without
+ * the private consent is read as public only, and a grant without the public
+ * consent is not read at all.
+ */
+describe("what a sweep reads is bounded by consent", () => {
+  it("reads a private grant as public only without the private consent", async () => {
+    const { scheduler, query } = harness({
+      interval: MINUTE,
+      due: [{ ...ISAAC, consents: ["PUBLIC_ACTIVITY"] }],
+    });
+
+    scheduler.onApplicationBootstrap();
+    await vi.advanceTimersByTimeAsync(MINUTE);
+
+    expect(query.poll.mock.calls.map(([candidate]) => candidate.scopes)).toEqual([
+      ["read:user", "read:org"],
+    ]);
+    scheduler.onApplicationShutdown();
+  });
+
+  it("reads private work for somebody who agreed to both", async () => {
+    const { scheduler, query } = harness({ interval: MINUTE, due: [ISAAC] });
+
+    scheduler.onApplicationBootstrap();
+    await vi.advanceTimersByTimeAsync(MINUTE);
+
+    expect(query.poll.mock.calls.map(([candidate]) => candidate.scopes)).toEqual([
+      ["read:user", "read:org", "repo"],
+    ]);
+    scheduler.onApplicationShutdown();
+  });
+
+  it("never polls a candidate without the public consent", async () => {
+    const { scheduler, query } = harness({
+      interval: MINUTE,
+      due: [{ ...ISAAC, consents: ["PRIVATE_ACTIVITY"] }, JOSE],
+    });
+
+    scheduler.onApplicationBootstrap();
+    await vi.advanceTimersByTimeAsync(MINUTE);
+
+    expect(query.poll.mock.calls.map(([candidate]) => candidate.gitHubUserId)).toEqual([
+      JOSE.gitHubUserId,
+    ]);
+    scheduler.onApplicationShutdown();
   });
 });
