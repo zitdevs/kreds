@@ -125,6 +125,20 @@ export const envSchema = z.object({
    */
   DELEGATED_QUERY_REQUESTS_PER_WINDOW: z.coerce.number().int().positive().default(60),
   DELEGATED_QUERY_WINDOW_MS: z.coerce.number().int().positive().default(900_000),
+
+  /**
+   * How often Kreds sweeps the users who opted in and asks GitHub for their
+   * activity, in milliseconds.
+   *
+   * Optional, and unset means no polling at all: the opt-in still stores a
+   * grant, and nothing reads with it until an operator chooses a cadence. The
+   * scheduler says so once at startup rather than staying quietly idle. Blank
+   * counts as unset, for the same secrets-manager reason as `optionalSecret`.
+   */
+  DELEGATED_QUERY_POLL_INTERVAL_MS: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.coerce.number().int().positive().optional(),
+  ),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -7,6 +7,7 @@ import { DATABASE } from "../database/database.module.js";
 import { GitHubModule } from "../github/github.module.js";
 import { RATE_BUDGET, TOKEN_CIPHER } from "./access.tokens.js";
 import { AuthorizationController } from "./authorization.controller.js";
+import { DelegatedQueryScheduler } from "./delegated-query.scheduler.js";
 import { DelegatedQueryService } from "./delegated-query.service.js";
 
 /**
@@ -55,6 +56,7 @@ import { DelegatedQueryService } from "./delegated-query.service.js";
         cipher ? new Authorizations(db, cipher) : null,
     },
     DelegatedQueryService,
+    DelegatedQueryScheduler,
   ],
   exports: [Authorizations, DelegatedQueryService],
 })
