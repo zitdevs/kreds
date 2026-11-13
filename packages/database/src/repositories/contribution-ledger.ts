@@ -97,8 +97,19 @@ export interface OwnSummary {
 }
 
 export interface LeaderboardRow {
+  /** Dense and over the whole board, so a later page does not restart at one. */
+  readonly rank: number;
   readonly gitHubUserId: GitHubUserId;
   readonly points: Points;
+}
+
+/**
+ * Where a leaderboard page ended: the last row's total and id. The board is
+ * ordered by total, highest first, then by id, so this names one position.
+ */
+export interface LeaderboardCursor {
+  readonly points: number;
+  readonly gitHubUserId: number;
 }
 
 /**
@@ -264,27 +275,62 @@ export class ContributionLedger {
    * it never reads a balance.
    */
   async leaderboard(
-    organizationId: string | null = null,
-    limit = 25,
-  ): Promise<readonly LeaderboardRow[]> {
+    organizationId: string | null,
+    page: { readonly limit: number; readonly after?: LeaderboardCursor },
+  ): Promise<{ entries: readonly LeaderboardRow[]; next: LeaderboardCursor | null }> {
     const scope = organizationId
       ? eq(contributionEntries.organizationId, organizationId)
       : undefined;
 
-    const rows = await this.db
-      .select({ gitHubUserId: contributionEntries.gitHubUserId, total: this.netPoints() })
+    const totals = this.db
+      .select({
+        gitHubUserId: contributionEntries.gitHubUserId,
+        total: this.netPoints().as("total"),
+      })
       .from(contributionEntries)
       .where(scope)
       .groupBy(contributionEntries.gitHubUserId)
-      .orderBy(sql`2 desc`)
-      .limit(limit);
+      .as("totals");
 
-    return rows
-      .map((row) => ({
-        gitHubUserId: toGitHubUserId(row.gitHubUserId),
-        points: toPoints(Math.max(0, Number(row.total ?? 0))),
-      }))
-      .filter((row) => row.points > 0);
+    // Ranked before the page is cut, so the rank is against everybody. Nobody
+    // at zero or below is listed, so nobody there takes up a rank either.
+    const ranked = this.db
+      .select({
+        gitHubUserId: totals.gitHubUserId,
+        total: totals.total,
+        rank: sql<string>`dense_rank() over (order by ${totals.total} desc)`.as("rank"),
+      })
+      .from(totals)
+      .where(sql`${totals.total} > 0`)
+      .as("ranked");
+
+    const after = page.after;
+    const rows = await this.db
+      .select({ gitHubUserId: ranked.gitHubUserId, total: ranked.total, rank: ranked.rank })
+      .from(ranked)
+      .where(
+        after
+          ? sql`(${ranked.total} < ${after.points} or (${ranked.total} = ${after.points} and ${ranked.gitHubUserId} > ${after.gitHubUserId}))`
+          : undefined,
+      )
+      // The id is a tiebreak for paging only. Equal totals share a rank.
+      .orderBy(sql`${ranked.total} desc`, ranked.gitHubUserId)
+      .limit(page.limit + 1);
+
+    const entries = rows.slice(0, page.limit).map((row): LeaderboardRow => ({
+      rank: Number(row.rank),
+      gitHubUserId: toGitHubUserId(Number(row.gitHubUserId)),
+      points: toPoints(Number(row.total)),
+    }));
+
+    const last = entries.at(-1);
+    return {
+      entries,
+      next:
+        rows.length > page.limit && last
+          ? { points: last.points, gitHubUserId: last.gitHubUserId }
+          : null,
+    };
   }
 
   /**

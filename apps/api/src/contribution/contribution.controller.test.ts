@@ -180,3 +180,71 @@ describe("GET /contributions/me/summary", () => {
     expect(ledger.summaryFor).toHaveBeenCalledWith(ISAAC);
   });
 });
+
+describe("GET /contributions/leaderboard", () => {
+  function board(
+    page: {
+      entries: unknown[];
+      next: { points: number; gitHubUserId: number } | null;
+    } = {
+      entries: [
+        { rank: 4, gitHubUserId: 7, points: 120, organizationId: "secret-org" },
+        { rank: 4, gitHubUserId: 8, points: 120 },
+      ],
+      next: { points: 120, gitHubUserId: 8 },
+    },
+  ) {
+    const ledger = { leaderboard: vi.fn(async () => page) };
+    const identities = {
+      findByGitHubUserId: vi.fn(async (id: number) => (id === 7 ? { login: "ada" } : null)),
+    };
+    const controller = new ContributionController(
+      ledger as never,
+      identities as never,
+      new SessionService(config),
+    );
+    return { controller, ledger };
+  }
+
+  /** Public, and the rank is the ledger's: global, never restarted at one on a later page. */
+  it("serves the board without a session, with the ledger's ranks", async () => {
+    const { controller, ledger } = board();
+
+    const response = await controller.leaderboard();
+
+    expect(ledger.leaderboard).toHaveBeenCalledWith(null, { limit: 25 });
+    expect(response.scope).toBe("GLOBAL");
+    expect(response.entries).toEqual([
+      { rank: 4, gitHubUserId: 7, login: "ada", points: 120 },
+      { rank: 4, gitHubUserId: 8, login: null, points: 120 },
+    ]);
+  });
+
+  it("hands out a cursor that reads the next page", async () => {
+    const { controller, ledger } = board();
+
+    const { nextCursor } = await controller.leaderboard(undefined, "10");
+    expect(nextCursor).toEqual(expect.any(String));
+
+    await controller.leaderboard(undefined, "10", nextCursor!);
+    expect(ledger.leaderboard).toHaveBeenLastCalledWith(null, {
+      limit: 10,
+      after: { points: 120, gitHubUserId: 8 },
+    });
+  });
+
+  it("has no cursor on the last page", async () => {
+    const { controller } = board({ entries: [], next: null });
+    expect((await controller.leaderboard()).nextCursor).toBeNull();
+  });
+
+  it("refuses a cursor it did not issue", async () => {
+    const { controller, ledger } = board();
+    for (const cursor of ["nonsense", Buffer.from('{"p":"x","u":1}').toString("base64url")]) {
+      await expect(controller.leaderboard(undefined, undefined, cursor)).rejects.toThrow(
+        BadRequestException,
+      );
+    }
+    expect(ledger.leaderboard).not.toHaveBeenCalled();
+  });
+});
