@@ -30,7 +30,7 @@ export function Hero() {
           </Link>
 
           <h1 className="text-gradient mt-7 text-4xl font-semibold tracking-tight text-balance sm:text-6xl sm:leading-[1.05]">
-            The leaderboard for your engineering team.
+            The currency of open-source contribution.
           </h1>
 
           <p className="text-ink-dim mx-auto mt-6 max-w-xl text-base leading-relaxed text-pretty sm:text-lg">

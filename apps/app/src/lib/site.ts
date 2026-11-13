@@ -7,7 +7,7 @@ const apiUrl = process.env["NEXT_PUBLIC_KREDS_API_URL"] ?? "http://localhost:400
 
 export const site = {
   name: "Kreds",
-  tagline: "The leaderboard for your engineering team.",
+  tagline: "The currency of open-source contribution.",
   marketing: "https://kreds.sh",
   docs: "https://docs.kreds.sh",
   github: "https://github.com/zitdevs/kreds",

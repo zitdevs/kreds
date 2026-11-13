@@ -15,7 +15,7 @@ export const contentType = "image/png";
  * So every line is its own element with an explicit width, and nothing here
  * relies on inline flow. Keep it that way.
  */
-const HEADLINE = ["The leaderboard for your", "engineering team."];
+const HEADLINE = ["The currency of", "open-source contribution."];
 
 export default function OpenGraphImage() {
   return new ImageResponse(
@@ -79,7 +79,7 @@ export default function OpenGraphImage() {
             color: "#9aa5b1",
           }}
         >
-          Weighted so helping someone ship beats shipping alone.
+          Shipping creates Kreds. Reviewing circulates them.
         </div>
       </div>
 
