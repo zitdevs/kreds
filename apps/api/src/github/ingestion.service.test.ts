@@ -192,3 +192,28 @@ describe("a failed delivery stays recoverable", () => {
     expect(events.markFailed).toHaveBeenCalledWith("raw-1", "the database went away");
   });
 });
+
+describe("every delivery records the source it came through", () => {
+  /**
+   * A05 named the sources, and new evidence is recorded under those names. A
+   * caller that names none is the App's webhook, the only source that existed
+   * before delegated query.
+   */
+  it("records an unlabelled delivery as the App's webhook", async () => {
+    const { service, events } = harness();
+    await service.ingest(delivery);
+
+    expect(events.record).toHaveBeenCalledWith(
+      expect.objectContaining({ ingestionMode: "GITHUB_APP_WEBHOOK" }),
+    );
+  });
+
+  it("records the source a caller names", async () => {
+    const { service, events } = harness();
+    await service.ingest({ ...delivery, ingestionMode: "USER_ACTIVITY_POLL" });
+
+    expect(events.record).toHaveBeenCalledWith(
+      expect.objectContaining({ ingestionMode: "USER_ACTIVITY_POLL" }),
+    );
+  });
+});

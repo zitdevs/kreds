@@ -74,3 +74,31 @@ describe("the values that are not optional stay required", () => {
     );
   });
 });
+
+describe("the delegated-query poll interval", () => {
+  /** Unset is a legitimate state: polling is off, and the scheduler says so. */
+  it("is optional, and blank means unset", () => {
+    expect(validateEnv(without()).DELEGATED_QUERY_POLL_INTERVAL_MS).toBeUndefined();
+    expect(
+      validateEnv({ ...without(), DELEGATED_QUERY_POLL_INTERVAL_MS: " " })
+        .DELEGATED_QUERY_POLL_INTERVAL_MS,
+    ).toBeUndefined();
+  });
+
+  it("reads a whole number of milliseconds", () => {
+    expect(
+      validateEnv({ ...without(), DELEGATED_QUERY_POLL_INTERVAL_MS: "600000" })
+        .DELEGATED_QUERY_POLL_INTERVAL_MS,
+    ).toBe(600_000);
+  });
+
+  /** An interval of zero would be a busy loop against GitHub, not a schedule. */
+  it("refuses zero, negatives and fractions", () => {
+    for (const value of ["0", "-1", "1.5", "soon"]) {
+      expect(
+        () => validateEnv({ ...without(), DELEGATED_QUERY_POLL_INTERVAL_MS: value }),
+        value,
+      ).toThrow(/DELEGATED_QUERY_POLL_INTERVAL_MS/);
+    }
+  });
+});

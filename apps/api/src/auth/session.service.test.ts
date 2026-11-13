@@ -177,3 +177,38 @@ describe("OAuth state ties the redirect to the callback", () => {
     expect(bad.cleared).toContain(OAUTH_STATE_COOKIE);
   });
 });
+
+/**
+ * 26: signing in and having private work ingested are "two different decisions
+ * with two different grants". A state issued for one must not complete the
+ * other, or a sign-in round trip could be replayed into the callback that
+ * stores a token.
+ */
+describe("OAuth state is bound to the decision it was issued for", () => {
+  function issued(purpose?: "SIGN_IN" | "PRIVATE_INGESTION") {
+    const service = serviceFor();
+    const issuing = fakeResponse();
+    const nonce = service.issueState(issuing.response, purpose);
+    const cookie = issuing.cookies.get(OAUTH_STATE_COOKIE)?.value;
+    return { service, nonce, cookie };
+  }
+
+  it("completes the decision it was issued for", () => {
+    const { service, nonce, cookie } = issued("PRIVATE_INGESTION");
+    expect(service.consumeState(fakeResponse().response, cookie, nonce, "PRIVATE_INGESTION")).toBe(
+      true,
+    );
+  });
+
+  it("refuses to complete a private-ingestion grant with a sign-in state", () => {
+    const { service, nonce, cookie } = issued();
+    expect(service.consumeState(fakeResponse().response, cookie, nonce, "PRIVATE_INGESTION")).toBe(
+      false,
+    );
+  });
+
+  it("refuses to complete a sign-in with a private-ingestion state", () => {
+    const { service, nonce, cookie } = issued("PRIVATE_INGESTION");
+    expect(service.consumeState(fakeResponse().response, cookie, nonce)).toBe(false);
+  });
+});

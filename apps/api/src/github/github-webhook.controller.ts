@@ -79,7 +79,14 @@ export class GitHubWebhookController {
 
     if (!deliveryId) throw new UnauthorizedException("Missing delivery id.");
 
-    const result = await this.ingestion.ingest({ deliveryId, eventType, payload });
+    // Named rather than left to the default, so the source this evidence came
+    // through is stated at the one place that knows it.
+    const result = await this.ingestion.ingest({
+      deliveryId,
+      eventType,
+      payload,
+      ingestionMode: "GITHUB_APP_WEBHOOK",
+    });
     return { delivery: deliveryId, outcome: result.outcome };
   }
 }

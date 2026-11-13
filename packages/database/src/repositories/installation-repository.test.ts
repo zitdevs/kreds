@@ -201,6 +201,87 @@ describeWithDatabase("InstallationRepository", () => {
     });
   });
 
+  /**
+   * A repository seen through a user's delegated poll rather than an App.
+   *
+   * 26 (A04): organization adoption is optional, so a repository can be fully
+   * evidenced by GitHub with no installation anywhere near it. Without a record
+   * eligibility fails closed for lack of one; with one, it can be asked. What a
+   * poll must never do is bind an organization (Law XXXVI) or touch a tier.
+   */
+  describe("repositories observed without an installation", () => {
+    const observed = (
+      over: Partial<Parameters<InstallationRepository["observeRepository"]>[0]> = {},
+    ) => ({
+      gitHubRepositoryId: 77_001,
+      nameWithOwner: "zitdevs/kreds",
+      isPrivate: false,
+      isPersonallyOwned: false,
+      primaryBranch: "main",
+      ...over,
+    });
+
+    it("records the repository, covered by nothing and bound to nobody, at the lowest tier", async () => {
+      const saved = await repository.observeRepository(observed({ isPersonallyOwned: true }));
+
+      expect(saved).toMatchObject({
+        gitHubRepositoryId: 77_001,
+        organizationId: null,
+        isPersonallyOwned: true,
+        isPrivate: false,
+        trustTier: "UNTRUSTED",
+      });
+      expect(await repository.findInstallationFor(77_001)).toBeNull();
+    });
+
+    it("records one row however many times it is observed", async () => {
+      const first = await repository.observeRepository(observed());
+      const second = await repository.observeRepository(observed());
+
+      expect(second.id).toBe(first.id);
+      const rows = await db.execute(sql`select count(*)::int as n from repositories`);
+      expect([...rows][0]).toMatchObject({ n: 1 });
+    });
+
+    /** Law XXXVI: repository access never binds, or unbinds, an organization. */
+    it("leaves an installed repository's installation, organization and ownership alone", async () => {
+      const installed = await repository.install(ORG, [repo()]);
+      const before = installed.repositories[0];
+
+      const after = await repository.observeRepository(observed({ isPersonallyOwned: true }));
+
+      expect(after.id).toBe(before?.id);
+      expect(after.organizationId).toBe(installed.organization?.id);
+      expect(after.isPersonallyOwned).toBe(false);
+      expect(await repository.findInstallationFor(77_001)).toBe(ORG.gitHubInstallationId);
+    });
+
+    /** A tier is earned under 25, and a poll is not evidence about it. */
+    it("never touches the trust tier", async () => {
+      const first = await repository.observeRepository(observed());
+      await db.execute(sql`update repositories set trust_tier = 'RELEVANT' where id = ${first.id}`);
+
+      const again = await repository.observeRepository(observed());
+
+      expect(again.trustTier).toBe("RELEVANT");
+    });
+
+    /**
+     * Law XXIX: private work creates no Official KRED. A repository that went
+     * private since it was first seen must read as private now, or it would
+     * still be evaluated as the public one it used to be.
+     */
+    it("takes the provider's current visibility and name", async () => {
+      await repository.observeRepository(observed());
+
+      const now = await repository.observeRepository(
+        observed({ isPrivate: true, nameWithOwner: "zitdevs/kreds-renamed" }),
+      );
+
+      expect(now).toMatchObject({ isPrivate: true, nameWithOwner: "zitdevs/kreds-renamed" });
+    });
+  });
+
   describe("lifecycle", () => {
     it("suspends and resumes without losing the installation", async () => {
       await repository.install(ORG, [repo()]);

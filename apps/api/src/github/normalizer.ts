@@ -48,7 +48,12 @@ const repository = z.object({
   default_branch: z.string().min(1).optional(),
 });
 
-const installation = z.object({ id: z.number().int().positive() });
+/**
+ * Optional, because A04 made it so. A webhook from the App always names its
+ * installation; a record read with a user's delegated authorization has none,
+ * and it describes the same fact under the same key.
+ */
+const installation = z.object({ id: z.number().int().positive() }).optional();
 
 const pullRequestEvent = z.object({
   action: z.string().min(1),
@@ -155,7 +160,7 @@ function normalizePullRequest(payload: unknown): DomainEvent | null {
     // database. Here it is GitHub's numeric id, stringified, so the normaliser
     // stays a pure function of the payload.
     repositoryId: toRepositoryId(String(repo.id)),
-    gitHubInstallationId: gitHubInstallationId(app.id),
+    gitHubInstallationId: app ? gitHubInstallationId(app.id) : null,
     pullRequestNumber: pr.number,
     authorGitHubUserId: gitHubUserId(pr.user.id),
     // Classified from what GitHub itself states about the account. Every
@@ -211,7 +216,7 @@ function normalizeReview(payload: unknown): DomainEvent | null {
     idempotencyKey: buildIdempotencyKey("REVIEW_SUBMITTED", review.id),
     occurredAt: fromIso(submittedAt),
     repositoryId: toRepositoryId(String(repo.id)),
-    gitHubInstallationId: gitHubInstallationId(app.id),
+    gitHubInstallationId: app ? gitHubInstallationId(app.id) : null,
     pullRequestNumber: pr.number,
     reviewerGitHubUserId: gitHubUserId(review.user.id),
     reviewerActorType: classifyActor(review.user),

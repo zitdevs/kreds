@@ -11,6 +11,15 @@ export interface SessionPayload {
   readonly issuedAt: number;
 }
 
+/**
+ * Which decision an OAuth round trip is for.
+ *
+ * 26: signing in and having private work ingested are "two different decisions
+ * with two different grants". The state is sealed with the decision it was
+ * issued for, so a round trip started for one cannot be completed as the other.
+ */
+export type OAuthPurpose = "SIGN_IN" | "PRIVATE_INGESTION";
+
 export const SESSION_COOKIE = "kreds_session";
 export const OAUTH_STATE_COOKIE = "kreds_oauth_state";
 
@@ -105,9 +114,9 @@ export class SessionService {
    * Without it, anyone can send a victim to our callback carrying an attacker's
    * authorization code and silently sign them into the attacker's account.
    */
-  issueState(response: Response): string {
+  issueState(response: Response, purpose: OAuthPurpose = "SIGN_IN"): string {
     const nonce = randomBytes(16).toString("base64url");
-    const token = this.seal({ nonce }, STATE_TTL_SECONDS);
+    const token = this.seal({ nonce, purpose }, STATE_TTL_SECONDS);
     response.cookie(OAUTH_STATE_COOKIE, token, {
       httpOnly: true,
       secure: this.secureCookies,
@@ -118,14 +127,21 @@ export class SessionService {
     return nonce;
   }
 
+  /**
+   * @param purpose the decision this callback completes. A state sealed for a
+   * different one is refused exactly like a forged one. A state with no purpose
+   * predates the field and can only have been issued for sign-in.
+   */
   consumeState(
     response: Response,
     cookie: string | undefined,
     returned: string | undefined,
+    purpose: OAuthPurpose = "SIGN_IN",
   ): boolean {
     response.clearCookie(OAUTH_STATE_COOKIE, { path: "/" });
-    const opened = this.open<{ nonce: string }>(cookie);
+    const opened = this.open<{ nonce: string; purpose?: OAuthPurpose }>(cookie);
     if (!opened || !returned) return false;
+    if ((opened.purpose ?? "SIGN_IN") !== purpose) return false;
 
     const expected = Buffer.from(opened.nonce);
     const actual = Buffer.from(returned);

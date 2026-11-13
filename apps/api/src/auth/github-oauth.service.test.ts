@@ -104,3 +104,74 @@ describe("the authorize URL", () => {
     expect(url.searchParams.get("redirect_uri")).toBe("https://api.kreds.sh/auth/callback/github");
   });
 });
+
+describe("the private-ingestion grant", () => {
+  const GRANT_CALLBACK = "https://api.kreds.sh/auth/callback/github/private-ingestion";
+
+  /**
+   * Its own callback, under the sign-in one. GitHub accepts a `redirect_uri`
+   * below the OAuth App's registered callback, so no instance has to edit its
+   * App to offer this.
+   */
+  it("asks for the private grant, and returns to its own callback", () => {
+    const url = new URL(service().authorizeUrl("nonce-2", "PRIVATE_INGESTION"));
+    expect(url.searchParams.get("scope")).toBe("read:user read:org repo");
+    expect(url.searchParams.get("state")).toBe("nonce-2");
+    expect(url.searchParams.get("redirect_uri")).toBe(GRANT_CALLBACK);
+    expect(
+      GRANT_CALLBACK.startsWith(
+        new URL(service().authorizeUrl("n")).searchParams.get("redirect_uri") ?? "-",
+      ),
+    ).toBe(true);
+  });
+
+  function gitHubAnswers(token: Record<string, unknown>, user: Record<string, unknown>) {
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (String(url).includes("/login/oauth/access_token")) {
+        return new Response(JSON.stringify(token), { status: 200 });
+      }
+      if (String(url) === "https://api.github.com/user") {
+        return new Response(JSON.stringify(user), { status: 200 });
+      }
+      throw new Error(`unexpected request to ${String(url)} ${String(init?.method)}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
+  }
+
+  /**
+   * Read from what GitHub granted, never from what Kreds asked for. The token
+   * response's `scope` is GitHub saying what this token can actually do.
+   */
+  it("reports the scopes GitHub granted, not the ones Kreds asked for", async () => {
+    const fetchMock = gitHubAnswers(
+      { access_token: "gho_fake", token_type: "bearer", scope: "read:org,read:user" },
+      { id: 4242, login: "isaac" },
+    );
+
+    const grant = await service().withGrantedToken("code-9", async (g) => ({
+      gitHubUserId: g.gitHubUserId,
+      scopes: g.scopes,
+    }));
+
+    expect(grant).toEqual({ gitHubUserId: 4242, scopes: ["read:org", "read:user"] });
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toMatchObject({ redirect_uri: GRANT_CALLBACK });
+  });
+
+  it("treats a response that names no scopes as a grant of none", async () => {
+    gitHubAnswers({ access_token: "gho_fake", token_type: "bearer" }, { id: 4242, login: "isaac" });
+    const scopes = await service().withGrantedToken("code-10", async (g) => g.scopes);
+    expect(scopes).toEqual([]);
+  });
+
+  /** The token goes to the callback that stores it, and is never returned from this service. */
+  it("hands the token to the caller's use and returns only what that use returns", async () => {
+    gitHubAnswers(
+      { access_token: "gho_fake", token_type: "bearer", scope: "repo" },
+      { id: 4242, login: "isaac" },
+    );
+    const seen = await service().withGrantedToken("code-11", async (g) => g.token === "gho_fake");
+    expect(seen).toBe(true);
+  });
+});

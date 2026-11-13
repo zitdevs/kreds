@@ -68,8 +68,20 @@ describe("Law XXXV, evidence comes from the provider", () => {
     }
   });
 
-  it("accepts exactly two channels and no others", () => {
-    expect(INGESTION_MODES).toEqual(["PROVIDER_WEBHOOK", "SERVER_SIDE_DELEGATED_QUERY"]);
+  /**
+   * A05 named the sources: "USER_ACTIVITY_POLL, GITHUB_APP_WEBHOOK,
+   * API_RECONCILIATION", all server-side. A04's two names stay valid, because
+   * evidence already recorded under them is history (Law XV), and history is
+   * never restated by renaming the channel it came through.
+   */
+  it("accepts A04's two channels and A05's three sources, and no others", () => {
+    expect(INGESTION_MODES).toEqual([
+      "PROVIDER_WEBHOOK",
+      "SERVER_SIDE_DELEGATED_QUERY",
+      "USER_ACTIVITY_POLL",
+      "GITHUB_APP_WEBHOOK",
+      "API_RECONCILIATION",
+    ]);
     for (const mode of INGESTION_MODES) {
       expect(provenance({ mode, deliveryRef: "d", occurredAt: NOW, observedAt: NOW }).mode).toBe(
         mode,
@@ -114,6 +126,18 @@ describe("Law XXXV, evidence comes from the provider", () => {
     const c = factKey({ kind: "REVIEW_SUBMITTED", gitHubRepositoryId: 1, gitHubNodeId: "x" });
 
     expect(new Set([a, b, c]).size).toBe(3);
+  });
+
+  /**
+   * A05: "The same underlying event may arrive through several of them and
+   * must produce one canonical event." A review seen by the webhook and by a
+   * reviewer's own poll is one review, so its key carries nothing about the
+   * source that saw it.
+   */
+  it("keys a review by the provider's own ids, whichever source observed it", () => {
+    const review = { kind: "REVIEW_SUBMITTED", gitHubRepositoryId: 77001, gitHubNodeId: "PRR_kw" };
+    expect(factKey(review)).toBe(factKey({ ...review }));
+    expect(factKey(review)).not.toMatch(/POLL|WEBHOOK|RECONCILIATION/);
   });
 });
 

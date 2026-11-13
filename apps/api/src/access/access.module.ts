@@ -3,10 +3,12 @@ import { ConfigService } from "@nestjs/config";
 
 import { Authorizations, TokenCipher, type RateBudget } from "@kreds/database";
 
+import { SessionModule } from "../auth/session.module.js";
 import { DATABASE } from "../database/database.module.js";
 import { GitHubModule } from "../github/github.module.js";
 import { RATE_BUDGET, TOKEN_CIPHER } from "./access.tokens.js";
 import { AuthorizationController } from "./authorization.controller.js";
+import { DelegatedQueryScheduler } from "./delegated-query.scheduler.js";
 import { DelegatedQueryService } from "./delegated-query.service.js";
 
 /**
@@ -22,7 +24,9 @@ import { DelegatedQueryService } from "./delegated-query.service.js";
   // `IngestionService` the webhook uses, which is what keeps the two channels
   // from building two different idempotency keys for one merge. `DATABASE`
   // needs no import here: `DatabaseModule` is `@Global`.
-  imports: [GitHubModule],
+  // `SessionModule` so a user can read and revoke only their own
+  // authorization.
+  imports: [GitHubModule, SessionModule],
   controllers: [AuthorizationController],
   providers: [
     {
@@ -55,6 +59,7 @@ import { DelegatedQueryService } from "./delegated-query.service.js";
         cipher ? new Authorizations(db, cipher) : null,
     },
     DelegatedQueryService,
+    DelegatedQueryScheduler,
   ],
   exports: [Authorizations, DelegatedQueryService],
 })

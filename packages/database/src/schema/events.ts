@@ -46,12 +46,20 @@ export const domainEventType = pgEnum("domain_event_type", [
  * How evidence reached Kreds.
  *
  * Law XXXV, A04: "from the source provider through a channel the beneficiary
- * does not control." Exactly two channels, and the enum has no third member, so
- * an event with no lawful provenance cannot be written at all.
+ * does not control." Mirrors `INGESTION_MODES` in `@kreds/domain`, so an event
+ * with no lawful provenance cannot be written at all.
+ *
+ * A05 named the sources "USER_ACTIVITY_POLL, GITHUB_APP_WEBHOOK,
+ * API_RECONCILIATION", and new rows use those names. A04's two values stay,
+ * because the rows recorded under them are history and Law XV does not let a
+ * later version restate it.
  */
 export const ingestionMode = pgEnum("ingestion_mode", [
   "PROVIDER_WEBHOOK",
   "SERVER_SIDE_DELEGATED_QUERY",
+  "USER_ACTIVITY_POLL",
+  "GITHUB_APP_WEBHOOK",
+  "API_RECONCILIATION",
 ]);
 
 export const gitHubEvents = pgTable(
@@ -73,11 +81,18 @@ export const gitHubEvents = pgTable(
      * How this evidence reached Kreds.
      *
      * Law XXXV, A04: evidence arrives "from the source provider through a
-     * channel the beneficiary does not control", and there are exactly two such
-     * channels. Recorded on the row rather than inferred later, so an auditor
-     * can answer "where did this come from" without reconstructing it, and so
-     * that a row with no lawful provenance cannot be written at all: the column
-     * is not null and the enum has no third member.
+     * channel the beneficiary does not control". Recorded on the row rather
+     * than inferred later, so an auditor can answer "where did this come from"
+     * without reconstructing it, and so that a row with no lawful provenance
+     * cannot be written at all: the column is not null and the enum holds only
+     * server-side sources.
+     *
+     * The column default is still A04's `PROVIDER_WEBHOOK`, on purpose. Postgres
+     * refuses to use an enum value in the transaction that added it, and the
+     * migrator applies every pending migration in one transaction, so moving
+     * the default in the same deploy that adds `GITHUB_APP_WEBHOOK` would fail
+     * on any database that receives both at once. Nothing relies on it instead:
+     * `EventStore.record` always writes the mode explicitly.
      */
     ingestionMode: ingestionMode("ingestion_mode").notNull().default("PROVIDER_WEBHOOK"),
     /**

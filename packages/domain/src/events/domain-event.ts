@@ -41,7 +41,14 @@ interface BaseDomainEvent {
   readonly idempotencyKey: IdempotencyKey;
   readonly occurredAt: Timestamp;
   readonly repositoryId: RepositoryId;
-  readonly gitHubInstallationId: GitHubInstallationId;
+  /**
+   * The App installation GitHub named, when one was involved.
+   *
+   * `null` for evidence Kreds read with a user's delegated authorization. A04
+   * made organization adoption optional, so a fact can be fully verified
+   * against the provider with no App installed anywhere near it.
+   */
+  readonly gitHubInstallationId: GitHubInstallationId | null;
 }
 
 export interface PullRequestMerged extends BaseDomainEvent {

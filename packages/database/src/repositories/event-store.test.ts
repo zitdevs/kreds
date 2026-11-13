@@ -61,6 +61,46 @@ describeWithDatabase("EventStore", () => {
     await db?.$client.end({ timeout: 5 });
   });
 
+  describe("where the evidence came from", () => {
+    const modeOf = async (id: string) => {
+      const rows = await db.execute<{ ingestion_mode: string }>(
+        sql`select ingestion_mode from github_events where id = ${id}`,
+      );
+      return [...rows][0]?.ingestion_mode;
+    };
+
+    /**
+     * A05 named the sources, and new evidence is recorded under those names.
+     * A caller that says nothing is the App's webhook, the only source that
+     * existed before delegated query.
+     */
+    it("records a delivery that names no source as the App's webhook", async () => {
+      const recorded = await store.record(delivery());
+      expect(await modeOf(recorded.id)).toBe("GITHUB_APP_WEBHOOK");
+    });
+
+    it("records each of A05's sources as itself", async () => {
+      for (const [index, mode] of (
+        ["USER_ACTIVITY_POLL", "GITHUB_APP_WEBHOOK", "API_RECONCILIATION"] as const
+      ).entries()) {
+        const recorded = await store.record(
+          delivery({ gitHubDeliveryId: `source-${index}`, ingestionMode: mode }),
+        );
+        expect(await modeOf(recorded.id)).toBe(mode);
+      }
+    });
+
+    /** Law XV: rows recorded under A04's names stay writable and readable as they were. */
+    it("still accepts A04's two channel names", async () => {
+      for (const mode of ["PROVIDER_WEBHOOK", "SERVER_SIDE_DELEGATED_QUERY"] as const) {
+        const recorded = await store.record(
+          delivery({ gitHubDeliveryId: `a04-${mode}`, ingestionMode: mode }),
+        );
+        expect(await modeOf(recorded.id)).toBe(mode);
+      }
+    });
+  });
+
   describe("the raw log", () => {
     it("stores a delivery whole", async () => {
       const recorded = await store.record(delivery());

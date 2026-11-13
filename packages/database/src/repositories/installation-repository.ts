@@ -311,6 +311,55 @@ export class InstallationRepository {
   }
 
   /**
+   * Record a repository GitHub showed Kreds through a user's delegated
+   * authorization rather than through an App installation.
+   *
+   * 26 (A04) made organization adoption optional, so a repository can be fully
+   * evidenced by the provider with no installation at all. Without a record,
+   * eligibility and the observation check fail closed for lack of one; this
+   * gives them one, built only from GitHub's canonical repository object.
+   *
+   * What it never does, and the reason it is not the installation upsert:
+   *
+   * - It never sets an installation or an organization. Law XXXVI: "Never
+   *   sufficient: being a member, being first to connect, having write access to
+   *   a repository". A new row is bound to nobody, and an existing row keeps
+   *   whatever binding the installation path gave it.
+   * - It never touches `trustTier`. A new row starts at the column's lowest
+   *   tier, as every repository does, and an existing tier is left where it is.
+   * - It never changes ownership or coverage on an existing row. Those belong
+   *   to the installation path.
+   *
+   * On a row that already exists it refreshes what `refreshRepository` does,
+   * name, visibility and primary branch, because those are provider facts and a
+   * repository that went private must read as private (Law XXIX).
+   *
+   * Idempotent: the same repository from the webhook and from a poll is one row.
+   */
+  async observeRepository(
+    input: RepositoryInput & { readonly isPersonallyOwned: boolean },
+  ): Promise<Repository> {
+    const [inserted] = await this.db
+      .insert(repositories)
+      .values({
+        gitHubRepositoryId: input.gitHubRepositoryId,
+        nameWithOwner: input.nameWithOwner,
+        isPrivate: input.isPrivate,
+        isPersonallyOwned: input.isPersonallyOwned,
+        ...(input.primaryBranch ? { primaryBranch: input.primaryBranch } : {}),
+      })
+      .onConflictDoNothing({ target: repositories.gitHubRepositoryId })
+      .returning();
+    if (inserted) return toRepository(inserted);
+
+    const refreshed = await this.refreshRepository(input);
+    if (!refreshed) {
+      throw new Error(`repository ${input.gitHubRepositoryId} conflicted but could not be read.`);
+    }
+    return refreshed;
+  }
+
+  /**
    * Store a repository's public relevance.
    *
    * Deliberately a separate method from anything that writes `trustTier`, and
