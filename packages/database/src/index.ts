@@ -61,3 +61,12 @@ export {
   TokenKeyError,
   type SealedToken,
 } from "./crypto/token-cipher.js";
+export {
+  NetworkSubmissions,
+  type DueSubmission,
+  type NetworkCandidateInput,
+  type NetworkCandidateKind,
+  type NetworkDecisionRecord,
+  type NetworkSubmission,
+  type NetworkSubmissionStatus,
+} from "./repositories/network-submissions.js";
