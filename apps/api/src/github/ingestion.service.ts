@@ -1,10 +1,17 @@
 import { Injectable, Logger } from "@nestjs/common";
 
 import { EventStore, InstallationRepository } from "@kreds/database";
-import { gitHubInstallationId, type DomainEvent, type IngestionMode } from "@kreds/domain";
+import {
+  gitHubInstallationId,
+  type DomainEvent,
+  type IngestionMode,
+  type PullRequestMerged,
+  type ReviewSubmitted,
+} from "@kreds/domain";
 
 import { ContributionService } from "../contribution/contribution.service.js";
 import { EligibilityService } from "../eligibility/eligibility.service.js";
+import { NetworkSubmissionService } from "../network/network-submission.service.js";
 import { InstallationService } from "./installation.service.js";
 import { normalize } from "./normalizer.js";
 
@@ -38,6 +45,7 @@ export class IngestionService {
     private readonly installationEvents: InstallationService,
     private readonly contributions: ContributionService,
     private readonly eligibility: EligibilityService,
+    private readonly network: NetworkSubmissionService,
   ) {}
 
   async ingest(input: {
@@ -123,6 +131,16 @@ export class IngestionService {
         await this.eligibility.forMerge(event);
       }
 
+      // Layer 2 again, and this time not Core's to answer: whether the work
+      // may affect Official KRED. "Core submits evidence. Network decides
+      // money." Last, and unable to fail the delivery: `offer` records the
+      // candidate and returns without waiting for the Network, and an
+      // unreachable Network leaves it for the retry sweep. A local economy
+      // never waits on a remote one (Law XII).
+      if (event.type === "PULL_REQUEST_MERGED" || event.type === "REVIEW_SUBMITTED") {
+        await this.offerToNetwork(event);
+      }
+
       if (!result.isNew) {
         // The same fact through a different delivery id, which is what pressing
         // Redeliver in the App settings produces. The raw log keeps both; the
@@ -136,6 +154,19 @@ export class IngestionService {
       await this.events.markFailed(recorded.id, reason);
       this.logger.error(`Delivery ${input.deliveryId} failed: ${reason}`);
       return { outcome: "FAILED" };
+    }
+  }
+
+  /**
+   * `offer` already never rejects. This holds the line once more where it
+   * matters, because the cost of being wrong is a failed delivery GitHub then
+   * retries, over a service the delivery does not depend on.
+   */
+  private async offerToNetwork(event: PullRequestMerged | ReviewSubmitted): Promise<void> {
+    try {
+      await this.network.offer(event);
+    } catch {
+      this.logger.warn(`Could not offer ${event.idempotencyKey} to the Kreds Network.`);
     }
   }
 

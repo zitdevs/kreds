@@ -425,6 +425,21 @@ export class InstallationRepository {
     return row?.id ?? null;
   }
 
+  /**
+   * GitHub's numeric id for a connected organization.
+   *
+   * The Network protocol names an organization the way GitHub does, because
+   * Kreds' own uuid means nothing outside this database.
+   */
+  async findGitHubOrganizationId(organizationId: string): Promise<number | null> {
+    const [row] = await this.db
+      .select({ gitHubOrganizationId: organizations.gitHubOrganizationId })
+      .from(organizations)
+      .where(eq(organizations.id, organizationId))
+      .limit(1);
+    return row?.gitHubOrganizationId ?? null;
+  }
+
   async findRepository(gitHubRepositoryId: number): Promise<Repository | null> {
     const [row] = await this.db
       .select()

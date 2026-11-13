@@ -85,6 +85,22 @@ describe("the module graph", () => {
   });
 
   /**
+   * And connected to the Kreds Network, which swaps the offline client for the
+   * HTTP one and gives the retry sweep something to do. Compiling reaches no
+   * Network: the client only speaks when a candidate is offered.
+   */
+  it("resolves every provider with the Kreds Network configured", async () => {
+    withEnvironment({
+      KREDS_NETWORK_URL: "http://127.0.0.1:1",
+      KREDS_NETWORK_TOKEN: "t".repeat(40),
+      KREDS_NETWORK_RETRY_INTERVAL_MS: "60000",
+    });
+    const moduleRef = await boot();
+    expect(moduleRef).toBeDefined();
+    await moduleRef.close();
+  });
+
+  /**
    * The routes the application serves, pinned.
    *
    * A module that fails to register is a module whose controllers quietly

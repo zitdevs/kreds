@@ -209,6 +209,25 @@ describeWithDatabase("InstallationRepository", () => {
    * eligibility fails closed for lack of one; with one, it can be asked. What a
    * poll must never do is bind an organization (Law XXXVI) or touch a tier.
    */
+  /**
+   * The Network protocol names an organization by GitHub's id, never by
+   * Kreds' own uuid, so the one has to be readable from the other.
+   */
+  describe("the organization's GitHub id", () => {
+    it("is read for a connected organization", async () => {
+      const installed = await repository.install(ORG, [repo()]);
+      const organizationId = installed.organization?.id as string;
+
+      expect(await repository.findGitHubOrganizationId(organizationId)).toBe(9_001);
+    });
+
+    it("is null for an organization Kreds has no row for", async () => {
+      expect(
+        await repository.findGitHubOrganizationId("00000000-0000-4000-8000-000000000000"),
+      ).toBeNull();
+    });
+  });
+
   describe("repositories observed without an installation", () => {
     const observed = (
       over: Partial<Parameters<InstallationRepository["observeRepository"]>[0]> = {},

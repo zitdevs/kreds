@@ -61,3 +61,13 @@ export {
   organizationGrantRelations,
   organizationGrants,
 } from "./access.js";
+export {
+  networkCandidateKind,
+  networkCandidateRelations,
+  networkCandidates,
+  networkDecisionOutcome,
+  networkDecisionReason,
+  networkDecisionRelations,
+  networkDecisions,
+  networkSubmissionStatus,
+} from "./network.js";

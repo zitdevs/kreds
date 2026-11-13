@@ -102,7 +102,7 @@ export class EligibilityService {
    * never sufficient, which is why the Network re-decides rather than trusting
    * it.
    */
-  private async hasEligibleReview(event: PullRequestMerged): Promise<boolean> {
+  async hasEligibleReview(event: PullRequestMerged): Promise<boolean> {
     const reviews = await this.events.findReviewsFor(
       Number(event.repositoryId),
       event.pullRequestNumber,
