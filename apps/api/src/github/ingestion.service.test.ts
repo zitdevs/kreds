@@ -42,14 +42,24 @@ function harness(over: Partial<Record<string, unknown>> = {}) {
   const eligibility = {
     forMerge: vi.fn(async () => ({ status: "INELIGIBLE", outcome: "NONE", reasons: [] })),
   };
+  const network = { offer: vi.fn(async () => "RECORDED") };
   const service = new IngestionService(
     events as never,
     installations as never,
     installationEvents as never,
     contributions as never,
     eligibility as never,
+    network as never,
   );
-  return { service, events, installations, installationEvents, contributions, eligibility };
+  return {
+    service,
+    events,
+    installations,
+    installationEvents,
+    contributions,
+    eligibility,
+    network,
+  };
 }
 
 const delivery = { deliveryId: "d-1", eventType: "pull_request", payload: PR_MERGED };
@@ -215,5 +225,70 @@ describe("every delivery records the source it came through", () => {
     expect(events.record).toHaveBeenCalledWith(
       expect.objectContaining({ ingestionMode: "USER_ACTIVITY_POLL" }),
     );
+  });
+});
+
+/**
+ * "Core submits evidence. Network decides money." A recorded merge or review is
+ * offered to the Network, and the Network never gets a say in whether the
+ * delivery itself succeeds.
+ */
+describe("recorded facts are offered to the Kreds Network", () => {
+  const REVIEW = {
+    action: "submitted",
+    installation: { id: 48_291_037 },
+    repository: { id: 77_001, full_name: "zitdevs/kreds", default_branch: "main" },
+    pull_request: { number: 412, merged_at: null, user: { id: 4242, login: "isaac" } },
+    review: {
+      id: 880_001,
+      state: "approved",
+      body: "Looks right.",
+      submitted_at: "2026-08-22T09:00:00Z",
+      user: { id: 6262, login: "rev", type: "User" },
+    },
+  };
+
+  it("offers a merge once it is recorded", async () => {
+    const { service, network } = harness();
+
+    await service.ingest(delivery);
+
+    expect(network.offer).toHaveBeenCalledOnce();
+    expect(network.offer).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "PULL_REQUEST_MERGED", pullRequestNumber: 412 }),
+    );
+  });
+
+  it("offers a review once it is recorded", async () => {
+    const { service, network } = harness({
+      recordDomainEvent: vi.fn(async () => ({
+        id: "fact-2",
+        idempotencyKey: "REVIEW_SUBMITTED:880001",
+        isNew: true,
+      })),
+    });
+
+    await service.ingest({ deliveryId: "d-3", eventType: "pull_request_review", payload: REVIEW });
+
+    expect(network.offer).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "REVIEW_SUBMITTED" }),
+    );
+  });
+
+  it("offers nothing for a delivery that records no merge or review", async () => {
+    const { service, network } = harness();
+
+    await service.ingest({ deliveryId: "d-2", eventType: "push", payload: { ref: "main" } });
+
+    expect(network.offer).not.toHaveBeenCalled();
+  });
+
+  /** The Network being unreachable is never a reason a delivery failed. */
+  it("processes the delivery even when offering it to the Network throws", async () => {
+    const { service, network, events } = harness();
+    network.offer.mockRejectedValueOnce(new Error("The Kreds Network is unreachable"));
+
+    await expect(service.ingest(delivery)).resolves.toMatchObject({ outcome: "PROCESSED" });
+    expect(events.markFailed).not.toHaveBeenCalled();
   });
 });
