@@ -299,8 +299,21 @@ export const policySchema = z.object({
     .object({
       /** A04: organizations adopt for shared money, not to let their people play. */
       organizationAdoptionRequired: z.literal(false),
+      /**
+       * A04 named two channels; A05 named the concrete sources behind them. All
+       * five stay valid so every snapshot remains readable (Law XV). None is a
+       * client: Law XXXV, pinned below, still refuses that.
+       */
       ingestionModes: z
-        .array(z.enum(["PROVIDER_WEBHOOK", "SERVER_SIDE_DELEGATED_QUERY"]))
+        .array(
+          z.enum([
+            "PROVIDER_WEBHOOK",
+            "SERVER_SIDE_DELEGATED_QUERY",
+            "USER_ACTIVITY_POLL",
+            "GITHUB_APP_WEBHOOK",
+            "API_RECONCILIATION",
+          ]),
+        )
         .nonempty(),
       /**
        * Law XXXV, pinned rather than read.
