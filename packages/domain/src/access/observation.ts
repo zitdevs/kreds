@@ -60,6 +60,16 @@ export interface ObservationContext {
    * rather than being computed here.
    */
   readonly observerIsNotControlledAlternate: boolean;
+  /**
+   * The repository's public history observed the work (kreds-laws v0.7, 24).
+   *
+   * Set when repository economic eligibility would qualify the merge for KRED
+   * without a review (Law XXXIII). Law XXVIII forbids recognition from needing
+   * more evidence than issuance, so whatever releases KRED without a reviewer
+   * must also lift the points cap. No person is involved, which is why this is
+   * a field of its own rather than a person with every field faked.
+   */
+  readonly byRepositoryHistory?: true;
 }
 
 /**
@@ -70,6 +80,7 @@ export interface ObservationContext {
  * watching" is no.
  */
 export function wasObserved(context: ObservationContext): boolean {
+  if (context.byRepositoryHistory === true) return true;
   return (
     context.observerGitHubUserId !== null &&
     context.observerIsDistinct &&
@@ -90,6 +101,21 @@ export const NOBODY_OBSERVED: ObservationContext = Object.freeze({
   observerIsDistinct: false,
   observerIsEligibleHuman: false,
   observerIsNotControlledAlternate: false,
+});
+
+/**
+ * Observed by the repository's public history rather than by a person.
+ *
+ * Only for a merge that repository economic eligibility would qualify for KRED
+ * without a review. See `qualifiesWithoutReview`, which is the sole way to
+ * decide it, so that this can never be granted on a weaker standard.
+ */
+export const OBSERVED_BY_REPOSITORY_HISTORY: ObservationContext = Object.freeze({
+  observerGitHubUserId: null,
+  observerIsDistinct: false,
+  observerIsEligibleHuman: false,
+  observerIsNotControlledAlternate: false,
+  byRepositoryHistory: true,
 });
 
 /**
