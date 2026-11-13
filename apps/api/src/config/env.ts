@@ -20,6 +20,17 @@ const optionalSecret = z.preprocess(
 );
 
 /**
+ * An optional interval in whole milliseconds, where blank means unset.
+ *
+ * Zero is refused rather than read as "as fast as possible": that would be a
+ * busy loop against somebody else's service, not a schedule.
+ */
+const optionalInterval = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.coerce.number().int().positive().optional(),
+);
+
+/**
  * The environment this service needs, validated once at boot.
  *
  * Every name here already appears in the repository's `.env.example`, which is
@@ -135,10 +146,31 @@ export const envSchema = z.object({
    * scheduler says so once at startup rather than staying quietly idle. Blank
    * counts as unset, for the same secrets-manager reason as `optionalSecret`.
    */
-  DELEGATED_QUERY_POLL_INTERVAL_MS: z.preprocess(
+  DELEGATED_QUERY_POLL_INTERVAL_MS: optionalInterval,
+
+  /**
+   * The Official Kreds Network, and the token it issued this instance.
+   *
+   * Both optional, and both or neither. Law XII: "Self-hosting does not require
+   * Kreds Network participation." An instance without them runs exactly as it
+   * always has, on `OfflineNetworkClient`, and says so once at startup naming
+   * whichever is missing. The token is never logged, by that warning or by
+   * anything else.
+   */
+  KREDS_NETWORK_URL: z.preprocess(
     (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
-    z.coerce.number().int().positive().optional(),
+    z.string().trim().url().optional(),
   ),
+  KREDS_NETWORK_TOKEN: optionalSecret,
+
+  /**
+   * How often Core offers the Network again what is still open: candidates it
+   * never answered, and candidates it deferred. Milliseconds.
+   *
+   * Unset means no retry sweep, announced once at startup, for the same reason
+   * an unset poll interval is.
+   */
+  KREDS_NETWORK_RETRY_INTERVAL_MS: optionalInterval,
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -3,6 +3,8 @@ import { join } from "node:path";
 import { NotFoundException } from "@nestjs/common";
 import { describe, expect, it } from "vitest";
 
+import { OfflineNetworkClient } from "@kreds/network-client";
+
 import { SupplyController } from "./supply.controller.js";
 
 /**
@@ -80,14 +82,24 @@ describe("an instance with no Network", () => {
    * somebody to display them.
    */
   it("says it has no Official supply, rather than reporting zero", async () => {
-    const controller = new SupplyController();
+    const controller = new SupplyController(new OfflineNetworkClient());
     await expect(controller.supply()).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it("explains why, so the answer is not mistaken for an outage", async () => {
-    const controller = new SupplyController();
+    const controller = new SupplyController(new OfflineNetworkClient());
     await expect(controller.supply()).rejects.toThrow(
       /not connected to the Official Kreds Network/,
     );
+  });
+});
+
+describe("an instance connected to the Network", () => {
+  /** The figures as the Network published them, not recomputed or reshaped here. */
+  it("serves the supply the Network published", async () => {
+    const published = { maximumSupply: "5000000", circulatingSupply: "0", reserve: "5000000" };
+    const network = { getSupply: async () => published } as unknown as OfflineNetworkClient;
+
+    await expect(new SupplyController(network).supply()).resolves.toBe(published);
   });
 });

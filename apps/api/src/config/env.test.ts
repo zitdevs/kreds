@@ -102,3 +102,55 @@ describe("the delegated-query poll interval", () => {
     }
   });
 });
+
+/**
+ * Law XII: "Self-hosting does not require Kreds Network participation." So
+ * every Network variable is optional, and blank is the same as absent.
+ */
+describe("the Kreds Network connection", () => {
+  it("is optional entirely, and blank means unset", () => {
+    const env = validateEnv({
+      ...without(),
+      KREDS_NETWORK_URL: " ",
+      KREDS_NETWORK_TOKEN: "",
+      KREDS_NETWORK_RETRY_INTERVAL_MS: " ",
+    });
+    expect(env.KREDS_NETWORK_URL).toBeUndefined();
+    expect(env.KREDS_NETWORK_TOKEN).toBeUndefined();
+    expect(env.KREDS_NETWORK_RETRY_INTERVAL_MS).toBeUndefined();
+  });
+
+  it("reads a URL, a token and an interval", () => {
+    const env = validateEnv({
+      ...without(),
+      KREDS_NETWORK_URL: "https://network.kreds.sh",
+      KREDS_NETWORK_TOKEN: " issued-token ",
+      KREDS_NETWORK_RETRY_INTERVAL_MS: "300000",
+    });
+    expect(env.KREDS_NETWORK_URL).toBe("https://network.kreds.sh");
+    expect(env.KREDS_NETWORK_TOKEN).toBe("issued-token");
+    expect(env.KREDS_NETWORK_RETRY_INTERVAL_MS).toBe(300_000);
+  });
+
+  it("refuses something that is not a URL", () => {
+    expect(() => validateEnv({ ...without(), KREDS_NETWORK_URL: "network" })).toThrow(
+      /KREDS_NETWORK_URL/,
+    );
+  });
+
+  it("refuses a retry interval of zero, a negative or a fraction", () => {
+    for (const value of ["0", "-1", "1.5"]) {
+      expect(
+        () => validateEnv({ ...without(), KREDS_NETWORK_RETRY_INTERVAL_MS: value }),
+        value,
+      ).toThrow(/KREDS_NETWORK_RETRY_INTERVAL_MS/);
+    }
+  });
+
+  /** A refusal names the variable at fault, and never what it was set to. */
+  it("never echoes a token in a refusal", () => {
+    expect(() =>
+      validateEnv({ ...without(), KREDS_NETWORK_URL: "nope", KREDS_NETWORK_TOKEN: "s3cret-token" }),
+    ).toThrow(expect.objectContaining({ message: expect.not.stringContaining("s3cret-token") }));
+  });
+});

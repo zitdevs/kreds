@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 
+import { NetworkModule } from "../network/network.module.js";
 import { SupplyController } from "./supply.controller.js";
 
 /**
@@ -10,5 +11,5 @@ import { SupplyController } from "./supply.controller.js";
  * this controller, because a service is where a write would eventually be
  * added.
  */
-@Module({ controllers: [SupplyController] })
+@Module({ imports: [NetworkModule], controllers: [SupplyController] })
 export class SupplyModule {}

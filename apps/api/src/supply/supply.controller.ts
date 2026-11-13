@@ -1,6 +1,8 @@
-import { Controller, Get, NotFoundException } from "@nestjs/common";
+import { Controller, Get, Inject, NotFoundException } from "@nestjs/common";
 
-import { OfflineNetworkClient, type KredsNetworkClient } from "@kreds/network-client";
+import type { KredsNetworkClient } from "@kreds/network-client";
+
+import { KREDS_NETWORK_CLIENT } from "../network/network-connection.js";
 
 /**
  * The published supply figures, read from the Network.
@@ -16,12 +18,14 @@ import { OfflineNetworkClient, type KredsNetworkClient } from "@kreds/network-cl
 @Controller("supply")
 export class SupplyController {
   /**
-   * The offline client by default, which is what most instances run.
+   * The instance's one client, decided from the environment by `NetworkModule`.
    *
-   * A self-hosted Kreds is not part of the Official Network and has no Official
-   * supply to report, which is a different fact from a supply of zero.
+   * The offline client unless the Network issued this instance a token, which
+   * is what most instances run: a self-hosted Kreds that is not part of the
+   * Official Network has no Official supply to report, which is a different
+   * fact from a supply of zero.
    */
-  private readonly network: KredsNetworkClient = new OfflineNetworkClient();
+  constructor(@Inject(KREDS_NETWORK_CLIENT) private readonly network: KredsNetworkClient) {}
 
   @Get()
   async supply() {
