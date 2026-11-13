@@ -48,6 +48,14 @@ describeWithDatabase("IdentityRepository", () => {
     ...over,
   });
 
+  /** The stored avatar, read from the row: the domain identity does not carry it. */
+  const storedAvatar = async () => {
+    const rows = await db.execute(
+      sql`select avatar_url from github_identities where github_user_id = 4242`,
+    );
+    return (rows as unknown as { avatar_url: string | null }[])[0]?.avatar_url;
+  };
+
   /**
    * Law XVII, Unclaimed Identity Can Have History: an identity may be recorded
    * before anyone signs in, and Law XVIII keeps it passive until they do.
@@ -88,6 +96,25 @@ describeWithDatabase("IdentityRepository", () => {
       expect(after.login).toBe("maria-dev");
       expect(after.gitHubUserId).toBe(before.gitHubUserId);
       expect(after.observedAt).toBe(before.observedAt);
+    });
+
+    /**
+     * Contribution events name an actor by id and login only. Observing one of
+     * those must not erase the avatar a sign-in recorded, or every merge Kreds
+     * ingests blanks the person's picture until they sign in again.
+     */
+    it("keeps a known avatar when an observation carries none", async () => {
+      await repository.observe(profile());
+      await repository.observe({ gitHubUserId: gitHubUserId(4242), login: "maria" });
+      expect(await storedAvatar()).toBe("https://avatars.githubusercontent.com/u/4242");
+    });
+
+    it("still replaces the avatar when an observation carries a new one", async () => {
+      await repository.observe(profile());
+      await repository.observe(
+        profile({ avatarUrl: "https://avatars.githubusercontent.com/u/4242?v=2" }),
+      );
+      expect(await storedAvatar()).toBe("https://avatars.githubusercontent.com/u/4242?v=2");
     });
   });
 

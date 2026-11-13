@@ -139,7 +139,13 @@ export class IdentityRepository {
       })
       .onConflictDoUpdate({
         target: gitHubIdentities.gitHubUserId,
-        set: { login: profile.login, avatarUrl: profile.avatarUrl ?? null },
+        // Contribution events name an actor by id and login only. An
+        // observation without an avatar keeps the one already known, or every
+        // ingested merge would blank the person's picture until they signed in
+        // again. A sign-in, which does carry it, still refreshes it.
+        set: profile.avatarUrl
+          ? { login: profile.login, avatarUrl: profile.avatarUrl }
+          : { login: profile.login },
       })
       .returning();
 
