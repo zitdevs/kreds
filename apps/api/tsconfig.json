@@ -2,15 +2,15 @@
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2022"],
+    // Nest 12 ships ESM-only. The app stays CommonJS and loads it through
+    // require(esm), which Node unflags from 20.19 and 22.12 (see engines).
+    // `bundler` resolves through package `exports` without the per-file format
+    // check that makes nodenext refuse a require of an ES module.
     "module": "commonjs",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "types": ["vitest/globals", "node"],
     "outDir": "./dist",
     "rootDir": "./src",
-    "baseUrl": "./",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "strict": true,

@@ -97,10 +97,11 @@ describe("the module graph", () => {
     const app = moduleRef.createNestApplication();
     await app.init();
 
+    // Express 5 exposes the router as `app.router`; Express 4's `_router` is gone.
     const server = app.getHttpAdapter().getInstance() as {
-      _router: { stack: { route?: { path: string; methods: Record<string, boolean> } }[] };
+      router: { stack: { route?: { path: string; methods: Record<string, boolean> } }[] };
     };
-    const routes = server._router.stack
+    const routes = server.router.stack
       .filter((layer) => layer.route)
       .map(
         (layer) => `${Object.keys(layer.route!.methods)[0]?.toUpperCase()} ${layer.route!.path}`,
