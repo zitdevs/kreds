@@ -12,6 +12,7 @@ import {
   readNetworkConnection,
   type NetworkConnection,
 } from "./network-connection.js";
+import { NetworkRetryScheduler } from "./network-retry.scheduler.js";
 import { NetworkSubmissionService } from "./network-submission.service.js";
 
 /**
@@ -46,6 +47,7 @@ import { NetworkSubmissionService } from "./network-submission.service.js";
       useFactory: (db: Database) => new NetworkSubmissions(db),
     },
     NetworkSubmissionService,
+    NetworkRetryScheduler,
   ],
   exports: [KREDS_NETWORK_CLIENT, NetworkSubmissionService],
 })
