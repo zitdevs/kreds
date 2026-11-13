@@ -29,7 +29,10 @@ export {
   ContributionLedger,
   type AwardInput,
   type AwardResult,
+  type EntryCursor,
   type InvalidationTrigger,
+  type OwnEntry,
+  type OwnSummary,
   type LeaderboardRow,
 } from "./repositories/contribution-ledger.js";
 export { InsufficientBalanceError, Ledger, type PostedTransaction } from "./repositories/ledger.js";

@@ -1,4 +1,4 @@
-import { and, eq, gte, isNull, lt, notExists, sql } from "drizzle-orm";
+import { and, desc, eq, exists, gte, isNull, lt, notExists, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import {
   gitHubUserId as toGitHubUserId,
@@ -11,7 +11,7 @@ import {
 } from "@kreds/domain";
 
 import type { Database } from "../client.js";
-import { contributionEntries } from "../schema/index.js";
+import { contributionEntries, domainEvents, repositories } from "../schema/index.js";
 
 /** One of the triggers the published policy names. Nothing else may reduce a score. */
 export type InvalidationTrigger =
@@ -45,6 +45,55 @@ export interface AwardResult {
   readonly idempotencyKey: string;
   /** False when this work had already been recognised. */
   readonly isNew: boolean;
+}
+
+/** Every kind the ledger records, so a summary always names all of them. */
+const CONTRIBUTION_KINDS = [
+  "PULL_REQUEST_MERGED",
+  "CODE_REVIEW",
+  "ISSUE_RESOLVED",
+  "REVIEW_FOLLOW_UP",
+] as const satisfies readonly ContributionKind[];
+
+/** Where a page of entries ended, so the next page starts strictly after it. */
+export interface EntryCursor {
+  readonly occurredAt: Date;
+  readonly id: string;
+}
+
+/**
+ * One award, as its owner may see it.
+ *
+ * Deliberately narrower than the row. `qualityScore` and `unobservedSignals`
+ * stay behind: they describe how scoring works rather than what was done, and
+ * nothing here says what an allowance is or how much of it is left, because 24
+ * keeps caps unpublished.
+ */
+export interface OwnEntry {
+  readonly id: string;
+  readonly kind: ContributionKind;
+  readonly points: number;
+  /** `null` when the question was never asked: rows from before A04. */
+  readonly observed: boolean | null;
+  readonly occurredAt: Date;
+  readonly rulesVersion: string;
+  /** Whether an invalidation cancels this award. The award itself stays (05). */
+  readonly invalidated: boolean;
+  readonly repository: { readonly nameWithOwner: string; readonly isPrivate: boolean } | null;
+  /** What Kreds already stored about the work, enough to link to it. */
+  readonly source: {
+    readonly pullRequestNumber: number | null;
+    readonly reviewId: number | null;
+  };
+}
+
+export interface OwnSummary {
+  /** The same number `scoreFor` gives, because it is the same query. */
+  readonly points: Points;
+  /** Dense, as the leaderboard ranks. `null` without standing points. */
+  readonly rank: number | null;
+  /** Awards still standing, per kind. */
+  readonly byKind: Readonly<Record<ContributionKind, number>>;
 }
 
 export interface LeaderboardRow {
@@ -236,6 +285,146 @@ export class ContributionLedger {
         points: toPoints(Math.max(0, Number(row.total ?? 0))),
       }))
       .filter((row) => row.points > 0);
+  }
+
+  /**
+   * One user's own awards, newest first, a page at a time.
+   *
+   * Filtered on the user in the query, not by whoever calls it, so a caller
+   * cannot widen it into somebody else's history. Invalidations are not listed
+   * as rows of their own: the award they cancel is listed and marked, so a
+   * reverted merge reads as reverted rather than vanishing (05: Reversals).
+   *
+   * Ordered by when the work happened, with the id as a tiebreak so a cursor
+   * neither repeats nor skips two entries on the same instant.
+   */
+  async entriesFor(
+    gitHubUserId: GitHubUserId,
+    page: { readonly limit: number; readonly before?: EntryCursor },
+  ): Promise<{ entries: readonly OwnEntry[]; next: EntryCursor | null }> {
+    const invalidation = alias(contributionEntries, "invalidation");
+    const rows = await this.db
+      .select({
+        id: contributionEntries.id,
+        idempotencyKey: contributionEntries.idempotencyKey,
+        kind: contributionEntries.kind,
+        points: contributionEntries.points,
+        observed: contributionEntries.observed,
+        occurredAt: contributionEntries.occurredAt,
+        rulesVersion: contributionEntries.rulesVersion,
+        invalidated: exists(
+          this.db
+            .select({ id: invalidation.id })
+            .from(invalidation)
+            .where(eq(invalidation.cancelsEntryId, contributionEntries.id)),
+        ),
+        nameWithOwner: repositories.nameWithOwner,
+        isPrivate: repositories.isPrivate,
+        pullRequestNumber: sql<string | null>`${domainEvents.data}->>'pullRequestNumber'`,
+      })
+      .from(contributionEntries)
+      .leftJoin(repositories, eq(repositories.id, contributionEntries.repositoryId))
+      // An award's key is its fact's key, so the fact is found without asking
+      // GitHub anything.
+      .leftJoin(domainEvents, eq(domainEvents.idempotencyKey, contributionEntries.idempotencyKey))
+      .where(
+        and(
+          eq(contributionEntries.gitHubUserId, gitHubUserId),
+          eq(contributionEntries.entryType, "AWARD"),
+          page.before
+            ? sql`(${contributionEntries.occurredAt}, ${contributionEntries.id}) < (${page.before.occurredAt.toISOString()}::timestamptz, ${page.before.id}::uuid)`
+            : undefined,
+        ),
+      )
+      .orderBy(desc(contributionEntries.occurredAt), desc(contributionEntries.id))
+      .limit(page.limit + 1);
+
+    const entries = rows.slice(0, page.limit).map((row): OwnEntry => {
+      const pullRequestNumber = Number(row.pullRequestNumber);
+      const reviewId = /^REVIEW_SUBMITTED:(\d+)$/.exec(row.idempotencyKey)?.[1];
+      return {
+        id: row.id,
+        kind: row.kind,
+        points: row.points,
+        observed: row.observed,
+        occurredAt: row.occurredAt,
+        rulesVersion: row.rulesVersion,
+        invalidated: Boolean(row.invalidated),
+        repository:
+          row.nameWithOwner === null || row.isPrivate === null
+            ? null
+            : { nameWithOwner: row.nameWithOwner, isPrivate: row.isPrivate },
+        source: {
+          pullRequestNumber:
+            row.pullRequestNumber !== null && Number.isSafeInteger(pullRequestNumber)
+              ? pullRequestNumber
+              : null,
+          reviewId: reviewId ? Number(reviewId) : null,
+        },
+      };
+    });
+
+    const last = entries.at(-1);
+    return {
+      entries,
+      next: rows.length > page.limit && last ? { occurredAt: last.occurredAt, id: last.id } : null,
+    };
+  }
+
+  /**
+   * What a user's own dashboard header shows: the score, where it ranks, and
+   * how much standing work of each kind it is made of.
+   *
+   * The total is `netPoints`, the same rule `scoreFor` uses. The rank is the
+   * leaderboard's dense rank, one more than the number of distinct higher
+   * totals, and `null` at zero or below because the leaderboard lists nobody
+   * there.
+   */
+  async summaryFor(gitHubUserId: GitHubUserId): Promise<OwnSummary> {
+    const { points } = await this.scoreFor(gitHubUserId);
+
+    let rank: number | null = null;
+    if (points > 0) {
+      const totals = this.db
+        .select({
+          gitHubUserId: contributionEntries.gitHubUserId,
+          total: this.netPoints().as("total"),
+        })
+        .from(contributionEntries)
+        .groupBy(contributionEntries.gitHubUserId)
+        .as("totals");
+      const [row] = await this.db
+        .select({ above: sql<string>`count(distinct ${totals.total})::text` })
+        .from(totals)
+        .where(sql`${totals.total} > ${points}`);
+      rank = Number(row?.above ?? "0") + 1;
+    }
+
+    const invalidation = alias(contributionEntries, "invalidation");
+    const counted = await this.db
+      .select({ kind: contributionEntries.kind, count: sql<string>`count(*)::text` })
+      .from(contributionEntries)
+      .where(
+        and(
+          eq(contributionEntries.gitHubUserId, gitHubUserId),
+          eq(contributionEntries.entryType, "AWARD"),
+          notExists(
+            this.db
+              .select({ id: invalidation.id })
+              .from(invalidation)
+              .where(eq(invalidation.cancelsEntryId, contributionEntries.id)),
+          ),
+        ),
+      )
+      .groupBy(contributionEntries.kind);
+
+    const byKind = Object.fromEntries(CONTRIBUTION_KINDS.map((kind) => [kind, 0])) as Record<
+      ContributionKind,
+      number
+    >;
+    for (const row of counted) byKind[row.kind] = Number(row.count);
+
+    return { points, rank, byKind };
   }
 
   /** Entries recorded for one repository, newest first. */
