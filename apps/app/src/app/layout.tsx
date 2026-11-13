@@ -28,7 +28,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           brandHref={site.marketing}
           badge="App"
           githubUrl={site.github}
-          items={[{ label: "Docs", href: site.docs }]}
+          items={[
+            { label: "Dashboard", href: "/" },
+            { label: "Leaderboard", href: "/leaderboard" },
+            { label: "Docs", href: site.docs },
+          ]}
         />
         <main id="main" className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
           {children}

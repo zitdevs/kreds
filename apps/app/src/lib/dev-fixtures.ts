@@ -20,11 +20,13 @@ import type {
   ContributionPage,
   ContributionSummary,
 } from "@/features/dashboard/types";
+import type { LeaderboardEntry, LeaderboardPage } from "@/features/leaderboard/types";
 
 import type { SessionUser } from "./session";
 
 const SCENARIOS = [
   "content",
+  "near-top",
   "private",
   "not-consented",
   "empty",
@@ -98,6 +100,66 @@ function entries(): ContributionEntry[] {
   });
 }
 
+/**
+ * The leaderboard. Dense ranks with a few ties, a missing login and one long
+ * one. The signed-in user sits at the rank their summary reports: off the
+ * first page in `content`, on it in `near-top`.
+ */
+const LOGINS = [
+  "grace-hopper",
+  "linus",
+  "margaret-hamilton",
+  "dennis",
+  "barbara-liskov",
+  "ken",
+  "frances-allen",
+  "an-exceptionally-long-github-login-that-will-not-fit",
+  "radia",
+  "edsger",
+] as const;
+const BOARD_RANKS = 45;
+const TIED_RANKS = [3, 12, 37];
+const pointsAt = (rank: number) => 60000 - (rank - 1) * 1310;
+
+function viewerRank(s: Scenario): number {
+  return s === "near-top" ? 3 : 37;
+}
+
+function board(s: Scenario): LeaderboardEntry[] {
+  if (s === "empty" || s === "unconfigured") return [];
+  const rows: LeaderboardEntry[] = [];
+  let next = 5000;
+  for (let rank = 1; rank <= BOARD_RANKS; rank++) {
+    const points = pointsAt(rank);
+    const people = TIED_RANKS.includes(rank) ? 2 : 1;
+    for (let seat = 0; seat < people; seat++) {
+      const id = next++;
+      rows.push({
+        rank,
+        gitHubUserId: id,
+        login:
+          id === 5009 ? null : `${LOGINS[id % LOGINS.length]}${id > 5009 ? `-${id - 5000}` : ""}`,
+        points,
+      });
+    }
+    if (rank === viewerRank(s)) {
+      rows.push({ rank, gitHubUserId: USER_ID, login: user.login, points });
+    }
+  }
+  return rows;
+}
+
+function boardPage(s: Scenario, cursor: string | null): LeaderboardPage {
+  const all = board(s);
+  const start = cursor ? Number(cursor) : 0;
+  const end = start + 25;
+  return {
+    scope: "GLOBAL",
+    entries: all.slice(start, end),
+    nextCursor: end < all.length ? String(end) : null,
+  };
+}
+
 function summary(s: Scenario): ContributionSummary {
   if (s === "empty" || s === "unconfigured") {
     return {
@@ -109,8 +171,8 @@ function summary(s: Scenario): ContributionSummary {
   }
   return {
     gitHubUserId: USER_ID,
-    points: 12840,
-    rank: 37,
+    points: pointsAt(viewerRank(s)),
+    rank: viewerRank(s),
     byKind: {
       PULL_REQUEST_MERGED: 23,
       CODE_REVIEW: 41,
@@ -182,6 +244,13 @@ export async function fixtureResponse(url: string, init: RequestInit): Promise<R
   if (pathname === "/auth/session") return json({ user: s === "signed-out" ? null : user });
   if (pathname === "/auth/signout") return json(null, 204);
   if (s === "offline") throw new TypeError("Failed to fetch");
+
+  // Public: answers the same whether or not anyone is signed in.
+  if (pathname === "/contributions/leaderboard") {
+    const cursor = searchParams.get("cursor");
+    if (s === "error" || (s === "more-error" && cursor)) return json({ message: "boom" }, 500);
+    return json(boardPage(s, cursor));
+  }
   if (s === "expired") return json({ message: "Not signed in." }, 401);
 
   if (pathname === "/contributions/me/summary") {
