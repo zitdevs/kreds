@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
 import { ContributionController } from "./contribution.controller.js";
+import { readUnobservedCaps, UNOBSERVED_CAPS } from "./unobserved-caps.provider.js";
 import { ContributionService } from "./contribution.service.js";
 
 /**
@@ -13,7 +15,10 @@ import { ContributionService } from "./contribution.service.js";
  */
 @Module({
   controllers: [ContributionController],
-  providers: [ContributionService],
+  providers: [
+    ContributionService,
+    { provide: UNOBSERVED_CAPS, inject: [ConfigService], useFactory: readUnobservedCaps },
+  ],
   exports: [ContributionService],
 })
 export class ContributionModule {}

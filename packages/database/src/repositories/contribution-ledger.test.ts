@@ -194,4 +194,61 @@ describeWithDatabase("ContributionLedger", () => {
       expect(await ledger.leaderboard()).toEqual([]);
     });
   });
+
+  /**
+   * The tally the chapter 24 cap is applied on. It only means something if it
+   * counts exactly the unobserved points that are still standing, inside the
+   * window being asked about.
+   */
+  describe("the unobserved tally", () => {
+    const day = new Date("2026-03-14T00:00:00Z");
+    const nextDay = new Date("2026-03-15T00:00:00Z");
+    const unobserved = (over: Partial<AwardInput> = {}) =>
+      award({ observed: false, occurredAt: new Date("2026-03-14T15:00:00Z"), ...over });
+
+    it("counts unobserved points earned inside the window", async () => {
+      await ledger.award(unobserved());
+
+      expect(await ledger.unobservedPointsBetween(4242, day, nextDay)).toBe(40);
+    });
+
+    it("ignores observed work and work that was never evaluated", async () => {
+      await ledger.award(
+        unobserved({ idempotencyKey: "PULL_REQUEST_MERGED:77001:1", observed: true }),
+      );
+      // No `observed` at all: the shape every pre-A04 row has.
+      await ledger.award(
+        award({
+          idempotencyKey: "PULL_REQUEST_MERGED:77001:2",
+          occurredAt: new Date("2026-03-14T15:00:00Z"),
+        }),
+      );
+
+      expect(await ledger.unobservedPointsBetween(4242, day, nextDay)).toBe(0);
+    });
+
+    /** A reverted pull request must stop consuming the allowance it used. */
+    it("stops counting an award once it is invalidated", async () => {
+      await ledger.award(unobserved());
+      await ledger.invalidate(unobserved().idempotencyKey, "PR_REVERTED");
+
+      expect(await ledger.unobservedPointsBetween(4242, day, nextDay)).toBe(0);
+    });
+
+    /**
+     * Backfill arrives newest-first, so a later day can already be recorded
+     * when an earlier day's merge is evaluated. It must not spend that day's
+     * allowance.
+     */
+    it("does not count a later day's work against an earlier day", async () => {
+      await ledger.award(
+        unobserved({
+          idempotencyKey: "PULL_REQUEST_MERGED:77001:500",
+          occurredAt: new Date("2026-03-15T09:00:00Z"),
+        }),
+      );
+
+      expect(await ledger.unobservedPointsBetween(4242, day, nextDay)).toBe(0);
+    });
+  });
 });

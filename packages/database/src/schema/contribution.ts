@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   bigint,
+  boolean,
   index,
   integer,
   pgEnum,
@@ -115,6 +116,15 @@ export const contributionEntries = pgTable(
     /** The award this entry cancels. Set only on an invalidation. */
     cancelsEntryId: uuid("cancels_entry_id"),
 
+    /**
+     * Whether an independent human observed the work (A04, 24).
+     *
+     * Nullable, and null means "not evaluated" rather than "nobody watched".
+     * Every row written before A04 predates the question, and Law XV does not
+     * permit history to be restated, so those rows stay outside the tally
+     * instead of being backfilled with a guess.
+     */
+    observed: boolean("observed"),
     /** Law XV: the version that decided travels with the decision. */
     rulesVersion: text("rules_version").notNull(),
     /** When the work happened on GitHub, not when Kreds heard about it. */
