@@ -33,7 +33,7 @@
   "devDependencies": {
     "@types/node": "^22.20.1",
     "drizzle-kit": "^0.31.11",
-    "typescript": "^5.7.0",
+    "typescript": "^7.0.2",
     "vitest": "^2.1.4"
   }
 }
